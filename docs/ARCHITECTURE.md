@@ -1,0 +1,291 @@
+# TABenchmark Architecture
+
+**A shared benchmark for 50 years of traffic assignment models.**
+
+This document is the normative design reference. It synthesizes three independently
+developed design studies (a SimOpt-style scenario×model matrix, an observability-first
+statistical design, and a contract/plugin-first design — see `docs/design/`) informed by
+three key references:
+
+- **SimOpt** (Eckman, Henderson & Shashaani): problem–solver testbed machinery —
+  macro/post-replication experiments, fixed random-number stream schemas, progress curves
+  and solvability profiles.
+- **BO4Mob** (Ryu, Kwon, Choi, Deshwal, Kang & Osorio, NeurIPS 2025 D&B): the lab's
+  house conventions — scenario ladders, declarative configs, strategy registries, seeded
+  subprocess adapters, budget tables, datasheets.
+- **Hazelton (2015), AOAS 9(1):474–506**: statistical inference of route flows from link
+  counts — identifiability conditions, why observation processes must be first-class,
+  and how to score probabilistic outputs.
+
+---
+
+## 1. Design principles
+
+### P1 — The certificate principle
+**The harness — never the model — computes every scored metric.** For static tasks with
+known link cost functions, the relative equilibrium gap is a property of
+`(link_flows, scenario)`, not of the algorithm: given emitted flows, the harness runs
+all-or-nothing shortest paths at the flow-induced costs and computes the gap externally.
+This single decision is what lets a 1975 Frank–Wolfe implementation and a 2025 GNN
+surrogate share one leaderboard: *anything that emits feasible link flows gets an
+externally certified gap.* Model self-reports are recorded as provenance and diffed
+against harness values as an honesty check, but never scored. This is SimOpt's
+"post-replicate, never trust in-run estimates" principle transported to the
+deterministic setting.
+
+### P2 — Scenarios are data, not code
+A `Scenario` is a frozen, content-hashed, declarative object: network arrays + demand +
+cost configuration + units metadata + known-defect notes. `scenario_hash =
+SHA-256(canonical serialization)` pins every result to the exact instance evaluated; a
+silently edited network can never masquerade as the benchmark scenario. Scenarios carry
+**no executable code**, following BO4Mob's data-directory-plus-JSON-config convention.
+
+### P3 — Observation processes are first-class (the data-levels axis)
+Models from 1956–2026 disagree less about networks than about *what data they see*.
+Ground truth is stored once at the finest granularity available (equilibrium link flows
+from a reference solver at tight gap; for synthetic estimation scenarios, realized
+integer route flows per Hazelton). Every data level is a seeded, versioned projection:
+
+| Data level | Parameters (dials) |
+|---|---|
+| `FullOD` | — |
+| `NoisyOD` | coefficient of variation |
+| `LinkCounts` | sensor subset (mask), noise model, number of observation periods N |
+| `Trajectories` | penetration rate, sampling noise |
+| `StalePriorOD` | prior age/quality (Gamma pseudo-counts) |
+
+Per Hazelton's Proposition 1, mean flow parameters are identifiable from a *sequence* of
+link-count vectors when the monitored incidence matrix has distinct nonzero columns —
+but not from a single snapshot (feasible polytopes exceed 10¹⁴ points on toy networks).
+Therefore: (i) per-period counts are distributed, never day-averages; (ii) every
+(network, sensor set) configuration reports its identifiability condition; (iii)
+configurations that deliberately violate identifiability are included and flagged;
+(iv) distributional outputs are scored against distributions (coverage, likelihood),
+never against a fictional unique inversion.
+
+### P4 — One minimal model contract, capabilities-declared
+Everything a model must do is one method plus one declaration:
+
+```python
+class TrafficAssignmentModel(ABC):
+    capabilities: Capabilities            # declared, machine-checkable
+    factors: dict[str, FactorSpec]        # typed hyperparameters with defaults
+
+    def solve(self, scenario: Scenario, budget: Budget,
+              rng: RngBundle, trace: Trace) -> ResultBundle: ...
+```
+
+`Capabilities` declares paradigm (`static_ue | static_so | sue | dta | day_to_day |
+learned | heuristic`), determinism, required inputs (`od_matrix`, `link_counts`, …),
+emitted outputs (`link_flows`, `path_flows`, `flow_distribution`, `od_estimate`),
+`provides_gap`, `seedable`, and `trained_on` lineage (learned models). The harness
+auto-filters the scenario×model×task matrix by compatibility — a counts-only task
+refuses a model that requires full OD; a gradient-requiring solver never meets a
+subprocess black box.
+
+White-box status means the model's internals match the scenario's *declared* cost
+functions (`Network.link_cost` / `link_cost_integral`), which is what makes external
+gap certification possible for everyone; a future `WhiteBoxMixin` will additionally
+expose Jacobians for derivative-based solvers. Black-box models plug in through adapters:
+`CallableAdapter` (any Python callable, e.g. a torch model), `SubprocessAdapter`
+(external engines — DTALite, MATSim, SUMO — via file I/O and explicit `--seed`
+passthrough, BO4Mob's `sumo_runner` pattern), and later `DockerAdapter` (digest-pinned
+engine images).
+
+### P5 — Two evaluation tracks, honestly separated
+- **Deterministic track** (convex UE/SO programs): one macroreplication, no
+  post-replications; metric = certified relative gap versus budget, reported as
+  progress curves and Moré–Wild-style data profiles; regression against best-known
+  objectives.
+- **Stochastic track** (SUE, day-to-day, simulators, ML surrogates): M macroreplications
+  with a fixed random-stream schema, N independent post-evaluations for unbiased
+  estimates at recommended solutions, bootstrap confidence intervals (never parametric),
+  mean/quantile progress curves and α-solve-time solvability profiles.
+
+Models that cannot certify equilibrium are **first-class, not excluded**: they appear
+with externally computed gap-at-budget where feasible-flow output permits, as censored
+entries in solvability profiles, and in a separate "no certificate" leaderboard column.
+No imputed zeros; no single ranking across tracks.
+
+### P6 — Budgets count work, not hardware
+Primary budget coordinates are hardware-free: iterations, shortest-path calls, scenario
+(engine) evaluations. Every checkpoint records *all* coordinates plus wall-clock, so any
+curve can be re-sliced post hoc. Wall-clock is recorded, never ranked on directly;
+normalization by a per-machine calibration constant (timing a standard all-or-nothing
+pass) is planned for the stochastic track. Training cost of learned models is reported
+as a separate amortized column.
+
+### P7 — Fairness is enforced by the harness, not by convention
+- Learned models must register a **training-data card**; the harness refuses evaluation
+  when `trained_on` lineage intersects the evaluation scenario's family (scenario
+  hashes + a held-out demand/topology perturbation generator mean there is no fixed
+  test set to memorize).
+- A **feasibility audit** (flow conservation, OD totals) runs before any external gap is
+  granted; infeasible flows are flagged, never silently scored.
+- Every run emits `manifest.json`: scenario hash, package and engine versions, seeds and
+  stream offsets, environment, git commit. The leaderboard rejects incomplete manifests.
+- Warm starts are declared factors; all models receive identical budgets and, where
+  applicable, identical shared initial candidates (BO4Mob convention).
+
+### P8 — Reproducible randomness by construction
+A single counter-based RNG root with a fixed spawn-key schema
+`(macroreplication m, declared randomness source i, replication r)` — the SimOpt
+MRG32k3a stream/substream design realized with NumPy `SeedSequence`/`Philox` spawn keys.
+Common random numbers are switchable per layer (across models on a scenario: default on;
+across macroreps: default off). Dedicated streams exist for observation generation,
+post-evaluation, and bootstrap. Stochastic models declare their number of randomness
+sources; unseedable external engines must declare `seedable=False` and are
+macroreplicated more heavily, and are labeled as such.
+
+### P9 — Data are fetched, never vendored
+TNTP networks (github.com/bstabler/TransportationNetworks) are donated for academic
+research without an OSI license. TABenchmark therefore ships a checksummed
+download-on-demand fetcher with a local cache and auto-generated citation strings, and
+never commits network data. Units are per-network metadata (Sioux Falls times are 0.01 h
+and demand is 0.1× daily; Anaheim lengths are feet; …), never global assumptions. Known
+data defects (Austin duplicate links, Chicago-Regional ramp coding, Chicago-Sketch
+under-congestion) live in a machine-readable defect registry. The six published
+best-known UE solutions (Sioux Falls, Barcelona, Winnipeg, Chicago-Sketch,
+Chicago-Regional, Anaheim) are regression oracles with recorded provenance. Because
+upstream-quoted objective values use varying unit/scaling conventions (the upstream
+README quotes Sioux Falls as 42.31335287107440 while the Beckmann objective in native
+TNTP units — what `tabench` computes — is **4231335.28710744**), TABenchmark never
+hardcodes quoted objectives: the oracle objective is always *recomputed from the
+best-known flows* with the package's own Beckmann implementation.
+
+---
+
+## 2. Object model
+
+```
+Scenario  = Network + Demand + CostConfig (+ ReferenceSolution?)   [frozen, hashed]
+DataLevel = observation process: (GroundTruth, rng) -> Dataset      [seeded projection]
+Task      = Scenario × DataLevel × objective + metric set           [T1 | T2 | T3]
+Model     = TrafficAssignmentModel (Capabilities, FactorSpecs, solve())
+Adapter   = CallableAdapter | SubprocessAdapter | DockerAdapter     [same ABC]
+Trace     = checkpoint stream: (BudgetCoords, link_flows, self_report)
+Evaluator = harness-side scoring: (Scenario, FlowState) -> Metrics  [model-blind]
+Experiment= (Task × Model) grid runner: macroreps -> records -> profiles
+```
+
+### Tasks
+- **T1 Equilibrium** (full specification): compute UE / SO / SUE(θ). Scored by certified
+  relative gap (and SUE fixed-point residual for SUE tasks), Beckmann objective, link-flow
+  error vs best-known, all versus budget.
+- **T2 Estimation / calibration** (partial observations): recover demand and/or flows from
+  a `DataLevel` output. Point metrics (RMSE/NRMSE vs truth) reported **separately from**
+  distributional metrics (held-out count log-likelihood, CRPS, empirical coverage of 95%
+  intervals) — overdispersion misspecification corrupts calibration before point accuracy
+  (Hazelton).
+- **T3 Prediction under intervention**: fit on pre-intervention data; predict flows after
+  a capacity cut / demand shift / link closure applied to the truth generator. The arena
+  where a classical model's structural prior competes fairly with a learned model's
+  flexibility.
+
+### Metric definitions (single source of truth, `tabench.metrics`)
+- `TSTT(v) = Σ_a v_a · t_a(v_a)`; `SPTT(v) = Σ_a y_a · t_a(v_a)` with `y` the
+  all-or-nothing assignment at costs `t(v)`.
+- **Relative gap** `RG(v) = (TSTT − SPTT) / TSTT` (documented choice; the literature has
+  several conventions — see Boyce, Ralevic-Dekic & Bar-Gera 2004).
+- **Average excess cost** `AEC(v) = (TSTT − SPTT) / total demand` (the convention used by
+  the TransportationNetworks best-known solutions).
+- **Beckmann objective** `B(v) = Σ_a ∫₀^{v_a} t_a(s) ds`, closed-form for BPR.
+- Flow errors vs oracle: RMSE, NRMSE (normalized by mean oracle flow).
+- Distributional: log-likelihood of held-out per-period counts (MC-estimated where
+  exact evaluation is infeasible), CRPS, 95%-interval empirical coverage.
+- Fit-vs-gap is reported as a **pair/curve, never collapsed to one scalar**.
+- **Censoring:** flows that fail the demand-aware feasibility audit (non-finite or
+  negative flows, unconserved intersections, zone flows inconsistent with OD
+  productions/attractions, or negative excess cost) receive `feasible = 0` and NaN gap
+  metrics — never a score, and never a crash of the surrounding experiment.
+
+---
+
+## 3. Repository layout
+
+```
+TABenchmark/
+├── src/tabench/
+│   ├── core/              # scenario.py (incl. content hashing), capabilities.py,
+│   │                      # factors.py, budget.py, results.py, rng.py
+│   ├── data/              # tntp.py (defensive parser), fetcher.py (checksums+citations),
+│   │                      # registry.py (networks + units metadata + defects), builtin.py
+│   ├── models/            # base.py, aon.py, msa.py, frank_wolfe.py
+│   │   └── adapters/      # callable_adapter.py (planned: subprocess.py, docker.py)
+│   ├── observe/           # data levels + identifiability checks
+│   ├── metrics/           # gaps.py, flows.py (planned: distributional.py)
+│   ├── experiments/       # runner.py incl. manifests (planned: profiles.py, bootstrap.py)
+│   └── cli.py             # tabench fetch | list | run (planned: validate)
+├── scenarios/             # declarative YAML scenario cards (ladder: 0braess, 1siouxfalls, …)
+├── demos/                 # demo_quickstart.py (planned ladder: scenario/model/experiment)
+├── tools/                 # generate_references.py (regenerates REFERENCES.md/ROADMAP.md)
+├── tests/                 # unit + analytic (Braess) + regression (Sioux Falls oracle)
+└── docs/                  # this file, REFERENCES.md, references.bib, ROADMAP.md, design/
+```
+(`conformance/` — the contract test suite behind a future `tabench validate` — is
+planned for v0.x.)
+
+Scenario ladder (BO4Mob convention — strictly increasing scale):
+`0braess` (hand-checkable analytic UE) → `1siouxfalls` (24z/76l) →
+`2anaheim`/`2easternmass` → `3barcelona`/`3winnipeg`/`3chicagosketch` →
+`4chicagoregional`/`4philadelphia`/… (with per-scenario budget tables).
+
+---
+
+## 4. How a 1975 solver and a 2025 surrogate share one harness
+
+**Frank–Wolfe (LeBlanc et al. 1975):** `Capabilities(paradigm="static_ue",
+deterministic=True, provides_gap=True, inputs={"od_matrix"})`, `WhiteBoxMixin`. `solve()`
+iterates all-or-nothing + exact line search on the Beckmann objective, emitting flows to
+`Trace` each iteration. Deterministic track, M=1. Its harness-computed gap must match its
+self-report to numerical precision — a built-in honesty regression test.
+
+**GNN surrogate (2020s):** `CallableAdapter` around a trained network;
+`Capabilities(paradigm="learned", provides_gap=False, seedable=True,
+trained_on=("tntp-small-v1",))`. `solve()` is one forward pass (budget: 1 evaluation).
+The harness audits feasibility, computes the same certified relative gap and flow errors
+as for Frank–Wolfe, blocks evaluation on scenarios in its training lineage, and
+macroreplicates over training seeds for distributional scoring. The leaderboard
+legitimately shows "gap 1e-14 in 200 SP-call-equivalents" next to "gap 3e-2 in 1
+evaluation" — that contrast *is* the scientific output.
+
+**External engines (DTALite, MATSim, SUMO), planned for v2:** `SubprocessAdapter` —
+write inputs, shell out with explicit seed, parse outputs — same ABC, same trace, same
+certification where static costs permit; otherwise scored on the observational track.
+
+---
+
+## 5. Implementation roadmap
+
+Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 172 references:
+57 tier-1, 80 tier-2, 35 context):
+
+- **v0 (this repo, now):** core abstractions; TNTP fetcher+parser with units metadata;
+  Braess (builtin, analytic) + Sioux Falls scenarios; AON, MSA, Frank–Wolfe;
+  callable black-box adapter; certified gap/AEC/Beckmann metrics; LinkCounts/FullOD
+  observation levels with identifiability check; experiment runner with manifests; tests
+  incl. analytic Braess UE and the Sioux Falls best-known-objective regression.
+- **v0.x:** conjugate/bi-conjugate FW, gradient projection (path-based), Dial's STOCH and
+  logit SUE via MSA (route-choice components), progress-curve/solvability-profile
+  plotting, `tabench validate` conformance suite, entry-point plugin registry.
+- **v1:** Algorithm B / TAPAS-class bush solvers; probit SUE; elastic demand & combined
+  models; T2 estimation track with Hazelton-style samplers as validated baselines;
+  frozen v1.0 core grid (3 networks × 4 data levels × T1/T2) with budget tables.
+- **v2:** DTA — CTM/LTM network loading components, analytical DUE, subprocess adapters
+  for DTALite/MATSim/SUMO; day-to-day dynamics track; T3 intervention suite; Docker
+  images per engine; public leaderboard.
+
+## 6. Top design risks and mitigations
+
+1. **Metric gaming / self-report drift** → all metrics harness-computed (P1); self-report
+   vs harness discrepancy flagged; evaluator regression-tested against oracles.
+2. **Cross-vintage unfairness** (C engines vs Python; amortized training) → hardware-free
+   budget coordinates (P6); segmented leaderboards; training cost amortized column;
+   T3 as the equalizer.
+3. **ML train/test contamination** → training-data cards + lineage gates + perturbation
+   generator (P7).
+4. **Data/licensing rot** → no vendoring, checksummed fetcher, per-network metadata and
+   defects registry, import-time validation against published objectives (P9).
+5. **Scope explosion** (networks × levels × tasks × models) → frozen versioned core
+   grids; everything else behind the registry as contrib; per-scenario budget tables cap
+   compute (BO4Mob policy).

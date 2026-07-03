@@ -1,0 +1,19 @@
+# Scenario ladder rung 1: the classic 24-node/76-link Sioux Falls instance.
+# Data are downloaded on demand (checksummed, commit-pinned) - never vendored (P9).
+scenario: siouxfalls
+source: tntp
+family: tntp-siouxfalls
+tasks: [t1_equilibrium]
+oracle:
+  kind: best-known
+  file: SiouxFalls_flow.tntp
+  aec: 3.9e-15
+  note: >
+    Best-known UE link flows from TransportationNetworks. The regression
+    objective is recomputed from these flows with tabench's Beckmann
+    implementation, making tests unit-convention-free.
+units:
+  free_flow_time: 0.01 hours (commonly misread as minutes)
+  demand: 0.1 x original daily vehicle trips
+budgets:
+  iterations: 500

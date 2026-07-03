@@ -1,0 +1,12 @@
+# Scenario ladder rung 0: hand-checkable analytic oracle (built in, no download).
+scenario: braess
+source: builtin
+family: builtin-braess
+tasks: [t1_equilibrium]
+oracle:
+  kind: analytic
+  link_flows: [4.0, 2.0, 2.0, 2.0, 4.0]
+  route_time: 92.0
+  note: Unique UE of the classic Braess (1968) paradox network with demand 6.
+budgets:
+  iterations: 200

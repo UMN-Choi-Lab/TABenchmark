@@ -1,0 +1,3363 @@
+[
+ {
+  "bibkey": "aashtiani1981equilibria",
+  "title": "Equilibria on a Congested Transportation Network",
+  "authors": [
+   "Aashtiani",
+   "Magnanti"
+  ],
+  "year": 1981,
+  "venue": "SIAM Journal on Algebraic and Discrete Methods",
+  "doi": "10.1137/0602024",
+  "families": [
+   "foundations"
+  ],
+  "tier": 2,
+  "contribution": "Crossref match; SIAM J. Alg. Disc. Meth. 2(3):213-226.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "agrawal2019differentiable",
+  "title": "Differentiable Convex Optimization Layers",
+  "authors": [
+   "Agrawal",
+   "Amos",
+   "Barratt",
+   "Boyd",
+   "Diamond",
+   "Kolter"
+  ],
+  "year": 2019,
+  "venue": "NeurIPS",
+  "doi": null,
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 2,
+  "contribution": "Verified via arXiv 1910.12430; NeurIPS 2019 (proceedings not in Crossref).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "ameli2026from",
+  "title": "From Optimization to Prediction: Transformer-Based Path-Flow Estimation to the Traffic Assignment Problem",
+  "authors": [
+   "Ameli",
+   "Shams",
+   "Le",
+   "Skabardonis"
+  ],
+  "year": 2026,
+  "venue": "Transportation Research Part C: Emerging Technologies",
+  "doi": "10.1016/j.trc.2026.105808",
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 2,
+  "contribution": "Now published in TR-C (2026, 105808); year/venue updated from arXiv 2510.19889.",
+  "implement_as": "black-box wrapper",
+  "verdict": "partial_match",
+  "confidence": 0.93
+ },
+ {
+  "bibkey": "amos2017optnet",
+  "title": "OptNet: Differentiable Optimization as a Layer in Neural Networks",
+  "authors": [
+   "Amos",
+   "Kolter"
+  ],
+  "year": 2017,
+  "venue": "ICML",
+  "doi": null,
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 3,
+  "contribution": "Verified via arXiv 1703.00443; ICML 2017 PMLR v70 pp.136-145 (PMLR not in Crossref).",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "antoniou2016towards",
+  "title": "Towards a generic benchmarking platform for origin-destination flows estimation/updating algorithms: Design, demonstration and validation",
+  "authors": [
+   "Antoniou",
+   "Barcel\u00f3",
+   "Breen",
+   "Bullejos",
+   "Casas",
+   "Cipriani",
+   "Ciuffo",
+   "Djukic",
+   "Hoogendoorn",
+   "Marzano",
+   "Montero",
+   "Nigro",
+   "Perarnau",
+   "Punzo",
+   "Toledo",
+   "van Lint"
+  ],
+  "year": 2016,
+  "venue": "Transportation Research Part C",
+  "doi": "10.1016/j.trc.2015.08.009",
+  "families": [
+   "dta-simulation-software",
+   "data-calibration-benchmarks"
+  ],
+  "tier": 2,
+  "contribution": "Exact match; TR-C 66:79-98. DOI added.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "arnott1990economics",
+  "title": "Economics of a Bottleneck",
+  "authors": [
+   "Arnott",
+   "de Palma",
+   "Lindsey"
+  ],
+  "year": 1990,
+  "venue": "Journal of Urban Economics",
+  "doi": "10.1016/0094-1190(90)90028-L",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 2,
+  "contribution": "Crossref match; DOI added (was missing in input).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "auld2016polaris",
+  "title": "POLARIS: Agent-based modeling framework development and implementation for integrated travel demand and network and operations simulations",
+  "authors": [
+   "Auld",
+   "Hope",
+   "Ley",
+   "Sokolov",
+   "Xu",
+   "Zhang"
+  ],
+  "year": 2016,
+  "venue": "Transportation Research Part C",
+  "doi": "10.1016/j.trc.2015.07.017",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 2,
+  "contribution": "Exact match; TR-C 64:101-116.",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "bai2019deep",
+  "title": "Deep Equilibrium Models",
+  "authors": [
+   "Bai",
+   "Kolter",
+   "Koltun"
+  ],
+  "year": 2019,
+  "venue": "NeurIPS",
+  "doi": null,
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 3,
+  "contribution": "Verified via arXiv 1909.01377; NeurIPS 2019 (proceedings not in Crossref).",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "balakrishna2007offline",
+  "title": "Offline calibration of dynamic traffic assignment: Simultaneous demand-and-supply estimation",
+  "authors": [
+   "Balakrishna",
+   "Ben-Akiva",
+   "Koutsopoulos"
+  ],
+  "year": 2007,
+  "venue": "Transportation Research Record",
+  "doi": "10.3141/2003-07",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 1,
+  "contribution": "Confirmed via Crossref DOI (title/subtitle split in Crossref record); TRR 2003:50-58.",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "ban2012continuous",
+  "title": "Continuous-time point-queue models in dynamic network loading",
+  "authors": [
+   "Ban",
+   "Pang",
+   "Liu",
+   "Ma"
+  ],
+  "year": 2012,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2011.11.004",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 2,
+  "contribution": "DOI added from Crossref; TRB 46(3):360-380.",
+  "implement_as": "network-loading component",
+  "verdict": "verified",
+  "confidence": 1.0
+ },
+ {
+  "bibkey": "barcelo2010fundamentals",
+  "title": "Fundamentals of Traffic Simulation",
+  "authors": [
+   "Barcel\u00f3"
+  ],
+  "year": 2010,
+  "venue": "Springer (International Series in Operations Research & Management Science)",
+  "doi": "10.1007/978-1-4419-6142-6",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 3,
+  "contribution": "Edited book; chapter DOIs under 10.1007/978-1-4419-6142-6 confirmed via Crossref; book entry hand-written.",
+  "implement_as": "survey/context",
+  "verdict": "book-manual",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "bargera2002origin",
+  "title": "Origin-based algorithm for the traffic assignment problem",
+  "authors": [
+   "Bar-Gera"
+  ],
+  "year": 2002,
+  "venue": "Transportation Science 36(4)",
+  "doi": "10.1287/trsc.36.4.398.549",
+  "families": [
+   "path-and-bush-based"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match, DOI confirmed, pages 398-417.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "bargera2006primal",
+  "title": "Primal Method for Determining the Most Likely Route Flows in Large Road Networks",
+  "authors": [
+   "Bar-Gera"
+  ],
+  "year": 2006,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.1050.0142",
+  "families": [
+   "foundations"
+  ],
+  "tier": 2,
+  "contribution": "DOI resolved directly on Crossref; exact match; 40(3):269-286.",
+  "implement_as": "route-choice component",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "bargera2010traffic",
+  "title": "Traffic assignment by paired alternative segments",
+  "authors": [
+   "Bar-Gera"
+  ],
+  "year": 2010,
+  "venue": "Transportation Research Part B: Methodological 44(8-9)",
+  "doi": "10.1016/j.trb.2009.11.004",
+  "families": [
+   "path-and-bush-based"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match; DOI added, pages 1022-1046.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "beckmann1956studies",
+  "title": "Studies in the Economics of Transportation",
+  "authors": [
+   "Beckmann",
+   "McGuire",
+   "Winsten"
+  ],
+  "year": 1956,
+  "venue": "Yale University Press",
+  "doi": null,
+  "families": [
+   "foundations",
+   "link-based-algorithms",
+   "so-and-pricing"
+  ],
+  "tier": 1,
+  "contribution": "Crossref only indexes book reviews (1957-59); hand-written @book from well-known Yale UP 1956 data.",
+  "implement_as": "white-box solver",
+  "verdict": "book-manual",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "bekhor2005investigating",
+  "title": "Investigating path-based solution algorithms to the stochastic user equilibrium problem",
+  "authors": [
+   "Bekhor",
+   "Toledo"
+  ],
+  "year": 2005,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/S0191-2615(04)00049-9",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref match; DOI added.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "bekhor2006evaluation",
+  "title": "Evaluation of choice set generation algorithms for route choice models",
+  "authors": [
+   "Bekhor",
+   "Ben-Akiva",
+   "Ramming"
+  ],
+  "year": 2006,
+  "venue": "Annals of Operations Research",
+  "doi": "10.1007/s10479-006-0009-8",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref match; DOI added.",
+  "implement_as": "route-choice component",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "bell1991estimation",
+  "title": "The estimation of origin-destination matrices by constrained generalised least squares",
+  "authors": [
+   "Bell"
+  ],
+  "year": 1991,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(91)90010-G",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 2,
+  "contribution": "CORRECTED DOI: given 10.1016/0191-2615(91)90018-E resolves to a different Bell 1991 paper; correct DOI 10.1016/0191-2615(91)90010-G found via Crossref search.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "bell1995alternatives",
+  "title": "Alternatives to Dial's logit assignment algorithm",
+  "authors": [
+   "Bell"
+  ],
+  "year": 1995,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(95)00005-X",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref match; DOI added.",
+  "implement_as": "network-loading component",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "benakiva1999discrete",
+  "title": "Discrete choice methods and their applications to short term travel decisions",
+  "authors": [
+   "Ben-Akiva",
+   "Bierlaire"
+  ],
+  "year": 1999,
+  "venue": "Handbook of Transportation Science (Kluwer Academic Publishers)",
+  "doi": "10.1007/978-1-4615-5203-1_2",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 2,
+  "contribution": "Verified via Crossref chapter DOI; DOI added.",
+  "implement_as": "route-choice component",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "benakiva2001network",
+  "title": "Network State Estimation and Prediction for Real-Time Traffic Management",
+  "authors": [
+   "Ben-Akiva",
+   "Bierlaire",
+   "Burton",
+   "Koutsopoulos",
+   "Mishalani"
+  ],
+  "year": 2001,
+  "venue": "Networks and Spatial Economics",
+  "doi": "10.1023/A:1012883811652",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 1,
+  "contribution": "DOI resolves; actual title is 'Network State Estimation and Prediction for Real-Time Traffic Management' (corrected). Authors/year/venue match.",
+  "implement_as": "black-box wrapper",
+  "verdict": "partial_match",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "bertsekas1982projection",
+  "title": "Projection methods for variational inequalities with application to the traffic assignment problem",
+  "authors": [
+   "Bertsekas",
+   "Gafni"
+  ],
+  "year": 1982,
+  "venue": "Mathematical Programming Study 17",
+  "doi": "10.1007/BFb0120965",
+  "families": [
+   "path-and-bush-based"
+  ],
+  "tier": 3,
+  "contribution": "Crossref match; book-chapter in Mathematical Programming Studies, pp.139-159. DOI added.",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "bie2010stability",
+  "title": "Stability and attraction domains of traffic equilibria in a day-to-day dynamical system formulation",
+  "authors": [
+   "Bie",
+   "Lo"
+  ],
+  "year": 2010,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2009.06.007",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 2,
+  "contribution": "Exact match; TR-B 44(1) 90-107.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "boyce2004convergence",
+  "title": "Convergence of Traffic Assignments: How Much Is Enough?",
+  "authors": [
+   "Boyce",
+   "Ralevic-Dekic",
+   "Bar-Gera"
+  ],
+  "year": 2004,
+  "venue": "Journal of Transportation Engineering",
+  "doi": "10.1061/(ASCE)0733-947X(2004)130:1(49)",
+  "families": [
+   "link-based-algorithms",
+   "data-calibration-benchmarks"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match; JTE 130(1), pp 49-55.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "boyce2004multiclass",
+  "title": "Multiclass Combined Models for Urban Travel Forecasting",
+  "authors": [
+   "Boyce",
+   "Bar-Gera"
+  ],
+  "year": 2004,
+  "venue": "Networks and Spatial Economics",
+  "doi": "10.1023/B:NETS.0000015659.39216.83",
+  "families": [
+   "extensions-static"
+  ],
+  "tier": 2,
+  "contribution": "Verified via Crossref search (DOI endpoint rate-limited once); NSE 4(1):115-124.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "boyce2005retrospective",
+  "title": "A Retrospective on Beckmann, McGuire and Winsten's Studies in the Economics of Transportation",
+  "authors": [
+   "Boyce",
+   "Mahmassani",
+   "Nagurney"
+  ],
+  "year": 2005,
+  "venue": "Papers in Regional Science",
+  "doi": "10.1111/j.1435-5957.2005.00005.x",
+  "families": [
+   "foundations"
+  ],
+  "tier": 3,
+  "contribution": "Crossref match; PiRS 84(1):85-103.",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "boyce2007forecasting",
+  "title": "Forecasting Travel on Congested Urban Transportation Networks: Review and Prospects for Network Equilibrium Models",
+  "authors": [
+   "Boyce"
+  ],
+  "year": 2007,
+  "venue": "Networks and Spatial Economics",
+  "doi": "10.1007/s11067-006-9009-0",
+  "families": [
+   "extensions-static"
+  ],
+  "tier": 3,
+  "contribution": "Exact Crossref DOI match; NSE 7(2):99-128.",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "boyles2023transportation",
+  "title": "Transportation Network Analysis, Volume I: Static and Dynamic Traffic Assignment",
+  "authors": [
+   "Boyles",
+   "Lownes",
+   "Unnikrishnan"
+  ],
+  "year": 2023,
+  "venue": "Open-access textbook (self-published, sboyles.github.io)",
+  "doi": null,
+  "families": [
+   "path-and-bush-based"
+  ],
+  "tier": 3,
+  "contribution": "Self-published open textbook, no DOI; hand-written @book entry.",
+  "implement_as": "survey/context",
+  "verdict": "book-manual",
+  "confidence": 0.9
+ },
+ {
+  "bibkey": "bpr1964traffic",
+  "title": "Traffic Assignment Manual",
+  "authors": [
+   "Bureau of Public Roads"
+  ],
+  "year": 1964,
+  "venue": "U.S. Department of Commerce, Urban Planning Division",
+  "doi": null,
+  "families": [
+   "foundations"
+  ],
+  "tier": 1,
+  "contribution": "Government report not in Crossref; hand-written @techreport from standard citation data.",
+  "implement_as": "network-loading component",
+  "verdict": "book-manual",
+  "confidence": 0.9
+ },
+ {
+  "bibkey": "braess1968uber",
+  "title": "\u00dcber ein Paradoxon aus der Verkehrsplanung",
+  "authors": [
+   "Braess"
+  ],
+  "year": 1968,
+  "venue": "Unternehmensforschung",
+  "doi": "10.1007/BF01918335",
+  "families": [
+   "foundations",
+   "so-and-pricing"
+  ],
+  "tier": 2,
+  "contribution": "Crossref match; vol 12(1), pp. 258-268. English translation (Transportation Science 2005, doi:10.1287/trsc.1050.0127) also verified and noted in bib entry.",
+  "implement_as": "data/scenario",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "braess2005paradox",
+  "title": "On a Paradox of Traffic Planning",
+  "authors": [
+   "Braess",
+   "Nagurney",
+   "Wakolbinger"
+  ],
+  "year": 2005,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.1050.0127",
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 3,
+  "contribution": "Crossref exact match incl. given DOI: Transp. Sci. 39(4):446-450.",
+  "implement_as": "data/scenario",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "camargo2024aequilibrae",
+  "title": "AequilibraE: Transportation modeling in Python",
+  "authors": [
+   "Camargo"
+  ],
+  "year": 2024,
+  "venue": "Open-source software",
+  "doi": null,
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 2,
+  "contribution": "Open-source software, not in Crossref; hand-written @misc entry.",
+  "implement_as": "black-box wrapper",
+  "verdict": "book-manual",
+  "confidence": 0.85
+ },
+ {
+  "bibkey": "cantarella1995dynamic",
+  "title": "Dynamic processes and equilibrium in transportation networks: towards a unifying theory",
+  "authors": [
+   "Cantarella",
+   "Cascetta"
+  ],
+  "year": 1995,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.29.4.305",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 1,
+  "contribution": "Exact match; Transportation Science 29(4).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "cantarella2016modelling",
+  "title": "Modelling road traffic assignment as a day-to-day dynamic, deterministic process: a unified approach to discrete- and continuous-time models",
+  "authors": [
+   "Cantarella",
+   "Watling"
+  ],
+  "year": 2016,
+  "venue": "EURO Journal on Transportation and Logistics",
+  "doi": "10.1007/s13676-014-0073-1",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 2,
+  "contribution": "Exact match; given DOI confirmed by Crossref.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "cantarella2019dynamics",
+  "title": "Dynamics and Stochasticity in Transportation Systems: Tools for Transportation Network Modelling",
+  "authors": [
+   "Cantarella",
+   "Watling",
+   "de Luca",
+   "Di Pace"
+  ],
+  "year": 2019,
+  "venue": "Elsevier",
+  "doi": null,
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 3,
+  "contribution": "Elsevier book; hand-written @book entry (ISBN 978-0-12-814353-7); chapters confirmed on Crossref.",
+  "implement_as": "survey/context",
+  "verdict": "book-manual",
+  "confidence": 0.9
+ },
+ {
+  "bibkey": "carey1987optimal",
+  "title": "Optimal Time-Varying Flows on Congested Networks",
+  "authors": [
+   "Carey"
+  ],
+  "year": 1987,
+  "venue": "Operations Research",
+  "doi": "10.1287/opre.35.1.58",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref match; DOI confirmed.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "casas2010traffic",
+  "title": "Traffic Simulation with Aimsun",
+  "authors": [
+   "Casas",
+   "Ferrer",
+   "Garcia",
+   "Perarnau",
+   "Torday"
+  ],
+  "year": 2010,
+  "venue": "Fundamentals of Traffic Simulation (Springer, ed. Barcel\u00f3)",
+  "doi": "10.1007/978-1-4419-6142-6_5",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 2,
+  "contribution": "Book chapter in Barcelo (ed.), Springer ISOR&MS 145, pp 173-232. DOI added.",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "cascetta1984estimation",
+  "title": "Estimation of trip matrices from traffic counts and survey data: A generalized least squares estimator",
+  "authors": [
+   "Cascetta"
+  ],
+  "year": 1984,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(84)90012-2",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 1,
+  "contribution": "Confirmed via Crossref; TR-B 18(4-5):289-299.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "cascetta1988unified",
+  "title": "A unified framework for estimating or updating origin/destination matrices from traffic counts",
+  "authors": [
+   "Cascetta",
+   "Nguyen"
+  ],
+  "year": 1988,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(88)90024-0",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 3,
+  "contribution": "CORRECTED DOI: given 10.1016/0191-2615(88)90037-X returns 404; correct DOI 10.1016/0191-2615(88)90024-0 via Crossref search (TR-B 22(6):437-455).",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "cascetta1989stochastic",
+  "title": "A stochastic process approach to the analysis of temporal dynamics in transportation networks",
+  "authors": [
+   "Cascetta"
+  ],
+  "year": 1989,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(89)90019-2",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 1,
+  "contribution": "Exact match; TR-B 23(1) 1-17.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "cascetta1996modified",
+  "title": "A modified logit route choice model overcoming path overlapping problems: specification and some calibration results for interurban networks",
+  "authors": [
+   "Cascetta",
+   "Nuzzolo",
+   "Russo",
+   "Vitetta"
+  ],
+  "year": 1996,
+  "venue": "Proceedings of the 13th International Symposium on Transportation and Traffic Theory (ISTTT), Lyon (Pergamon)",
+  "doi": null,
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 2,
+  "contribution": "ISTTT proceedings not in Crossref; hand-written @inproceedings (pp 697-711, Pergamon).",
+  "implement_as": "route-choice component",
+  "verdict": "book-manual",
+  "confidence": 0.9
+ },
+ {
+  "bibkey": "chiu2011dynamic",
+  "title": "Dynamic Traffic Assignment: A Primer",
+  "authors": [
+   "Chiu",
+   "Bottom",
+   "Mahut",
+   "Paz",
+   "Balakrishna",
+   "Waller",
+   "Hicks"
+  ],
+  "year": 2011,
+  "venue": "Transportation Research Circular E-C153, Transportation Research Board",
+  "doi": "10.17226/22872",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 3,
+  "contribution": "Crossref/NAP record 10.17226/22872 (2011). Authors from circular itself; entered as techreport.",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.9
+ },
+ {
+  "bibkey": "correa2004selfish",
+  "title": "Selfish Routing in Capacitated Networks",
+  "authors": [
+   "Correa",
+   "Schulz",
+   "Stier-Moses"
+  ],
+  "year": 2004,
+  "venue": "Mathematics of Operations Research",
+  "doi": "10.1287/moor.1040.0098",
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 2,
+  "contribution": "Crossref exact match incl. given DOI: MOR 29(4):961-976, 2004.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "dafermos1969traffic",
+  "title": "The Traffic Assignment Problem for a General Network",
+  "authors": [
+   "Dafermos",
+   "Sparrow"
+  ],
+  "year": 1969,
+  "venue": "Journal of Research of the National Bureau of Standards, Series B",
+  "doi": "10.6028/jres.073b.010",
+  "families": [
+   "foundations",
+   "so-and-pricing"
+  ],
+  "tier": 2,
+  "contribution": "Crossref match; J. Res. NBS Section B 73B(2), p. 91.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "dafermos1972traffic",
+  "title": "The Traffic Assignment Problem for Multiclass-User Transportation Networks",
+  "authors": [
+   "Dafermos"
+  ],
+  "year": 1972,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.6.1.73",
+  "families": [
+   "foundations",
+   "extensions-static"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref DOI match; vol 6(1):73-87.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "dafermos1980traffic",
+  "title": "Traffic Equilibrium and Variational Inequalities",
+  "authors": [
+   "Dafermos"
+  ],
+  "year": 1980,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.14.1.42",
+  "families": [
+   "foundations",
+   "extensions-static"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref DOI match; vol 14(1):42-54.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "daganzo1977stochastic",
+  "title": "On stochastic models of traffic assignment",
+  "authors": [
+   "Daganzo",
+   "Sheffi"
+  ],
+  "year": 1977,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.11.3.253",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match (vol 11(3), pp 253-274).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "daganzo1994cell",
+  "title": "The cell transmission model: A dynamic representation of highway traffic consistent with the hydrodynamic theory",
+  "authors": [
+   "Daganzo"
+  ],
+  "year": 1994,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(94)90002-7",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 1,
+  "contribution": "CORRECTED DOI: given 10.1016/0191-2615(94)90002-5 was invalid (404); correct suffix is -7. TRB 28(4):269-287.",
+  "implement_as": "network-loading component",
+  "verdict": "verified",
+  "confidence": 1.0
+ },
+ {
+  "bibkey": "daganzo1995cell",
+  "title": "The cell transmission model, part II: Network traffic",
+  "authors": [
+   "Daganzo"
+  ],
+  "year": 1995,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(94)00022-R",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 1,
+  "contribution": "DOI added from Crossref; TRB 29(2):79-93.",
+  "implement_as": "network-loading component",
+  "verdict": "verified",
+  "confidence": 1.0
+ },
+ {
+  "bibkey": "davis1993large",
+  "title": "Large population approximations of a general stochastic traffic assignment model",
+  "authors": [
+   "Davis",
+   "Nihan"
+  ],
+  "year": 1993,
+  "venue": "Operations Research",
+  "doi": "10.1287/opre.41.1.169",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 2,
+  "contribution": "Exact match; Operations Research 41(1).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "di2013boundedly",
+  "title": "Boundedly rational user equilibria (BRUE): Mathematical formulation and solution sets",
+  "authors": [
+   "Di",
+   "Liu",
+   "Pang",
+   "Ban"
+  ],
+  "year": 2013,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2013.06.008",
+  "families": [
+   "extensions-static"
+  ],
+  "tier": 2,
+  "contribution": "DOI missing in input; found via Crossref search (TRB 57:300-313; also a Procedia version exists).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "di2016boundedly",
+  "title": "Boundedly rational route choice behavior: A review of models and methodologies",
+  "authors": [
+   "Di",
+   "Liu"
+  ],
+  "year": 2016,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2016.01.002",
+  "families": [
+   "extensions-static"
+  ],
+  "tier": 3,
+  "contribution": "Exact Crossref DOI match; vol 85:142-179.",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "dial1971probabilistic",
+  "title": "A probabilistic multipath traffic assignment model which obviates path enumeration",
+  "authors": [
+   "Dial"
+  ],
+  "year": 1971,
+  "venue": "Transportation Research",
+  "doi": "10.1016/0041-1647(71)90012-8",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match (vol 5, pp 83-111).",
+  "implement_as": "network-loading component",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "dial2006path",
+  "title": "A path-based user-equilibrium traffic assignment algorithm that obviates path storage and enumeration",
+  "authors": [
+   "Dial"
+  ],
+  "year": 2006,
+  "venue": "Transportation Research Part B: Methodological 40(10)",
+  "doi": "10.1016/j.trb.2006.02.008",
+  "families": [
+   "path-and-bush-based"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match; DOI added, pages 917-936.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "eckman2023simopt",
+  "title": "SimOpt: A testbed for simulation-optimization experiments",
+  "authors": [
+   "Eckman",
+   "Henderson",
+   "Shashaani"
+  ],
+  "year": 2023,
+  "venue": "INFORMS Journal on Computing",
+  "doi": "10.1287/ijoc.2023.1273",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 1,
+  "contribution": "Confirmed via Crossref; IJOC 35(2):495-508.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "evans1976derivation",
+  "title": "Derivation and analysis of some models for combining trip distribution and assignment",
+  "authors": [
+   "Evans"
+  ],
+  "year": 1976,
+  "venue": "Transportation Research",
+  "doi": "10.1016/0041-1647(76)90100-3",
+  "families": [
+   "extensions-static"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref DOI match; vol 10(1):37-57.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "fisk1980some",
+  "title": "Some developments in equilibrium traffic assignment",
+  "authors": [
+   "Fisk"
+  ],
+  "year": 1980,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(80)90004-1",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match; DOI added (was missing in input).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "florian1974method",
+  "title": "A Method for Computing Network Equilibrium with Elastic Demands",
+  "authors": [
+   "Florian",
+   "Nguyen"
+  ],
+  "year": 1974,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.8.4.321",
+  "families": [
+   "extensions-static"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref DOI match; vol 8(4):321-332.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "florian1982convergence",
+  "title": "The convergence of diagonalization algorithms for asymmetric network equilibrium problems",
+  "authors": [
+   "Florian",
+   "Spiess"
+  ],
+  "year": 1982,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(82)90007-8",
+  "families": [
+   "extensions-static"
+  ],
+  "tier": 2,
+  "contribution": "DOI missing in input; found via Crossref search (16(6):477-483).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "florian1987efficient",
+  "title": "An Efficient Implementation of the \"PARTAN\" Variant of the Linear Approximation Method for the Network Equilibrium Problem",
+  "authors": [
+   "Florian",
+   "Gu\u00e9lat",
+   "Spiess"
+  ],
+  "year": 1987,
+  "venue": "Networks",
+  "doi": "10.1002/net.3230170307",
+  "families": [
+   "link-based-algorithms"
+  ],
+  "tier": 2,
+  "contribution": "Crossref match; Networks 17(3), pp 319-339; Crossref misspells Guelat as 'Gualat'.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "florian2009new",
+  "title": "A New Look at Projected Gradient Method for Equilibrium Assignment",
+  "authors": [
+   "Florian",
+   "Constantin",
+   "Florian"
+  ],
+  "year": 2009,
+  "venue": "Transportation Research Record 2090",
+  "doi": "10.3141/2090-02",
+  "families": [
+   "path-and-bush-based"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref match, DOI confirmed, pages 10-16.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "flotterod2011operational",
+  "title": "Operational macroscopic modeling of complex urban road intersections",
+  "authors": [
+   "Fl\u00f6tter\u00f6d",
+   "Rohde"
+  ],
+  "year": 2011,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2011.04.001",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 2,
+  "contribution": "DOI added from Crossref; TRB 45(6):903-922.",
+  "implement_as": "network-loading component",
+  "verdict": "verified",
+  "confidence": 1.0
+ },
+ {
+  "bibkey": "fosgerau2013link",
+  "title": "A link based network route choice model with unrestricted choice set",
+  "authors": [
+   "Fosgerau",
+   "Frejinger",
+   "Karlstr\u00f6m"
+  ],
+  "year": 2013,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2013.07.012",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref match; DOI added.",
+  "implement_as": "route-choice component",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "frank1956algorithm",
+  "title": "An Algorithm for Quadratic Programming",
+  "authors": [
+   "Frank",
+   "Wolfe"
+  ],
+  "year": 1956,
+  "venue": "Naval Research Logistics Quarterly",
+  "doi": "10.1002/nav.3800030109",
+  "families": [
+   "link-based-algorithms"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match; vol 3(1-2), pp 95-110.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "friesz1993variational",
+  "title": "A Variational Inequality Formulation of the Dynamic Network User Equilibrium Problem",
+  "authors": [
+   "Friesz",
+   "Bernstein",
+   "Smith",
+   "Tobin",
+   "Wie"
+  ],
+  "year": 1993,
+  "venue": "Operations Research",
+  "doi": "10.1287/opre.41.1.179",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match; DOI confirmed.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "friesz1994daytoday",
+  "title": "Day-to-day dynamic network disequilibria and idealized traveler information systems",
+  "authors": [
+   "Friesz",
+   "Bernstein",
+   "Mehta",
+   "Tobin",
+   "Ganjalizadeh"
+  ],
+  "year": 1994,
+  "venue": "Operations Research",
+  "doi": "10.1287/opre.42.6.1120",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 1,
+  "contribution": "Exact match; all five authors confirmed.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "fukushima1984modified",
+  "title": "A Modified Frank-Wolfe Algorithm for Solving the Traffic Assignment Problem",
+  "authors": [
+   "Fukushima"
+  ],
+  "year": 1984,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(84)90029-8",
+  "families": [
+   "link-based-algorithms"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref match; TR-B 18(2), pp 169-177.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "gartner1980optimal",
+  "title": "Optimal Traffic Assignment with Elastic Demands: A Review Part I. Analysis Framework",
+  "authors": [
+   "Gartner"
+  ],
+  "year": 1980,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.14.2.174",
+  "families": [
+   "extensions-static"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref DOI match; vol 14(2):174-191.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "gentile2010general",
+  "title": "The General Link Transmission Model for Dynamic Network Loading and a Comparison with the DUE Algorithm",
+  "authors": [
+   "Gentile"
+  ],
+  "year": 2010,
+  "venue": "New Developments in Transport Planning: Advances in Dynamic Traffic Assignment (Edward Elgar)",
+  "doi": "10.4337/9781781000809.00015",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 2,
+  "contribution": "Crossref book-chapter match (Edward Elgar); DOI added.",
+  "implement_as": "network-loading component",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "gentile2014local",
+  "title": "Local User Cost Equilibrium: a bush-based algorithm for traffic assignment",
+  "authors": [
+   "Gentile"
+  ],
+  "year": 2014,
+  "venue": "Transportmetrica A: Transport Science 10(1)",
+  "doi": "10.1080/18128602.2012.691911",
+  "families": [
+   "path-and-bush-based"
+  ],
+  "tier": 2,
+  "contribution": "Crossref match; online 2012, print issue 10(1) 2014, pages 15-54. DOI confirmed.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "han2013existence",
+  "title": "Existence of Simultaneous Route and Departure Choice Dynamic User Equilibrium",
+  "authors": [
+   "Han",
+   "Friesz",
+   "Yao"
+  ],
+  "year": 2013,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2013.01.009",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 3,
+  "contribution": "Crossref match; DOI added (was missing in input).",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "hazelton2004computation",
+  "title": "Computation of equilibrium distributions of Markov traffic-assignment models",
+  "authors": [
+   "Hazelton",
+   "Watling"
+  ],
+  "year": 2004,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.1030.0052",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 2,
+  "contribution": "Exact match; Transportation Science 38(3).",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "hazelton2015network",
+  "title": "Network tomography for integer-valued traffic",
+  "authors": [
+   "Hazelton"
+  ],
+  "year": 2015,
+  "venue": "Annals of Applied Statistics",
+  "doi": "10.1214/15-AOAS805",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 2,
+  "contribution": "Confirmed via Crossref; AOAS vol 9; Crossref lacks page numbers, omitted.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "he2010linkbased",
+  "title": "A link-based day-to-day traffic assignment model",
+  "authors": [
+   "He",
+   "Guo",
+   "Liu"
+  ],
+  "year": 2010,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2009.10.001",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 1,
+  "contribution": "Exact match; TR-B 44(4) 597-608.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "hearn1982gap",
+  "title": "The Gap Function of a Convex Program",
+  "authors": [
+   "Hearn"
+  ],
+  "year": 1982,
+  "venue": "Operations Research Letters",
+  "doi": "10.1016/0167-6377(82)90049-9",
+  "families": [
+   "foundations"
+  ],
+  "tier": 2,
+  "contribution": "Crossref match; ORL 1(2):67-71.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "hearn1987restricted",
+  "title": "Restricted Simplicial Decomposition: Computation and Extensions",
+  "authors": [
+   "Hearn",
+   "Lawphongpanich",
+   "Ventura"
+  ],
+  "year": 1987,
+  "venue": "Mathematical Programming Study",
+  "doi": "10.1007/BFb0121181",
+  "families": [
+   "link-based-algorithms"
+  ],
+  "tier": 2,
+  "contribution": "Crossref match, DOI confirmed; Mathematical Programming Studies vol 31, pp 99-118.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "hearn1998solving",
+  "title": "Solving Congestion Toll Pricing Models",
+  "authors": [
+   "Hearn",
+   "Ramana"
+  ],
+  "year": 1998,
+  "venue": "Equilibrium and Advanced Transportation Modelling (Marcotte & Nguyen, eds.), Kluwer",
+  "doi": "10.1007/978-1-4615-5757-9_6",
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 2,
+  "contribution": "Crossref match: book chapter, pp. 109-124, Springer/Kluwer 1998.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.96
+ },
+ {
+  "bibkey": "horni2016multiagent",
+  "title": "The Multi-Agent Transport Simulation MATSim",
+  "authors": [
+   "Horni",
+   "Nagel",
+   "Axhausen"
+  ],
+  "year": 2016,
+  "venue": "Ubiquity Press",
+  "doi": "10.5334/baw",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 1,
+  "contribution": "DOI resolves to edited book, Ubiquity Press 2016. Horni/Nagel/Axhausen are editors.",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "horowitz1984stability",
+  "title": "The stability of stochastic equilibrium in a two-link transportation network",
+  "authors": [
+   "Horowitz"
+  ],
+  "year": 1984,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(84)90003-1",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match; title, author, year, venue all confirmed.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "jayakrishnan1994evaluation",
+  "title": "An evaluation tool for advanced traffic information and management systems in urban networks",
+  "authors": [
+   "Jayakrishnan",
+   "Mahmassani",
+   "Hu"
+  ],
+  "year": 1994,
+  "venue": "Transportation Research Part C",
+  "doi": "10.1016/0968-090X(94)90005-1",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match; vol 2(3), pp 129-147. DOI added.",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "jayakrishnan1994faster",
+  "title": "A faster path-based algorithm for traffic assignment",
+  "authors": [
+   "Jayakrishnan",
+   "Tsai",
+   "Prashker",
+   "Rajadhyaksha"
+  ],
+  "year": 1994,
+  "venue": "Transportation Research Record 1443",
+  "doi": null,
+  "families": [
+   "path-and-bush-based"
+  ],
+  "tier": 1,
+  "contribution": "TRR 1443 pp.75-83 predates Crossref TRR indexing; verified from well-known citation data (refcheck CLI unavailable, Crossref fallback used).",
+  "implement_as": "white-box solver",
+  "verdict": "verified-manual",
+  "confidence": 0.9
+ },
+ {
+  "bibkey": "jin2021introduction",
+  "title": "Introduction to Network Traffic Flow Theory: Principles, Concepts, Models, and Methods",
+  "authors": [
+   "Jin"
+  ],
+  "year": 2021,
+  "venue": "Elsevier",
+  "doi": null,
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 3,
+  "contribution": "Book confirmed via Crossref chapter records (ISBN 978-0-12-815840-1); hand-written @book, no book-level DOI recorded.",
+  "implement_as": "survey/context",
+  "verdict": "book-manual",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "jungel2025wardropnet",
+  "title": "WardropNet: Traffic Flow Predictions via Equilibrium-Augmented Learning",
+  "authors": [
+   "Jungel",
+   "Paccagnan",
+   "Parmentier",
+   "Schiffer"
+  ],
+  "year": 2025,
+  "venue": "ICLR",
+  "doi": null,
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 2,
+  "contribution": "arXiv 2410.06656 verified; ICLR 2025 acceptance per OpenReview; not in Crossref.",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.9
+ },
+ {
+  "bibkey": "kitthamkesorn2013path",
+  "title": "A path-size weibit stochastic user equilibrium model",
+  "authors": [
+   "Kitthamkesorn",
+   "Chen"
+  ],
+  "year": 2013,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2013.06.001",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 2,
+  "contribution": "TR-B journal version chosen over Procedia duplicate; DOI added.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "knight1924some",
+  "title": "Some Fallacies in the Interpretation of Social Cost",
+  "authors": [
+   "Knight"
+  ],
+  "year": 1924,
+  "venue": "Quarterly Journal of Economics",
+  "doi": "10.2307/1884592",
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 3,
+  "contribution": "Crossref exact match: QJE 38(4):582-606, 1924.",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "larsson1992simplicial",
+  "title": "Simplicial decomposition with disaggregated representation for the traffic assignment problem",
+  "authors": [
+   "Larsson",
+   "Patriksson"
+  ],
+  "year": 1992,
+  "venue": "Transportation Science 26(1)",
+  "doi": "10.1287/trsc.26.1.4",
+  "families": [
+   "path-and-bush-based"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref match; DOI added, pages 4-17.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "larsson1995augmented",
+  "title": "An augmented Lagrangean dual algorithm for link capacity side constrained traffic assignment problems",
+  "authors": [
+   "Larsson",
+   "Patriksson"
+  ],
+  "year": 1995,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(95)00016-7",
+  "families": [
+   "extensions-static"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref DOI match; vol 29(6):433-455.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "larsson1999side",
+  "title": "Side constrained traffic equilibrium models \u2014 analysis, computation and applications",
+  "authors": [
+   "Larsson",
+   "Patriksson"
+  ],
+  "year": 1999,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/S0191-2615(98)00024-1",
+  "families": [
+   "extensions-static"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref DOI match; vol 33(4):233-264.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "lassen2025learning",
+  "title": "Learning traffic flows: Graph Neural Networks for Metamodelling Traffic Assignment",
+  "authors": [
+   "Lassen",
+   "Agriesti",
+   "Eldafrawi",
+   "Gammelli",
+   "Cantelmo",
+   "Gentile",
+   "Pereira"
+  ],
+  "year": 2025,
+  "venue": "MT-ITS 2025 (IEEE); arXiv:2505.11230",
+  "doi": "10.1109/mt-its68460.2025.11223524",
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 2,
+  "contribution": "arXiv confirmed; published version found at IEEE MT-ITS 2025 with DOI.",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "lawphongpanich1984simplicial",
+  "title": "Simplicial Decomposition of the Asymmetric Traffic Assignment Problem",
+  "authors": [
+   "Lawphongpanich",
+   "Hearn"
+  ],
+  "year": 1984,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(84)90026-2",
+  "families": [
+   "link-based-algorithms"
+  ],
+  "tier": 2,
+  "contribution": "Crossref match; published title spelled 'Simplical' (sic); TR-B 18(2), pp 123-133.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "lawphongpanich2004mpec",
+  "title": "An MPEC Approach to Second-Best Toll Pricing",
+  "authors": [
+   "Lawphongpanich",
+   "Hearn"
+  ],
+  "year": 2004,
+  "venue": "Mathematical Programming, Series B",
+  "doi": "10.1007/s10107-004-0536-5",
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 2,
+  "contribution": "Crossref match: Math. Program. 101(1):33-55, 2004.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "leblanc1975efficient",
+  "title": "An Efficient Approach to Solving the Road Network Equilibrium Traffic Assignment Problem",
+  "authors": [
+   "LeBlanc",
+   "Morlok",
+   "Pierskalla"
+  ],
+  "year": 1975,
+  "venue": "Transportation Research",
+  "doi": "10.1016/0041-1647(75)90030-1",
+  "families": [
+   "link-based-algorithms"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match; vol 9, pp 309-318.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "leblanc1985improved",
+  "title": "Improved Efficiency of the Frank-Wolfe Algorithm for Convex Network Programs",
+  "authors": [
+   "LeBlanc",
+   "Helgason",
+   "Boyce"
+  ],
+  "year": 1985,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.19.4.445",
+  "families": [
+   "link-based-algorithms"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref match; Transp. Sci. 19(4), pp 445-462.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "lighthill1955kinematic",
+  "title": "On kinematic waves. II. A theory of traffic flow on long crowded roads",
+  "authors": [
+   "Lighthill",
+   "Whitham"
+  ],
+  "year": 1955,
+  "venue": "Proceedings of the Royal Society of London. Series A",
+  "doi": "10.1098/rspa.1955.0089",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 3,
+  "contribution": "Exact Crossref match; vol 229(1178):317-345.",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 1.0
+ },
+ {
+  "bibkey": "liu2023end",
+  "title": "End-to-end learning of user equilibrium with implicit neural networks",
+  "authors": [
+   "Liu",
+   "Yin",
+   "Bai",
+   "Grimm"
+  ],
+  "year": 2023,
+  "venue": "Transportation Research Part C: Emerging Technologies",
+  "doi": "10.1016/j.trc.2023.104085",
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 1,
+  "contribution": "DOI lookup confirmed title/authors/year/journal (TR-C 150, 104085).",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "liu2024end",
+  "title": "End-to-end heterogeneous graph neural networks for traffic assignment",
+  "authors": [
+   "Liu",
+   "Meidani"
+  ],
+  "year": 2024,
+  "venue": "Transportation Research Part C: Emerging Technologies",
+  "doi": "10.1016/j.trc.2024.104695",
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 1,
+  "contribution": "DOI lookup confirmed (TR-C 165, 104695).",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "liu2024heterogeneous",
+  "title": "Heterogeneous Graph Sequence Neural Networks for Dynamic Traffic Assignment",
+  "authors": [
+   "Liu",
+   "Meidani"
+  ],
+  "year": 2024,
+  "venue": "arXiv (2408.04131)",
+  "doi": "10.48550/arXiv.2408.04131",
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 2,
+  "contribution": "Verified via arXiv API; preprint only, no journal version found.",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "liu2025end",
+  "title": "End-to-End Learning of User Equilibrium: Expressivity, Generalization, and Optimization",
+  "authors": [
+   "Liu",
+   "Yin"
+  ],
+  "year": 2025,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.2023.0489",
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 2,
+  "contribution": "DOI lookup confirmed; Transportation Science 2025.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "lo2002cellbased",
+  "title": "A Cell-Based Variational Inequality Formulation of the Dynamic User Optimal Assignment Problem",
+  "authors": [
+   "Lo",
+   "Szeto"
+  ],
+  "year": 2002,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/S0191-2615(01)00011-X",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 2,
+  "contribution": "Crossref match; DOI added (was missing in input).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "lopez2018microscopic",
+  "title": "Microscopic Traffic Simulation using SUMO",
+  "authors": [
+   "Lopez",
+   "Behrisch",
+   "Bieker-Walz",
+   "Erdmann",
+   "Fl\u00f6tter\u00f6d",
+   "Hilbrich",
+   "L\u00fccken",
+   "Rummel",
+   "Wagner",
+   "Wiessner"
+  ],
+  "year": 2018,
+  "venue": "IEEE Intelligent Transportation Systems Conference (ITSC)",
+  "doi": "10.1109/ITSC.2018.8569938",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 1,
+  "contribution": "DOI resolves; ITSC 2018 pp 2575-2582, all 10 authors match.",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "lou2010robust",
+  "title": "Robust congestion pricing under boundedly rational user equilibrium",
+  "authors": [
+   "Lou",
+   "Yin",
+   "Lawphongpanich"
+  ],
+  "year": 2010,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2009.06.004",
+  "families": [
+   "extensions-static"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref DOI match; vol 44(1):15-28.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "lu2015enhanced",
+  "title": "An enhanced SPSA algorithm for the calibration of Dynamic Traffic Assignment models",
+  "authors": [
+   "Lu",
+   "Xu",
+   "Antoniou",
+   "Ben-Akiva"
+  ],
+  "year": 2015,
+  "venue": "Transportation Research Part C",
+  "doi": "10.1016/j.trc.2014.11.006",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 2,
+  "contribution": "Exact match; TR-C 51:149-166. DOI added.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "ma2014continuous",
+  "title": "Continuous-time dynamic system optimum for single-destination traffic networks with queue spillbacks",
+  "authors": [
+   "Ma",
+   "Ban",
+   "Pang"
+  ],
+  "year": 2014,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2014.06.003",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 2,
+  "contribution": "DOI added from Crossref; TRB 68:98-122.",
+  "implement_as": "network-loading component",
+  "verdict": "verified",
+  "confidence": 1.0
+ },
+ {
+  "bibkey": "maher1998algorithms",
+  "title": "Algorithms for logit-based stochastic user equilibrium assignment",
+  "authors": [
+   "Maher"
+  ],
+  "year": 1998,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/S0191-2615(98)00015-0",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref match; DOI added.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "mahmassani1987on",
+  "title": "On Boundedly Rational User Equilibrium in Transportation Systems",
+  "authors": [
+   "Mahmassani",
+   "Chang"
+  ],
+  "year": 1987,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.21.2.89",
+  "families": [
+   "extensions-static"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref DOI match; vol 21(2):89-99.",
+  "implement_as": "route-choice component",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "mahmassani2001dynamic",
+  "title": "Dynamic network traffic assignment and simulation methodology for advanced system management applications",
+  "authors": [
+   "Mahmassani"
+  ],
+  "year": 2001,
+  "venue": "Networks and Spatial Economics",
+  "doi": "10.1023/A:1012831808926",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 2,
+  "contribution": "Exact match; NSE 1(3-4):267-292. DOI added.",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "merchant1978model",
+  "title": "A Model and an Algorithm for the Dynamic Traffic Assignment Problems",
+  "authors": [
+   "Merchant",
+   "Nemhauser"
+  ],
+  "year": 1978,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.12.3.183",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match; DOI confirmed.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "merchant1978optimality",
+  "title": "Optimality Conditions for a Dynamic Traffic Assignment Model",
+  "authors": [
+   "Merchant",
+   "Nemhauser"
+  ],
+  "year": 1978,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.12.3.200",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref match; DOI confirmed.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "mitradjieva2013stiff",
+  "title": "The Stiff Is Moving\u2014Conjugate Direction Frank-Wolfe Methods with Applications to Traffic Assignment",
+  "authors": [
+   "Mitradjieva",
+   "Lindberg"
+  ],
+  "year": 2013,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.1120.0409",
+  "families": [
+   "link-based-algorithms"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match, DOI confirmed; Transp. Sci. 47(2), pp 280-293.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "nagel2001parallel",
+  "title": "Parallel implementation of the TRANSIMS micro-simulation",
+  "authors": [
+   "Nagel",
+   "Rickert"
+  ],
+  "year": 2001,
+  "venue": "Parallel Computing",
+  "doi": "10.1016/S0167-8191(01)00106-5",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 2,
+  "contribution": "Exact match; Parallel Computing 27(12):1611-1639. DOI added.",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "nagurney1993network",
+  "title": "Network Economics: A Variational Inequality Approach",
+  "authors": [
+   "Nagurney"
+  ],
+  "year": 1993,
+  "venue": "Kluwer Academic Publishers",
+  "doi": "10.1007/978-94-011-2178-1",
+  "families": [
+   "extensions-static"
+  ],
+  "tier": 3,
+  "contribution": "Book found on Crossref (Springer/Kluwer, Advances in Computational Economics); DOI added.",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "newell1993simplified",
+  "title": "A simplified theory of kinematic waves in highway traffic, part I: General theory",
+  "authors": [
+   "Newell"
+  ],
+  "year": 1993,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(93)90038-C",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match; TRB 27(4):281-287.",
+  "implement_as": "network-loading component",
+  "verdict": "verified",
+  "confidence": 1.0
+ },
+ {
+  "bibkey": "nie2005comparative",
+  "title": "A comparative study of some macroscopic link models used in dynamic traffic assignment",
+  "authors": [
+   "Nie",
+   "Zhang"
+  ],
+  "year": 2005,
+  "venue": "Networks and Spatial Economics",
+  "doi": "10.1007/s11067-005-6663-6",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 3,
+  "contribution": "DOI added from Crossref; NSE 5(1):89-115.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 1.0
+ },
+ {
+  "bibkey": "nie2010class",
+  "title": "A class of bush-based algorithms for the traffic assignment problem",
+  "authors": [
+   "Nie"
+  ],
+  "year": 2010,
+  "venue": "Transportation Research Part B: Methodological 44(1)",
+  "doi": "10.1016/j.trb.2009.06.005",
+  "families": [
+   "path-and-bush-based"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref match; DOI added, pages 73-89.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "nie2011cellbased",
+  "title": "A Cell-Based Merchant-Nemhauser Model for the System Optimum Dynamic Traffic Assignment Problem",
+  "authors": [
+   "Nie"
+  ],
+  "year": 2011,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2010.07.001",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 2,
+  "contribution": "Crossref match; DOI added (was missing in input).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "ohare2016mechanisms",
+  "title": "Mechanisms That Govern How the Price of Anarchy Varies with Travel Demand",
+  "authors": [
+   "O'Hare",
+   "Connors",
+   "Watling"
+  ],
+  "year": 2016,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2015.12.005",
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 2,
+  "contribution": "Crossref exact match: TR-B 84:55-80, 2016.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "osorio2013simulationbased",
+  "title": "A simulation-based optimization framework for urban transportation problems",
+  "authors": [
+   "Osorio",
+   "Bierlaire"
+  ],
+  "year": 2013,
+  "venue": "Operations Research",
+  "doi": "10.1287/opre.2013.1226",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 2,
+  "contribution": "Exact match; OR 61(6):1333-1345.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "osorio2019high",
+  "title": "High-dimensional offline origin-destination (OD) demand calibration for stochastic traffic simulators of large-scale road networks",
+  "authors": [
+   "Osorio"
+  ],
+  "year": 2019,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2019.01.005",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 2,
+  "contribution": "Confirmed via Crossref; TR-B 124:18-43.",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "patriksson1994traffic",
+  "title": "The Traffic Assignment Problem: Models and Methods",
+  "authors": [
+   "Patriksson"
+  ],
+  "year": 1994,
+  "venue": "VSP (republished by Dover, 2015)",
+  "doi": null,
+  "families": [
+   "foundations",
+   "link-based-algorithms",
+   "path-and-bush-based"
+  ],
+  "tier": 3,
+  "contribution": "Monograph not found in Crossref search; hand-written @book (VSP 1994, Dover reprint 2015).",
+  "implement_as": "survey/context",
+  "verdict": "book-manual",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "peeta2001foundations",
+  "title": "Foundations of Dynamic Traffic Assignment: The Past, the Present and the Future",
+  "authors": [
+   "Peeta",
+   "Ziliaskopoulos"
+  ],
+  "year": 2001,
+  "venue": "Networks and Spatial Economics",
+  "doi": "10.1023/A:1012827724856",
+  "families": [
+   "dta-analytical",
+   "dta-simulation-software"
+  ],
+  "tier": 3,
+  "contribution": "Exact Crossref match; DOI confirmed.",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "perederieieva2015framework",
+  "title": "A Framework for and Empirical Study of Algorithms for Traffic Assignment",
+  "authors": [
+   "Perederieieva",
+   "Ehrgott",
+   "Raith",
+   "Wang"
+  ],
+  "year": 2015,
+  "venue": "Computers & Operations Research",
+  "doi": "10.1016/j.cor.2014.08.024",
+  "families": [
+   "link-based-algorithms",
+   "path-and-bush-based"
+  ],
+  "tier": 3,
+  "contribution": "Exact Crossref match; C&OR 54, pp 90-107.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "pigou1920economics",
+  "title": "The Economics of Welfare",
+  "authors": [
+   "Pigou"
+  ],
+  "year": 1920,
+  "venue": "Macmillan (London)",
+  "doi": null,
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 3,
+  "contribution": "Classic book; no Crossref record for 1920 original. Hand-written @book from well-known publisher data.",
+  "implement_as": "survey/context",
+  "verdict": "book-manual",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "powell1982convergence",
+  "title": "The convergence of equilibrium algorithms with predetermined step sizes",
+  "authors": [
+   "Powell",
+   "Sheffi"
+  ],
+  "year": 1982,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.16.1.45",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match (vol 16(1), pp 45-55).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "prashker2004route",
+  "title": "Route choice models used in the stochastic user equilibrium problem: a review",
+  "authors": [
+   "Prashker",
+   "Bekhor"
+  ],
+  "year": 2004,
+  "venue": "Transport Reviews",
+  "doi": "10.1080/0144164042000181707",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 3,
+  "contribution": "Exact Crossref match; DOI added.",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "rahman2023data",
+  "title": "Data-Driven Traffic Assignment: A Novel Approach for Learning Traffic Flow Patterns Using Graph Convolutional Neural Network",
+  "authors": [
+   "Rahman",
+   "Hasan"
+  ],
+  "year": 2023,
+  "venue": "Data Science for Transportation (Springer)",
+  "doi": "10.1007/s42421-023-00073-y",
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match; DOI, authors, year confirmed.",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "ran1993new",
+  "title": "A New Class of Instantaneous Dynamic User-Optimal Traffic Assignment Models",
+  "authors": [
+   "Ran",
+   "Boyce",
+   "LeBlanc"
+  ],
+  "year": 1993,
+  "venue": "Operations Research",
+  "doi": "10.1287/opre.41.1.192",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref match; DOI confirmed.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "ran1996modeling",
+  "title": "Modeling Dynamic Transportation Networks: An Intelligent Transportation System Oriented Approach",
+  "authors": [
+   "Ran",
+   "Boyce"
+  ],
+  "year": 1996,
+  "venue": "Springer",
+  "doi": "10.1007/978-3-642-80230-0",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 3,
+  "contribution": "Book DOI verified in Crossref (Springer 1996, 2nd ed.); entry hand-written.",
+  "implement_as": "survey/context",
+  "verdict": "book-manual",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "rasmussen2015stochastic",
+  "title": "Stochastic user equilibrium with equilibrated choice sets: Part II \u2013 Solving the restricted SUE for the logit family",
+  "authors": [
+   "Rasmussen",
+   "Watling",
+   "Prato",
+   "Nielsen"
+  ],
+  "year": 2015,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2015.03.009",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref match; DOI added.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "richards1956shock",
+  "title": "Shock waves on the highway",
+  "authors": [
+   "Richards"
+  ],
+  "year": 1956,
+  "venue": "Operations Research",
+  "doi": "10.1287/opre.4.1.42",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 3,
+  "contribution": "Exact Crossref match; OR 4(1):42-51.",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 1.0
+ },
+ {
+  "bibkey": "rossi1989entropy",
+  "title": "Entropy Model for Consistent Impact-Fee Assessment",
+  "authors": [
+   "Rossi",
+   "McNeil",
+   "Hendrickson"
+  ],
+  "year": 1989,
+  "venue": "Journal of Urban Planning and Development",
+  "doi": "10.1061/(ASCE)0733-9488(1989)115:2(51)",
+  "families": [
+   "foundations"
+  ],
+  "tier": 2,
+  "contribution": "Crossref match; JUPD 115(2):51-63.",
+  "implement_as": "route-choice component",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "roughgarden2002how",
+  "title": "How Bad Is Selfish Routing?",
+  "authors": [
+   "Roughgarden",
+   "Tardos"
+  ],
+  "year": 2002,
+  "venue": "Journal of the ACM",
+  "doi": "10.1145/506147.506153",
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 1,
+  "contribution": "Crossref exact match incl. given DOI: JACM 49(2):236-259, 2002. (FOCS 2000 conference version also exists.)",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "roughgarden2005selfish",
+  "title": "Selfish Routing and the Price of Anarchy",
+  "authors": [
+   "Roughgarden"
+  ],
+  "year": 2005,
+  "venue": "MIT Press",
+  "doi": null,
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 3,
+  "contribution": "MIT Press book not directly in Crossref (only DTIC report / lecture-chapter variants). Hand-written @book.",
+  "implement_as": "survey/context",
+  "verdict": "book-manual",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "ryu2025bo4mob",
+  "title": "BO4Mob: Bayesian Optimization Benchmarks for High-Dimensional Urban Mobility Problem",
+  "authors": [
+   "Ryu",
+   "Kwon",
+   "Choi",
+   "Deshwal",
+   "Kang",
+   "Osorio"
+  ],
+  "year": 2025,
+  "venue": "arXiv:2510.18824 (NeurIPS D&B submission)",
+  "doi": null,
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 1,
+  "contribution": "Confirmed via arXiv API; authors resolved: Ryu, Kwon, Choi, Deshwal, Kang, Osorio. No DOI; arXiv preprint entry.",
+  "implement_as": "data/scenario",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "sbayti2007efficient",
+  "title": "Efficient Implementation of Method of Successive Averages in Simulation-Based Dynamic Traffic Assignment Models for Large-Scale Network Applications",
+  "authors": [
+   "Sbayti",
+   "Lu",
+   "Mahmassani"
+  ],
+  "year": 2007,
+  "venue": "Transportation Research Record",
+  "doi": "10.3141/2029-03",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 2,
+  "contribution": "Exact match; TRR 2029:22-30. DOI added.",
+  "implement_as": "route-choice component",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "sheffi1985urban",
+  "title": "Urban Transportation Networks: Equilibrium Analysis with Mathematical Programming Methods",
+  "authors": [
+   "Sheffi"
+  ],
+  "year": 1985,
+  "venue": "Prentice-Hall",
+  "doi": null,
+  "families": [
+   "foundations",
+   "link-based-algorithms",
+   "stochastic-ue"
+  ],
+  "tier": 3,
+  "contribution": "Classic textbook not in Crossref; hand-written @book from well-known Prentice-Hall 1985 data.",
+  "implement_as": "white-box solver",
+  "verdict": "book-manual",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "shou2022multi",
+  "title": "Multi-agent reinforcement learning for Markov routing games: A new modeling paradigm for dynamic traffic assignment",
+  "authors": [
+   "Shou",
+   "Chen",
+   "Fu",
+   "Di"
+  ],
+  "year": 2022,
+  "venue": "Transportation Research Part C: Emerging Technologies",
+  "doi": "10.1016/j.trc.2022.103560",
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 2,
+  "contribution": "Crossref match; DOI 10.1016/j.trc.2022.103560 added (missing in input).",
+  "implement_as": "route-choice component",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "smith1979existence",
+  "title": "The Existence, Uniqueness and Stability of Traffic Equilibria",
+  "authors": [
+   "Smith"
+  ],
+  "year": 1979,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(79)90022-5",
+  "families": [
+   "foundations",
+   "extensions-static"
+  ],
+  "tier": 1,
+  "contribution": "DOI resolved directly on Crossref; exact match; TR-B 13(4):295-304.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "smith1984stability",
+  "title": "The stability of a dynamic model of traffic assignment \u2014 an application of a method of Lyapunov",
+  "authors": [
+   "Smith"
+  ],
+  "year": 1984,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.18.3.245",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 1,
+  "contribution": "Exact match (Transportation Science 18(3)).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "smith2016routeswapping",
+  "title": "A route-swapping dynamical system and Lyapunov function for stochastic user equilibrium",
+  "authors": [
+   "Smith",
+   "Watling"
+  ],
+  "year": 2016,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2015.12.015",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 1,
+  "contribution": "Exact match; TR-B 85.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "spiess1990gradient",
+  "title": "A gradient approach for the O-D matrix adjustment problem",
+  "authors": [
+   "Spiess"
+  ],
+  "year": 1990,
+  "venue": "Publication CRT-693, Centre de Recherche sur les Transports, Universite de Montreal",
+  "doi": null,
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 1,
+  "contribution": "Technical report not in Crossref; hand-written @techreport from well-known CRT-693 metadata.",
+  "implement_as": "white-box solver",
+  "verdict": "book-manual",
+  "confidence": 0.9
+ },
+ {
+  "bibkey": "stabler2016transportation",
+  "title": "Transportation Networks for Research",
+  "authors": [
+   "Stabler",
+   "Bar-Gera",
+   "Sall"
+  ],
+  "year": 2016,
+  "venue": "GitHub repository",
+  "doi": null,
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 1,
+  "contribution": "Software/data repository, not in Crossref; hand-written @misc entry.",
+  "implement_as": "data/scenario",
+  "verdict": "book-manual",
+  "confidence": 0.9
+ },
+ {
+  "bibkey": "tampere2011generic",
+  "title": "A generic class of first order node models for dynamic macroscopic simulation of traffic flows",
+  "authors": [
+   "Tamp\u00e8re",
+   "Corthout",
+   "Cattrysse",
+   "Immers"
+  ],
+  "year": 2011,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2010.06.004",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match; TRB 45(1):289-309.",
+  "implement_as": "network-loading component",
+  "verdict": "verified",
+  "confidence": 1.0
+ },
+ {
+  "bibkey": "tebaldi1998bayesian",
+  "title": "Bayesian inference on network traffic using link count data",
+  "authors": [
+   "Tebaldi",
+   "West"
+  ],
+  "year": 1998,
+  "venue": "Journal of the American Statistical Association",
+  "doi": "10.1080/01621459.1998.10473707",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 2,
+  "contribution": "Confirmed via Crossref; JASA 93(442):557-573.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "vanwageningenkessels2015genealogy",
+  "title": "Genealogy of traffic flow models",
+  "authors": [
+   "van Wageningen-Kessels",
+   "van Lint",
+   "Vuik",
+   "Hoogendoorn"
+  ],
+  "year": 2015,
+  "venue": "EURO Journal on Transportation and Logistics",
+  "doi": "10.1007/s13676-014-0045-5",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 3,
+  "contribution": "DOI added from Crossref; EJTL 4(4):445-473.",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 1.0
+ },
+ {
+  "bibkey": "vanzuylen1980most",
+  "title": "The most likely trip matrix estimated from traffic counts",
+  "authors": [
+   "Van Zuylen",
+   "Willumsen"
+  ],
+  "year": 1980,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(80)90008-9",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 1,
+  "contribution": "Confirmed via Crossref DOI lookup; TR-B 14(3):281-293.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "vardi1996network",
+  "title": "Network tomography: Estimating source-destination traffic intensities from link data",
+  "authors": [
+   "Vardi"
+  ],
+  "year": 1996,
+  "venue": "Journal of the American Statistical Association",
+  "doi": "10.1080/01621459.1996.10476697",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 2,
+  "contribution": "Confirmed via Crossref; JASA 91(433):365-377.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "verhoef1996secondbest",
+  "title": "Second-Best Congestion Pricing: The Case of an Untolled Alternative",
+  "authors": [
+   "Verhoef",
+   "Nijkamp",
+   "Rietveld"
+  ],
+  "year": 1996,
+  "venue": "Journal of Urban Economics",
+  "doi": "10.1006/juec.1996.0033",
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 2,
+  "contribution": "Crossref match (journal original, not the 2004 reprint chapter): JUE 40(3):279-302, 1996.",
+  "implement_as": "data/scenario",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "verhoef2002secondbest",
+  "title": "Second-Best Congestion Pricing in General Networks: Heuristic Algorithms for Finding Second-Best Optimal Toll Levels and Toll Points",
+  "authors": [
+   "Verhoef"
+  ],
+  "year": 2002,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/S0191-2615(01)00025-X",
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 2,
+  "contribution": "Crossref match: TR-B 36(8):707-729, 2002. Published title uses a period, not a colon.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "vickrey1969congestion",
+  "title": "Congestion Theory and Transport Investment",
+  "authors": [
+   "Vickrey"
+  ],
+  "year": 1969,
+  "venue": "American Economic Review",
+  "doi": null,
+  "families": [
+   "dta-analytical",
+   "dnl-models"
+  ],
+  "tier": 1,
+  "contribution": "Classic AER Papers & Proceedings 59(2):251-260; no Crossref DOI exists; entry hand-written from JSTOR (stable/1823678).",
+  "implement_as": "white-box solver",
+  "verdict": "verified-manual",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "vovsha1998link",
+  "title": "Link-Nested Logit Model of Route Choice: Overcoming Route Overlapping Problem",
+  "authors": [
+   "Vovsha",
+   "Bekhor"
+  ],
+  "year": 1998,
+  "venue": "Transportation Research Record",
+  "doi": "10.3141/1645-17",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref match (TRR 1645, pp 133-142).",
+  "implement_as": "route-choice component",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "walters1961theory",
+  "title": "The Theory and Measurement of Private and Social Cost of Highway Congestion",
+  "authors": [
+   "Walters"
+  ],
+  "year": 1961,
+  "venue": "Econometrica",
+  "doi": "10.2307/1911814",
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 3,
+  "contribution": "Crossref exact match: Econometrica 29(4):676-699, 1961.",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "wang2018dynamic",
+  "title": "Dynamic Traffic Assignment: A Review of the Methodological Advances for Environmentally Sustainable Road Transportation Applications",
+  "authors": [
+   "Wang",
+   "Szeto",
+   "Han",
+   "Friesz"
+  ],
+  "year": 2018,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2018.03.011",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 3,
+  "contribution": "Crossref match; DOI added (was missing in input).",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "wang2025scalable",
+  "title": "Scalable and reliable multi-agent reinforcement learning for traffic assignment",
+  "authors": [
+   "Wang",
+   "Duan",
+   "Lyu",
+   "Wang",
+   "He",
+   "Zheng",
+   "Ma"
+  ],
+  "year": 2025,
+  "venue": "IEEE ITSC 2025; arXiv:2506.17029",
+  "doi": "10.1109/itsc60802.2025.11423512",
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 2,
+  "contribution": "Published at IEEE ITSC 2025, not Multimodal Transportation; venue corrected. arXiv confirmed.",
+  "implement_as": "route-choice component",
+  "verdict": "partial_match",
+  "confidence": 0.9
+ },
+ {
+  "bibkey": "wardrop1952some",
+  "title": "Some Theoretical Aspects of Road Traffic Research",
+  "authors": [
+   "Wardrop"
+  ],
+  "year": 1952,
+  "venue": "Proceedings of the Institution of Civil Engineers, Part II",
+  "doi": "10.1680/ipeds.1952.11259",
+  "families": [
+   "foundations",
+   "link-based-algorithms"
+  ],
+  "tier": 1,
+  "contribution": "Crossref match; official title prefixed 'Road Paper.'; Proc. ICE vol 1(3), pp. 325-362.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "watling1999stability",
+  "title": "Stability of the stochastic equilibrium assignment problem: a dynamical systems approach",
+  "authors": [
+   "Watling"
+  ],
+  "year": 1999,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/s0191-2615(98)00033-2",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 2,
+  "contribution": "Exact match; TR-B 33(4).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "watling2003dynamics",
+  "title": "The dynamics and equilibria of day-to-day assignment models",
+  "authors": [
+   "Watling",
+   "Hazelton"
+  ],
+  "year": 2003,
+  "venue": "Networks and Spatial Economics",
+  "doi": "10.1023/a:1025398302560",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 3,
+  "contribution": "Exact match; NETS 3, 349-370.",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "xie2015origin",
+  "title": "Origin-Based Algorithms for Traffic Assignment: Algorithmic Structure, Complexity Analysis, and Convergence Performance",
+  "authors": [
+   "Xie",
+   "Xie"
+  ],
+  "year": 2015,
+  "venue": "Transportation Research Record 2498",
+  "doi": "10.3141/2498-06",
+  "families": [
+   "path-and-bush-based"
+  ],
+  "tier": 3,
+  "contribution": "Crossref match (subtitle stored separately); DOI confirmed, pages 46-55.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "xie2016new",
+  "title": "New insights and improvements of using paired alternative segments for traffic assignment",
+  "authors": [
+   "Xie",
+   "Xie"
+  ],
+  "year": 2016,
+  "venue": "Transportation Research Part B: Methodological 93",
+  "doi": "10.1016/j.trb.2016.08.009",
+  "families": [
+   "path-and-bush-based"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref match; DOI added, pages 406-424.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "xie2018greedy",
+  "title": "A Greedy Path-Based Algorithm for Traffic Assignment",
+  "authors": [
+   "Xie",
+   "Nie",
+   "Liu"
+  ],
+  "year": 2018,
+  "venue": "Transportation Research Record 2672(48)",
+  "doi": "10.1177/0361198118774236",
+  "families": [
+   "path-and-bush-based"
+  ],
+  "tier": 2,
+  "contribution": "Exact Crossref match; DOI confirmed, pages 36-44.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "xu2024unified",
+  "title": "A unified dataset for the city-scale traffic assignment model in 20 U.S. cities",
+  "authors": [
+   "Xu",
+   "Zheng",
+   "Hu",
+   "Feng",
+   "Ma"
+  ],
+  "year": 2024,
+  "venue": "Scientific Data (Nature)",
+  "doi": "10.1038/s41597-024-03149-8",
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 1,
+  "contribution": "Exact Crossref match.",
+  "implement_as": "data/scenario",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "xue2025data",
+  "title": "Data Science in Transportation Networks with Graph Neural Networks: A Review and Outlook",
+  "authors": [
+   "Xue",
+   "Tan",
+   "Ma",
+   "Ukkusuri"
+  ],
+  "year": 2025,
+  "venue": "Data Science for Transportation (Springer)",
+  "doi": "10.1007/s42421-025-00124-6",
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 3,
+  "contribution": "Published title is 'Data Science in...', not 'Data Mining in...'; title corrected. [Corrected: full authors are Xue, Jiawei; Tan, Ruichen; Ma, Jianzhu; Ukkusuri, Satish V.]",
+  "implement_as": "survey/context",
+  "verdict": "partial_match",
+  "confidence": 0.92
+ },
+ {
+  "bibkey": "yang1992estimation",
+  "title": "Estimation of origin-destination matrices from link traffic counts on congested networks",
+  "authors": [
+   "Yang",
+   "Sasaki",
+   "Iida",
+   "Asakura"
+  ],
+  "year": 1992,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(92)90008-K",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 1,
+  "contribution": "Confirmed via Crossref; TR-B 26(6):417-434.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "yang1998optimal",
+  "title": "Optimal traffic counting locations for origin-destination matrix estimation",
+  "authors": [
+   "Yang",
+   "Zhou"
+  ],
+  "year": 1998,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/S0191-2615(97)00016-7",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 2,
+  "contribution": "Confirmed via Crossref; TR-B 32(2):109-126.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "yang1998principle",
+  "title": "Principle of Marginal-Cost Pricing: How Does It Work in a General Road Network?",
+  "authors": [
+   "Yang",
+   "Huang"
+  ],
+  "year": 1998,
+  "venue": "Transportation Research Part A: Policy and Practice",
+  "doi": "10.1016/S0965-8564(97)00018-9",
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 1,
+  "contribution": "Crossref exact match: TR-A 32(1):45-54, 1998.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
+  "bibkey": "yang2005mathematical",
+  "title": "Mathematical and Economic Theory of Road Pricing",
+  "authors": [
+   "Yang",
+   "Huang"
+  ],
+  "year": 2005,
+  "venue": "Elsevier",
+  "doi": "10.1108/9780080456713",
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 3,
+  "contribution": "Crossref monograph record (2005) lists Emerald as current publisher; originally Elsevier. Kept Elsevier in @book with Crossref DOI.",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.9
+ },
+ {
+  "bibkey": "youn2008price",
+  "title": "Price of Anarchy in Transportation Networks: Efficiency and Optimality Control",
+  "authors": [
+   "Youn",
+   "Gastner",
+   "Jeong"
+  ],
+  "year": 2008,
+  "venue": "Physical Review Letters",
+  "doi": "10.1103/PhysRevLett.101.128701",
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 2,
+  "contribution": "Crossref exact match incl. given DOI: PRL 101:128701, 2008 (erratum PRL 102:049905 exists).",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "yperman2007link",
+  "title": "The Link Transmission Model for dynamic network loading",
+  "authors": [
+   "Yperman"
+  ],
+  "year": 2007,
+  "venue": "PhD thesis, Katholieke Universiteit Leuven",
+  "doi": null,
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 1,
+  "contribution": "PhD thesis not indexed by Crossref; hand-written @phdthesis entry (KU Leuven, 2007).",
+  "implement_as": "network-loading component",
+  "verdict": "book-manual",
+  "confidence": 0.9
+ },
+ {
+  "bibkey": "zhang1996local",
+  "title": "On the local and global stability of a travel route choice adjustment process",
+  "authors": [
+   "Zhang",
+   "Nagurney"
+  ],
+  "year": 1996,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(95)00034-8",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 2,
+  "contribution": "Exact match; published 1996 in TR-B 30(4).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.96
+ },
+ {
+  "bibkey": "zhou2014dtalite",
+  "title": "DTALite: A queue-based mesoscopic traffic simulator for fast model evaluation and calibration",
+  "authors": [
+   "Zhou",
+   "Taylor"
+  ],
+  "year": 2014,
+  "venue": "Cogent Engineering",
+  "doi": "10.1080/23311916.2014.961345",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 1,
+  "contribution": "Exact match; Cogent Engineering 1(1):961345.",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "zhu2000existence",
+  "title": "On the Existence of Solutions to the Dynamic User Equilibrium Problem",
+  "authors": [
+   "Zhu",
+   "Marcotte"
+  ],
+  "year": 2000,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.34.4.402.12322",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 3,
+  "contribution": "Crossref match; DOI added (was missing in input).",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
+  "bibkey": "ziliaskopoulos2000internet",
+  "title": "An Internet-based geographic information system that integrates data, models and users for transportation applications",
+  "authors": [
+   "Ziliaskopoulos",
+   "Waller"
+  ],
+  "year": 2000,
+  "venue": "Transportation Research Part C",
+  "doi": "10.1016/S0968-090X(00)00027-9",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 2,
+  "contribution": "Exact match; TR-C 8:427-444.",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.99
+ },
+ {
+  "bibkey": "ziliaskopoulos2000linear",
+  "title": "A Linear Programming Model for the Single Destination System Optimum Dynamic Traffic Assignment Problem",
+  "authors": [
+   "Ziliaskopoulos"
+  ],
+  "year": 2000,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.34.1.37.12281",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 1,
+  "contribution": "Crossref match; DOI added (was missing in input).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.98
+ }
+]

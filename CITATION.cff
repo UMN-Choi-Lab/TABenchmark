@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use TABenchmark, please cite it as below."
+title: "TABenchmark: A Shared Benchmark for 50 Years of Traffic Assignment Models"
+type: software
+authors:
+  - family-names: Choi
+    given-names: Seongjin
+    affiliation: "University of Minnesota Twin Cities"
+  - name: "UMN Choi Lab"
+    website: "https://choi-seongjin.umn.edu/"
+repository-code: "https://github.com/UMN-Choi-Lab/TABenchmark"
+license: MIT
+date-released: "2026-07-03"
+version: 0.1.0
+keywords:
+  - traffic assignment
+  - user equilibrium
+  - benchmark
+  - transportation networks

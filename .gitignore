@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.eggs/
+.venv/
+venv/
+
+# Tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Downloaded benchmark data (fetched on demand, never committed)
+data/cache/
+*.tntp
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Experiment outputs
+results/
+*.ipynb_checkpoints/
