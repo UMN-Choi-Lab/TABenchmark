@@ -9,6 +9,7 @@ provenance (P7): scenario hashes, seeds, package versions, environment.
 from __future__ import annotations
 
 import csv
+import dataclasses
 import json
 import platform
 import subprocess
@@ -50,9 +51,14 @@ _CSV_FIELDS = [
     "node_balance_residual",
     "feasible",
     "sue_fixed_point_residual",
+    "so_relative_gap",
+    "so_average_excess_cost",
+    "tstt_mc",
+    "sptt_mc",
     "flow_rmse_vs_reference",
     "self_relative_gap",
     "self_sue_residual",
+    "self_so_relative_gap",
 ]
 
 
@@ -81,9 +87,8 @@ def _git_commit() -> str:
 
 
 def _score_bundle(
-    scenario: Scenario, bundle: ResultBundle, macrorep: int
+    scenario: Scenario, bundle: ResultBundle, macrorep: int, evaluator: Evaluator
 ) -> list[dict[str, Any]]:
-    evaluator = Evaluator(scenario)
     scenario_hash = scenario.content_hash()
     reference = scenario.reference
     rows = []
@@ -103,6 +108,7 @@ def _score_bundle(
             ),
             "self_relative_gap": state.self_report.get("relative_gap", ""),
             "self_sue_residual": state.self_report.get("sue_fixed_point_residual", ""),
+            "self_so_relative_gap": state.self_report.get("so_relative_gap", ""),
         }
         rows.append(row)
     return rows
@@ -115,11 +121,15 @@ def run_experiment(
     seed: int = 0,
     macroreps: int = 1,
     out_dir: str | Path | None = None,
+    so_metrics: bool | None = None,
 ) -> ExperimentResult:
     """Run every model on the scenario and certify all checkpoints.
 
     Deterministic models are run with ``macroreps=1`` regardless of the
-    argument (deterministic track, P5).
+    argument (deterministic track, P5). Certified system-optimum columns
+    (``so_metrics``) are enabled automatically when the grid contains a
+    ``static_so`` model, uniformly for every model in the run; pass
+    ``so_metrics=True``/``False`` to override.
     """
     names = [model.name for model in models]
     duplicates = {n for n in names if names.count(n) > 1}
@@ -130,18 +140,29 @@ def run_experiment(
             "`model.name = 'fw-xtol1e-4'` when sweeping factors."
         )
 
+    if so_metrics is None:
+        so_metrics = any(m.capabilities.paradigm == "static_so" for m in models)
+    evaluator = Evaluator(scenario, so_metrics=so_metrics)
+
     rows: list[dict[str, Any]] = []
     bundles: dict[tuple[str, str], ResultBundle] = {}
 
     for model in models:
         assert_fair_evaluation(model.capabilities, scenario)
+        # A UE best-known oracle does not apply to SO-goal models: their
+        # flow_rmse_vs_reference stays blank rather than misleading.
+        score_scenario = (
+            dataclasses.replace(scenario, reference=None)
+            if model.capabilities.paradigm == "static_so"
+            else scenario
+        )
         reps = 1 if model.capabilities.deterministic else macroreps
         for m in range(reps):
             rng = RngBundle(root_seed=seed, macrorep=m)
             trace = Trace()
             bundle = model.solve(scenario, budget, rng, trace)
             bundles[(model.name, f"m{m}")] = bundle
-            rows.extend(_score_bundle(scenario, bundle, m))
+            rows.extend(_score_bundle(score_scenario, bundle, m, evaluator))
 
     manifest = {
         "created_utc": datetime.now(timezone.utc).isoformat(),

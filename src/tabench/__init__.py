@@ -21,7 +21,15 @@ from .core import (
 )
 from .data import braess_scenario, load_scenario, two_route_scenario
 from .experiments import run_experiment
-from .metrics import Evaluator, nrmse, rmse
+from .metrics import (
+    Evaluator,
+    marginal_cost_tolls,
+    marginal_costs,
+    nrmse,
+    price_of_anarchy,
+    rmse,
+    tolled_network,
+)
 from .models import (
     MODEL_REGISTRY,
     AllOrNothingModel,
@@ -30,7 +38,9 @@ from .models import (
     ConjugateFrankWolfeModel,
     DialSUEModel,
     FrankWolfeModel,
+    GradientProjectionModel,
     MSAModel,
+    SystemOptimumModel,
     TrafficAssignmentModel,
     register_model,
 )
@@ -56,8 +66,12 @@ __all__ = [
     "two_route_scenario",
     "run_experiment",
     "Evaluator",
+    "marginal_costs",
+    "marginal_cost_tolls",
     "nrmse",
+    "price_of_anarchy",
     "rmse",
+    "tolled_network",
     "MODEL_REGISTRY",
     "AllOrNothingModel",
     "BiconjugateFrankWolfeModel",
@@ -65,7 +79,9 @@ __all__ = [
     "ConjugateFrankWolfeModel",
     "DialSUEModel",
     "FrankWolfeModel",
+    "GradientProjectionModel",
     "MSAModel",
+    "SystemOptimumModel",
     "TrafficAssignmentModel",
     "register_model",
     "__version__",

@@ -39,6 +39,7 @@ import numpy as np
 from ..core.scenario import Scenario
 from ..models._paths import PathEngine
 from ..models._stoch import StochEngine
+from ..models.so import marginal_network
 
 __all__ = ["Evaluator", "node_balance_residual"]
 
@@ -74,13 +75,24 @@ class Evaluator:
     #: negative flows within this (relative) tolerance are clipped as noise
     _CLIP_TOL = 1e-9
 
-    def __init__(self, scenario: Scenario, feasibility_tol: float = 1e-6) -> None:
+    def __init__(
+        self,
+        scenario: Scenario,
+        feasibility_tol: float = 1e-6,
+        so_metrics: bool = False,
+    ) -> None:
         self.scenario = scenario
         self.feasibility_tol = feasibility_tol
         self._engine = PathEngine(scenario.network)
         self._total_demand = scenario.demand.total
         self._theta = scenario.sue_theta
         self._stoch = StochEngine(scenario.network) if self._theta is not None else None
+        # Certified SO gap columns (one extra AON per checkpoint): enabled by
+        # the runner when the grid contains a static_so model, or explicitly.
+        # No scenario field: the SO gap needs no instance data — UE and SO
+        # runs answer two questions about ONE hashed instance.
+        self.so_metrics = so_metrics
+        self._marginal = marginal_network(scenario.network) if so_metrics else None
 
     def _censored(self, reason: str) -> dict[str, float]:
         metrics = {
@@ -94,6 +106,9 @@ class Evaluator:
         }
         if self._theta is not None:
             metrics["sue_fixed_point_residual"] = float("nan")
+        if self.so_metrics:
+            for key in ("so_relative_gap", "so_average_excess_cost", "tstt_mc", "sptt_mc"):
+                metrics[key] = float("nan")
         return metrics
 
     def evaluate(self, link_flows: np.ndarray) -> dict[str, float]:
@@ -129,6 +144,18 @@ class Evaluator:
         nonnegative_excess = excess >= -self.feasibility_tol * max(tstt, 1.0)
         feasible = conserves and nonnegative_excess
 
+        tstt_mc = sptt_mc = None
+        if self._marginal is not None and feasible:
+            t_mc = self._marginal.link_cost(v)
+            tstt_mc = float(v @ t_mc)
+            _, sptt_mc = self._engine.all_or_nothing(t_mc, self.scenario.demand)
+            # SPTT_mc > TSTT_mc is equally impossible for demand-feasible
+            # flows — without this, under-scaled flows would earn a negative
+            # certified SO gap and top an SO leaderboard.
+            feasible = (
+                tstt_mc - sptt_mc >= -self.feasibility_tol * max(tstt_mc, 1.0)
+            )
+
         if not feasible:
             metrics = self._censored("failed feasibility audit")
             metrics["node_balance_residual"] = balance
@@ -149,6 +176,14 @@ class Evaluator:
             "node_balance_residual": balance,
             "feasible": 1.0,
         }
+        if self._marginal is not None:
+            excess_mc = tstt_mc - sptt_mc
+            metrics["tstt_mc"] = tstt_mc
+            metrics["sptt_mc"] = sptt_mc
+            metrics["so_relative_gap"] = excess_mc / tstt_mc if tstt_mc > 0 else 0.0
+            metrics["so_average_excess_cost"] = (
+                excess_mc / self._total_demand if self._total_demand > 0 else 0.0
+            )
         if self._stoch is not None:
             try:
                 v_hat = self._stoch.load(costs, self.scenario.demand, self._theta)

@@ -84,9 +84,12 @@ def _cmd_run(args: argparse.Namespace) -> int:
     print(f"Scenario {scenario.name} (hash {scenario.content_hash()[:16]}), "
           f"budget {iterations} iterations, seed {args.seed}\n")
     is_sue = scenario.sue_theta is not None
+    has_so = any("so_relative_gap" in row for row in last_by_model.values())
     header = f"{'model':<10}{'iters':>6}{'rel. gap':>14}{'AEC':>14}{'Beckmann obj.':>18}"
     if is_sue:
         header += f"{'SUE residual':>16}"
+    if has_so:
+        header += f"{'SO rel. gap':>14}"
     print(header)
     print("-" * len(header))
     for name, row in sorted(last_by_model.items()):
@@ -96,11 +99,18 @@ def _cmd_run(args: argparse.Namespace) -> int:
         )
         if is_sue:
             line += f"{row['sue_fixed_point_residual']:>16.3e}"
+        if has_so:
+            line += f"{row['so_relative_gap']:>14.3e}"
         print(line)
     if is_sue:
         print(
             "\nSUE task: ranked by the certified SUE residual; the UE columns "
             "are descriptive (docs/design/adr-001)."
+        )
+    if has_so:
+        print(
+            "\nSO goal: static_so models are ranked by the certified SO relative "
+            "gap; the UE columns are descriptive."
         )
     if args.out:
         print(f"\nWrote CSV + manifest to {args.out}/")

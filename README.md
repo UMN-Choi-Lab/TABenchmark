@@ -73,8 +73,8 @@ run it — that's the point.)
 |---|---|
 | Core | `Scenario` (frozen, content-hashed, optional SUE θ), `Capabilities`, `Budget` (incl. Boyce-style convergence target), `Trace`, spawn-key RNG schema |
 | Data | Defensive TNTP parser, commit-pinned checksummed fetcher, per-network units metadata; scenario ladder Braess → Sioux Falls → Anaheim → Barcelona → Winnipeg (+ analytic two-route SUE anchor) |
-| Models | All-or-nothing, MSA, Frank–Wolfe, conjugate & bi-conjugate FW (Mitradjieva & Lindberg 2013), logit SUE via Dial-STOCH + MSA, black-box `CallableModel` adapter |
-| Metrics | Certified relative gap / average excess cost / Beckmann objective, SUE fixed-point residual ([ADR-001](docs/design/adr-001-logit-sue-dial-certificate.md)), feasibility audit, flow RMSE vs best-known |
+| Models | All-or-nothing, MSA, Frank–Wolfe, conjugate & bi-conjugate FW (Mitradjieva & Lindberg 2013), path-based gradient projection (Jayakrishnan et al. 1994), system optimum via marginal costs, logit SUE via Dial-STOCH + MSA, black-box `CallableModel` adapter |
+| Metrics | Certified relative gap / average excess cost / Beckmann objective, certified SO gap + price of anarchy + first-best tolls (Yang & Huang 1998; Roughgarden & Tardos 2002), SUE fixed-point residual ([ADR-001](docs/design/adr-001-logit-sue-dial-certificate.md)), feasibility audit, flow RMSE vs best-known |
 | Observe | `FullOD`, `LinkCounts` (sensor mask × periods × noise), Hazelton identifiability check |
 | Experiments | Grid runner, CSV results, full provenance manifests |
 | Tests | Analytic Braess UE + two-route logit-SUE oracles; best-known-solution regressions on Sioux Falls, Anaheim, Barcelona, Winnipeg; conjugacy-identity and golden-hash regressions |

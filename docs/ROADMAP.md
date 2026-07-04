@@ -14,7 +14,7 @@ T3 interventions.
 
 - [x] Wardrop (1952) — *Some Theoretical Aspects of Road Traffic Research* (metric/protocol) — **shipped in v0** (equilibrium conditions in the certified gap)
 - [x] Beckmann et al. (1956) — *Studies in the Economics of Transportation* (white-box solver) — **shipped in v0** (Beckmann objective in metrics)
-- [ ] Bureau of Public Roads (1964) — *Traffic Assignment Manual* (network-loading component)
+- [x] Bureau of Public Roads (1964) — *Traffic Assignment Manual* (network-loading component) — **shipped in v0** (BPR link performance function (Network.link_cost))
 - [ ] Dafermos (1972) — *The Traffic Assignment Problem for Multiclass-User Transportation Networks* (white-box solver)
 - [ ] Smith (1979) — *The Existence, Uniqueness and Stability of Traffic Equilibria* (metric/protocol)
 - [ ] Dafermos (1980) — *Traffic Equilibrium and Variational Inequalities* (white-box solver)
@@ -28,7 +28,7 @@ T3 interventions.
 
 ## Path/bush-based UE algorithms — v1
 
-- [ ] Jayakrishnan et al. (1994) — *A faster path-based algorithm for traffic assignment* (white-box solver)
+- [x] Jayakrishnan et al. (1994) — *A faster path-based algorithm for traffic assignment* (white-box solver) — **shipped in v1** (path-based gradient projection solver (gp))
 - [ ] Bar-Gera (2002) — *Origin-based algorithm for the traffic assignment problem* (white-box solver)
 - [ ] Dial (2006) — *A path-based user-equilibrium traffic assignment algorithm that obviates path storage and enumeration* (white-box solver)
 - [ ] Bar-Gera (2010) — *Traffic assignment by paired alternative segments* (white-box solver)
@@ -43,8 +43,8 @@ T3 interventions.
 
 ## System optimum & pricing — v1
 
-- [ ] Yang & Huang (1998) — *Principle of Marginal-Cost Pricing: How Does It Work in a General Road Network?* (white-box solver)
-- [ ] Roughgarden & Tardos (2002) — *How Bad Is Selfish Routing?* (metric/protocol)
+- [x] Yang & Huang (1998) — *Principle of Marginal-Cost Pricing: How Does It Work in a General Road Network?* (white-box solver) — **shipped in v1** (first-best marginal-cost tolls (metrics.so))
+- [x] Roughgarden & Tardos (2002) — *How Bad Is Selfish Routing?* (metric/protocol) — **shipped in v1** (price-of-anarchy protocol + certified SO gap)
 
 ## Static extensions — v1
 

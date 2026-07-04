@@ -220,6 +220,7 @@ TABenchmark/
 │   ├── data/              # tntp.py (defensive parser), fetcher.py (checksums+citations),
 │   │                      # registry.py (networks + units metadata + defects), builtin.py
 │   ├── models/            # base.py, aon.py, msa.py, frank_wolfe.py (FW/CFW/BFW),
+│   │   │                  # gradient_projection.py, so.py (marginal-cost SO),
 │   │   │                  # sue_logit.py, _paths.py, _stoch.py (Dial loading map)
 │   │   └── adapters/      # callable_adapter.py (planned: subprocess.py, docker.py)
 │   ├── observe/           # data levels + identifiability checks
@@ -282,7 +283,11 @@ Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 172 refe
   target protocol per Boyce et al. 2004 (shipped). Still open in v0.x: gradient
   projection (path-based), progress-curve/solvability-profile plotting, `tabench
   validate` conformance suite, entry-point plugin registry.
-- **v1:** Algorithm B / TAPAS-class bush solvers; probit SUE; elastic demand & combined
+- **v1 (in progress):** path-based gradient projection (shipped: `gp`, the first
+  solver reaching certified gaps below 1e-8 within ~100 iterations — a regime the
+  FW family needs thousands to cross); system optimum + certified SO gap +
+  price of anarchy + first-best tolls (shipped: `so-bfw`, `metrics.so`). Still open:
+  Algorithm B / TAPAS-class bush solvers; probit SUE; elastic demand & combined
   models; T2 estimation track with Hazelton-style samplers as validated baselines and
   **computational-graph estimators** — assignment/estimation expressed as a layered
   differentiable graph solved by forward-backward passes (Wu, Guo, Xian & Zhou 2018;

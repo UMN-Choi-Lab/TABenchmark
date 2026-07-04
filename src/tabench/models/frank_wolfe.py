@@ -69,6 +69,16 @@ class _FrankWolfeFamily(TrafficAssignmentModel):
         ),
     }
 
+    #: self-report key names at the trace.record site. Solvers that run the
+    #: family on a TRANSFORMED network (e.g. system optimum on marginal
+    #: costs) override these so self-reports stay truthfully labeled.
+    _SELF_REPORT_KEYS = {
+        "relative_gap": "relative_gap",
+        "tstt": "tstt",
+        "sptt": "sptt",
+        "beckmann": "beckmann",
+    }
+
     def _search_point(
         self, network: Network, v: np.ndarray, y: np.ndarray, state: dict
     ) -> np.ndarray:
@@ -107,8 +117,16 @@ class _FrankWolfeFamily(TrafficAssignmentModel):
                 sp_calls=sp_calls,
                 wall_ms=1000.0 * (time.perf_counter() - start),
             )
+            keys = self._SELF_REPORT_KEYS
             trace.record(
-                v, coords, relative_gap=gap, tstt=tstt, sptt=sptt, beckmann=objective
+                v,
+                coords,
+                **{
+                    keys["relative_gap"]: gap,
+                    keys["tstt"]: tstt,
+                    keys["sptt"]: sptt,
+                    keys["beckmann"]: objective,
+                },
             )
 
             if budget.exhausted(coords) or budget.target_met(gap):

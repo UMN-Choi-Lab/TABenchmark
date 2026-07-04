@@ -57,6 +57,48 @@ class PathEngine:
         n = self._n_expanded
         return csr_matrix((costs, (self._tails, self._heads)), shape=(n, n))
 
+    def shortest_paths(
+        self, costs: np.ndarray, demand: Demand
+    ) -> tuple[dict[tuple[int, int], np.ndarray], float]:
+        """Explicit shortest path per positive-demand OD pair at fixed costs.
+
+        Returns ``(paths, sptt)``: ``paths`` maps 0-based zone pairs
+        ``(origin, destination)`` to the path's link indices in traversal
+        order (backtracked through the node-split expanded graph, so paths
+        never traverse restricted centroids); ``sptt`` is as in
+        :meth:`all_or_nothing`. One batched Dijkstra over all origins.
+        """
+        graph = self._graph(np.asarray(costs, dtype=np.float64))
+        od = demand.matrix
+        origins = np.nonzero(od.sum(axis=1) > 0)[0]
+        paths: dict[tuple[int, int], np.ndarray] = {}
+        sptt = 0.0
+        if origins.size == 0:
+            return paths, sptt
+
+        dist, pred = dijkstra(
+            graph, directed=True, indices=origins, return_predecessors=True
+        )
+        for row, o in enumerate(origins):
+            origin_index = int(o)  # origin's tail role keeps its original index
+            for d in np.nonzero(od[o] > 0)[0]:
+                if d == o:
+                    continue  # intrazonal demand never enters the network
+                di = self._dest_index(d + 1)
+                if not np.isfinite(dist[row, di]):
+                    raise RuntimeError(
+                        f"Zone {d + 1} unreachable from zone {o + 1} at current costs"
+                    )
+                sptt += od[o, d] * dist[row, di]
+                links = []
+                j = int(di)
+                while j != origin_index:
+                    p = int(pred[row, j])
+                    links.append(self._link_lookup[(p, j)])
+                    j = p
+                paths[(int(o), int(d))] = np.asarray(links[::-1], dtype=np.int64)
+        return paths, float(sptt)
+
     def all_or_nothing(
         self, costs: np.ndarray, demand: Demand
     ) -> tuple[np.ndarray, float]:

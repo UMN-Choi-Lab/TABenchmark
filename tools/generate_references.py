@@ -88,12 +88,16 @@ SHIPPED = {
     "leblanc1975efficient": ("v0", "Frank-Wolfe solver"),
     "wardrop1952some": ("v0", "equilibrium conditions in the certified gap"),
     "beckmann1956studies": ("v0", "Beckmann objective in metrics"),
+    "bpr1964traffic": ("v0", "BPR link performance function (Network.link_cost)"),
     "mitradjieva2013stiff": ("v0.x", "conjugate and bi-conjugate FW solvers"),
     "boyce2004convergence": ("v0.x", "convergence target protocol (Budget.target_relative_gap)"),
     "dial1971probabilistic": ("v0.x", "STOCH loading map (models/_stoch.py)"),
     "fisk1980some": ("v0.x", "logit SUE task (fixed-point certificate, ADR-001)"),
     "powell1982convergence": ("v0.x", "MSA-SUE solver step sizes"),
     "stabler2016transportation": ("v0.x", "checksummed TNTP fetcher + 4 registered networks"),
+    "jayakrishnan1994faster": ("v1", "path-based gradient projection solver (gp)"),
+    "yang1998principle": ("v1", "first-best marginal-cost tolls (metrics.so)"),
+    "roughgarden2002how": ("v1", "price-of-anarchy protocol + certified SO gap"),
 }
 
 
