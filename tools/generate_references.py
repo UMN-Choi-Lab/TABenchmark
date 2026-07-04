@@ -98,6 +98,11 @@ SHIPPED = {
     "jayakrishnan1994faster": ("v1", "path-based gradient projection solver (gp)"),
     "yang1998principle": ("v1", "first-best marginal-cost tolls (metrics.so)"),
     "roughgarden2002how": ("v1", "price-of-anarchy protocol + certified SO gap"),
+    "vanzuylen1980most": ("v1", "T2 entropy estimator (vzw-entropy, ADR-002)"),
+    "cascetta1984estimation": ("v1", "T2 GLS estimator (gls, ADR-002)"),
+    "spiess1990gradient": ("v1", "T2 gradient OD adjustment (spiess, ADR-002)"),
+    "spall1992multivariate": ("v1", "T2 SPSA calibration baseline (spsa, ADR-002)"),
+    "hazelton2015network": ("v1", "T2 identifiability report + held-out ranking protocol"),
 }
 
 

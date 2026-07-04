@@ -1,0 +1,21 @@
+# T2 estimation on Sioux Falls: the flagship under-determined task. With 76
+# links and 528 positive off-diagonal OD pairs, rank(P*) <= 76 < 528, so
+# linear_identifiable is False at ANY coverage - the OD columns are descriptive
+# and estimators rank on held-out count fit (ADR-002 Decision 4/6). Data are
+# downloaded on demand (checksummed, commit-pinned) - never vendored (P9).
+scenario: siouxfalls
+source: tntp
+family: tntp-siouxfalls
+tasks: [t2_estimation]
+estimation:
+  data_level: link_counts
+  sensors: {kind: random, coverage: 0.30}
+  heldout: {kind: random, coverage: 0.10}         # disjoint from sensors
+  n_periods: 15
+  noise: poisson
+  prior: {kind: stale, cv: 0.30}
+  certificate: {assignment: bfw, target_relative_gap: 1.0e-6, max_iterations: 5000}
+  identifiability: reported
+  identifiability_k_inner: 40
+budgets:
+  sp_calls: 4000

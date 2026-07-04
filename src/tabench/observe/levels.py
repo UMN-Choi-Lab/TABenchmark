@@ -26,6 +26,7 @@ __all__ = [
     "DataLevel",
     "FullOD",
     "LinkCounts",
+    "StalePriorOD",
     "random_sensor_mask",
     "distinct_nonzero_columns",
 ]
@@ -103,6 +104,52 @@ class LinkCounts(DataLevel):
                 "n_periods": self.n_periods,
                 "noise": self.noise,
                 "coverage": len(self.sensor_links) / scenario.network.n_links,
+            },
+        )
+
+
+class StalePriorOD(DataLevel):
+    """A degraded target/seed OD matrix: truth times multiplicative Gamma noise.
+
+    Each positive off-diagonal truth cell is scaled by an i.i.d. draw from a
+    Gamma with mean 1 and coefficient of variation ``cv`` (``shape = 1/cv**2``,
+    ``scale = cv**2``); ``cv = 0`` returns the truth unchanged. Zero cells stay
+    zero — a survey knows which OD pairs exist even when it misstates their
+    size, so the truth's *support* leaks (a limitation stated on every T2 card;
+    a uniform-support variant is a one-line dial). Intrazonal (diagonal) demand
+    is passed through unchanged: it never enters the network and is never
+    estimated.
+
+    Drawn on the reserved ``SOURCE_PRIOR`` stream so the prior is independent
+    of the observed counts (``SOURCE_OBSERVATION``).
+    """
+
+    name = "stale_prior_od"
+
+    def __init__(self, cv: float = 0.3) -> None:
+        if not np.isfinite(cv) or cv < 0:
+            raise ValueError(f"cv must be finite and >= 0, got {cv!r}")
+        self.cv = float(cv)
+
+    def observe(
+        self, scenario: Scenario, link_flows: np.ndarray, rng: np.random.Generator
+    ) -> Dataset:
+        truth = scenario.demand.matrix
+        prior = truth.copy()
+        if self.cv > 0:
+            off = ~np.eye(truth.shape[0], dtype=bool)
+            positive = off & (truth > 0)
+            shape = 1.0 / self.cv**2
+            scale = self.cv**2
+            noise = rng.gamma(shape=shape, scale=scale, size=int(positive.sum()))
+            prior[positive] = truth[positive] * noise
+        return Dataset(
+            kind=self.name,
+            payload={"prior_od": prior},
+            meta={
+                "n_zones": scenario.demand.n_zones,
+                "cv": self.cv,
+                "support": "truth (zero cells stay zero; support leak stated on card)",
             },
         )
 

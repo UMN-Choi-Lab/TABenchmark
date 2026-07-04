@@ -1,0 +1,19 @@
+# T2 estimation on the two-route network (pure UE, sue_theta dropped): the
+# convex, fully identifiable anchor. Full-coverage counts pin the single OD
+# pair; with the count-fit exactly satisfiable at the truth, the deterministic
+# estimators recover it (ADR-002 Decision 6).
+scenario: tworoute
+source: builtin
+family: builtin-tworoute
+tasks: [t2_estimation]
+estimation:
+  data_level: link_counts
+  sensors: {kind: explicit, links: [0, 1]}        # 1->3 (route A), 3->2 (route A)
+  heldout: {kind: explicit, links: [2, 3]}        # route B legs (disjoint)
+  n_periods: 10
+  noise: poisson
+  prior: {kind: stale, cv: 0.30}
+  certificate: {assignment: bfw, target_relative_gap: 1.0e-6, max_iterations: 5000}
+  identifiability: reported
+budgets:
+  sp_calls: 2000

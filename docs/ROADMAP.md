@@ -98,10 +98,10 @@ T3 interventions.
 
 ## Data, estimation & benchmarking — v1 (T2 estimation track)
 
-- [ ] Van Zuylen & Willumsen (1980) — *The most likely trip matrix estimated from traffic counts* (white-box solver)
-- [ ] Cascetta (1984) — *Estimation of trip matrices from traffic counts and survey data: A generalized least squares estimator* (white-box solver)
-- [ ] Spiess (1990) — *A gradient approach for the O-D matrix adjustment problem* (white-box solver)
-- [ ] Spall (1992) — *Multivariate stochastic approximation using a simultaneous perturbation gradient approximation* (white-box solver)
+- [x] Van Zuylen & Willumsen (1980) — *The most likely trip matrix estimated from traffic counts* (white-box solver) — **shipped in v1** (T2 entropy estimator (vzw-entropy, ADR-002))
+- [x] Cascetta (1984) — *Estimation of trip matrices from traffic counts and survey data: A generalized least squares estimator* (white-box solver) — **shipped in v1** (T2 GLS estimator (gls, ADR-002))
+- [x] Spiess (1990) — *A gradient approach for the O-D matrix adjustment problem* (white-box solver) — **shipped in v1** (T2 gradient OD adjustment (spiess, ADR-002))
+- [x] Spall (1992) — *Multivariate stochastic approximation using a simultaneous perturbation gradient approximation* (white-box solver) — **shipped in v1** (T2 SPSA calibration baseline (spsa, ADR-002))
 - [ ] Yang et al. (1992) — *Estimation of origin-destination matrices from link traffic counts on congested networks* (white-box solver)
 - [ ] Cascetta et al. (1993) — *Dynamic Estimators of Origin-Destination Matrices Using Traffic Counts* (white-box solver)
 - [ ] Balakrishna et al. (2007) — *Offline calibration of dynamic traffic assignment: Simultaneous demand-and-supply estimation* (black-box wrapper)

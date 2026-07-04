@@ -75,8 +75,9 @@ run it — that's the point.)
 | Data | Defensive TNTP parser, commit-pinned checksummed fetcher, per-network units metadata; scenario ladder Braess → Sioux Falls → Anaheim → Barcelona → Winnipeg (+ analytic two-route SUE anchor) |
 | Models | All-or-nothing, MSA, Frank–Wolfe, conjugate & bi-conjugate FW (Mitradjieva & Lindberg 2013), path-based gradient projection (Jayakrishnan et al. 1994), system optimum via marginal costs, logit SUE via Dial-STOCH + MSA, black-box `CallableModel` adapter |
 | Metrics | Certified relative gap / average excess cost / Beckmann objective, certified SO gap + price of anarchy + first-best tolls (Yang & Huang 1998; Roughgarden & Tardos 2002), SUE fixed-point residual ([ADR-001](docs/design/adr-001-logit-sue-dial-certificate.md)), feasibility audit, flow RMSE vs best-known |
-| Observe | `FullOD`, `LinkCounts` (sensor mask × periods × noise), Hazelton identifiability check |
-| Experiments | Grid runner, CSV results, full provenance manifests |
+| Observe | `FullOD`, `LinkCounts` (sensor mask × periods × noise), `StalePriorOD`, Hazelton identifiability check |
+| Estimation (T2) | OD estimation from link counts under a pinned-assignment certificate ([ADR-002](docs/design/adr-002-t2-estimation-certificate.md)): VZW entropy, Cascetta GLS, Spiess gradient, SPSA baseline; held-out sensors rank, identifiability reported per task |
+| Experiments | Grid runner (T1) + estimation runner (T2), CSV results, full provenance manifests |
 | Tests | Analytic Braess UE + two-route logit-SUE oracles; best-known-solution regressions on Sioux Falls, Anaheim, Barcelona, Winnipeg; conjugacy-identity and golden-hash regressions |
 
 The certified solver ladder on Winnipeg (147 zones, 2,836 links; iterations to

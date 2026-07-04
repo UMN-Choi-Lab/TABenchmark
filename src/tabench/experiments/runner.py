@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import csv
 import dataclasses
+import hashlib
 import json
 import platform
 import subprocess
@@ -27,13 +28,37 @@ import tabench
 from ..core.budget import Budget
 from ..core.capabilities import assert_fair_evaluation
 from ..core.results import ResultBundle, Trace
-from ..core.rng import SOURCE_BOOTSTRAP, SOURCE_EVALUATION, SOURCE_OBSERVATION, RngBundle
-from ..core.scenario import Scenario
+from ..core.rng import (
+    SOURCE_BOOTSTRAP,
+    SOURCE_EVALUATION,
+    SOURCE_OBSERVATION,
+    SOURCE_PRIOR,
+    RngBundle,
+)
+from ..core.scenario import Demand, Scenario
+from ..estimation._proportions import active_pairs, proportion_matrix
+from ..estimation.base import EstimationTask, ODEstimator, ODTrace
+from ..metrics.estimation import CERTIFICATE_DEFAULTS, ODCertifier
 from ..metrics.flows import rmse
 from ..metrics.gaps import Evaluator
 from ..models.base import TrafficAssignmentModel
+from ..models.frank_wolfe import BiconjugateFrankWolfeModel
+from ..observe.levels import (
+    LinkCounts,
+    StalePriorOD,
+    distinct_nonzero_columns,
+)
 
-__all__ = ["ExperimentResult", "run_experiment"]
+__all__ = [
+    "ExperimentResult",
+    "run_experiment",
+    "run_estimation_experiment",
+    "identifiability_report",
+]
+
+# Sensor *placement* draws deterministically from this reserved substream so it
+# stays independent of the per-macrorep count draws (replication 0..macroreps).
+_SENSOR_PLACEMENT_REPLICATION = 1_000_000
 
 _CSV_FIELDS = [
     "scenario",
@@ -244,6 +269,392 @@ def run_experiment(
         )
         with open(out / f"{stem}.csv", "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=_CSV_FIELDS)
+            writer.writeheader()
+            writer.writerows(rows)
+        with open(out / f"{stem}.manifest.json", "w") as f:
+            json.dump(manifest, f, indent=2)
+
+    return ExperimentResult(rows=rows, bundles=bundles, manifest=manifest)
+
+
+# --------------------------------------------------------------------------- T2
+
+_EST_CSV_FIELDS = [
+    "scenario",
+    "scenario_hash",
+    "task_hash",
+    "estimator",
+    "macrorep",
+    "iterations",
+    "sp_calls",
+    "wall_ms",
+    "od_feasible",
+    "obs_count_rmse",
+    "obs_mean_count_rmse",
+    "oracle_obs_count_rmse",
+    "heldout_count_rmse",
+    "oracle_heldout_count_rmse",
+    "heldout_flow_rmse",
+    "od_rmse",
+    "od_nrmse",
+    "total_demand_error",
+    "od_identifiable",
+    "certificate_gap",
+    "certificate_converged",
+    "self_obs_count_rmse",
+]
+
+
+def _draw_sensors(
+    n_links: int, spec: dict[str, Any], rng: np.random.Generator, exclude: Any = None
+) -> np.ndarray:
+    """Draw a sensor set, either explicit links or a random coverage fraction.
+
+    ``exclude`` links (the observed set, when drawing the held-out set) are
+    removed from the candidate pool so the two sets stay disjoint (P3).
+    """
+    if spec.get("kind", "random") == "explicit":
+        return np.sort(np.asarray(spec["links"], dtype=np.int64))
+    coverage = float(spec.get("coverage", 0.3))
+    excluded = set() if exclude is None else {int(x) for x in np.asarray(exclude).tolist()}
+    available = np.array([i for i in range(n_links) if i not in excluded], dtype=np.int64)
+    if available.size == 0:
+        return np.array([], dtype=np.int64)
+    n = min(max(1, round(coverage * n_links)), available.size)
+    return np.sort(rng.choice(available, size=n, replace=False))
+
+
+def identifiability_report(
+    network: Any, truth_demand: Demand, obs_sensors: np.ndarray, k_inner: int = 40
+) -> dict[str, Any]:
+    """Per-(sensor set, task) identifiability report (ADR-002 Decision 4).
+
+    Builds the truth-side proportion matrix ``P*`` (harness-only; the estimator
+    never sees it) and reports Hazelton's Prop. 1 column condition, the
+    mean-count ``linear_identifiable`` rank test (dense only for
+    ``n_zones <= 100``), and the unseen/confounded-pair diagnostics.
+    """
+    obs_sensors = np.asarray(obs_sensors, dtype=np.int64)
+    pairs = active_pairs(truth_demand.matrix)
+    n_active = len(pairs)
+    report: dict[str, Any] = {
+        "n_active_pairs": n_active,
+        "n_obs_sensors": int(obs_sensors.size),
+    }
+    if n_active == 0:
+        report.update(
+            hazelton_condition=False,
+            n_unseen_pairs=0,
+            n_confounded_pairs=0,
+            linear_identifiable=False,
+            rank_not_computed=False,
+        )
+        return report
+    p_star, _, _ = proportion_matrix(network, truth_demand, k_inner, pairs=pairs)
+    sub = p_star[obs_sensors]
+    report["hazelton_condition"] = (
+        bool(distinct_nonzero_columns(sub)) if obs_sensors.size else False
+    )
+    zero_cols = ~sub.any(axis=0)
+    report["n_unseen_pairs"] = int(zero_cols.sum())
+    nz = sub[:, ~zero_cols]
+    if nz.shape[1]:
+        _, inverse, counts = np.unique(
+            nz, axis=1, return_inverse=True, return_counts=True
+        )
+        class_size = counts[inverse.ravel()]
+        report["n_confounded_pairs"] = int((class_size > 1).sum())
+    else:
+        report["n_confounded_pairs"] = 0
+    if truth_demand.n_zones <= 100:
+        rank = int(np.linalg.matrix_rank(sub)) if obs_sensors.size else 0
+        report["rank"] = rank
+        report["linear_identifiable"] = bool(rank == n_active)
+        report["rank_not_computed"] = False
+    else:
+        report["linear_identifiable"] = False
+        report["rank_not_computed"] = True
+    return report
+
+
+def _score_estimator(
+    estimator: ODEstimator,
+    task: EstimationTask,
+    budget: Budget,
+    rng: RngBundle,
+    certifier: ODCertifier,
+    macrorep: int,
+    scenario: Scenario,
+    rows: list[dict[str, Any]],
+    bundles: dict[tuple[str, str], Any],
+) -> None:
+    trace = ODTrace()
+    bundle = estimator.estimate(task, budget, rng, trace)
+    bundles[(estimator.name, f"m{macrorep}")] = bundle
+    scenario_hash = scenario.content_hash()[:16]
+    task_hash = task.content_hash()[:16]
+    for state in trace:
+        metrics = certifier.certify(state.od_matrix)
+        row: dict[str, Any] = {
+            "scenario": scenario.name,
+            "scenario_hash": scenario_hash,
+            "task_hash": task_hash,
+            "estimator": estimator.name,
+            "macrorep": macrorep,
+            "iterations": state.coords.iterations,
+            "sp_calls": state.coords.sp_calls,
+            "wall_ms": round(state.coords.wall_ms, 3),
+            **metrics,
+            "self_obs_count_rmse": state.self_report.get("obs_count_rmse", ""),
+        }
+        rows.append(row)
+
+
+def run_estimation_experiment(
+    scenario: Scenario,
+    estimators: list[ODEstimator],
+    budget: Budget,
+    seed: int = 0,
+    macroreps: int = 1,
+    out_dir: str | Path | None = None,
+    estimation: dict[str, Any] | None = None,
+) -> ExperimentResult:
+    """Run every estimator on the scenario's T2 task and certify all checkpoints.
+
+    The dataset is stochastic (counts and/or a Gamma-perturbed prior), so
+    ``reps = macroreps`` whenever ``noise != 'none'`` or the prior ``cv > 0``,
+    even for deterministic estimators; a deterministic estimator on a fully
+    deterministic task collapses to one rep (ADR-002 Decision 5). Every emitted
+    OD checkpoint is certified through the pinned reference assignment; nothing
+    is thinned.
+    """
+    estimation = dict(estimation or {})
+    network = scenario.network
+    n_links = network.n_links
+
+    if scenario.sue_theta is not None:
+        # T2 certifies against the pinned deterministic-UE assignment only; SUE-
+        # pinned certificates are deferred (ADR-002 Decision 2). Enforce the
+        # semantic in the runner, not just the CLI, so the public API is safe.
+        raise ValueError(
+            f"scenario {scenario.name!r} is an SUE instance (sue_theta="
+            f"{scenario.sue_theta}); T2 estimation certifies against the pinned "
+            "deterministic-UE assignment only (ADR-002 defers SUE-pinned "
+            "certificates). Pass the UE instance, e.g. "
+            "dataclasses.replace(scenario, sue_theta=None, reference=None)."
+        )
+
+    names = [e.name for e in estimators]
+    duplicates = {n for n in names if names.count(n) > 1}
+    if duplicates:
+        raise ValueError(f"Duplicate estimator names {sorted(duplicates)}")
+
+    certificate = dict(CERTIFICATE_DEFAULTS)
+    certificate.update(estimation.get("certificate") or {})
+    if str(certificate["assignment"]) != "bfw":
+        # The pin's model component is hashed and recorded, so it must be
+        # enforced, not decorative (ADR-002 Decision 2). Only bfw ships in v1.
+        raise ValueError(
+            f"unsupported certificate assignment {certificate['assignment']!r}: "
+            "only 'bfw' is a supported certificate pin this sprint (SUE-pinned "
+            "certificates are deferred, ADR-002)"
+        )
+
+    pin_solver = BiconjugateFrankWolfeModel(
+        line_search_xtol=float(certificate["line_search_xtol"])
+    )
+    pin_budget = Budget(
+        iterations=int(certificate["max_iterations"]),
+        target_relative_gap=float(certificate["target_relative_gap"]),
+    )
+    truth_trace = Trace()
+    pin_solver.solve(scenario, pin_budget, RngBundle(seed), truth_trace)
+    oracle_flows = truth_trace.final.link_flows
+
+    place_rng = RngBundle(root_seed=seed, macrorep=0).generator(
+        SOURCE_OBSERVATION, replication=_SENSOR_PLACEMENT_REPLICATION
+    )
+    obs_sensors = _draw_sensors(
+        n_links, estimation.get("sensors") or {"kind": "random", "coverage": 0.3}, place_rng
+    )
+    ho_cfg = estimation.get("heldout") or {"kind": "random", "coverage": 0.1}
+    heldout_sensors = _draw_sensors(n_links, ho_cfg, place_rng, exclude=obs_sensors)
+
+    overlap = np.intersect1d(obs_sensors, heldout_sensors)
+    if overlap.size:
+        # heldout_count_rmse is the ranking column and must be out of sample;
+        # disjointness is enforced by the harness, never by convention (P7). The
+        # exclude= path only covers random draws, so validate explicit sets here.
+        raise ValueError(
+            "held-out sensors must be disjoint from observed sensors "
+            "(ADR-002 heldout_count_rmse contract, P7); overlapping links: "
+            f"{overlap.tolist()}"
+        )
+
+    n_periods = int(estimation.get("n_periods", 1))
+    ho_periods = int(ho_cfg.get("n_periods", n_periods))
+    # Digest of the held-out design folded into the task hash without exposing
+    # the held-out sensor identities to the estimator (ADR-002 Decision 1).
+    ho_hash = hashlib.sha256()
+    ho_hash.update(np.ascontiguousarray(np.sort(heldout_sensors), dtype=np.int64).tobytes())
+    ho_hash.update(f"ho_periods={ho_periods};".encode())
+    heldout_digest = ho_hash.hexdigest()
+    noise = estimation.get("noise", "poisson")
+    prior_cfg = estimation.get("prior") or {"kind": "stale", "cv": 0.3}
+    prior_cv = float(prior_cfg.get("cv", 0.3))
+    id_k_inner = int(estimation.get("identifiability_k_inner", 40))
+
+    ident = identifiability_report(network, scenario.demand, obs_sensors, k_inner=id_k_inner)
+
+    stochastic = (noise != "none") or (prior_cv > 0.0)
+    n_data = macroreps if stochastic else 1
+
+    data_reps: list[tuple[EstimationTask, ODCertifier]] = []
+    for dr in range(n_data):
+        rb = RngBundle(root_seed=seed, macrorep=dr)
+        prior_ds = StalePriorOD(cv=prior_cv).observe(
+            scenario, oracle_flows, rb.generator(SOURCE_PRIOR)
+        )
+        prior = Demand(matrix=prior_ds.payload["prior_od"])
+        obs_ds = LinkCounts(obs_sensors, n_periods, noise).observe(
+            scenario, oracle_flows, rb.generator(SOURCE_OBSERVATION)
+        )
+        ho_ds = LinkCounts(heldout_sensors, ho_periods, noise).observe(
+            scenario, oracle_flows, rb.generator(SOURCE_EVALUATION)
+        )
+        task = EstimationTask(
+            name=scenario.name,
+            network=network,
+            prior=prior,
+            dataset=obs_ds,
+            identifiability=ident,
+            scenario_hash=scenario.content_hash(),
+            certificate=certificate,
+            seed=seed,
+            heldout_digest=heldout_digest,
+        )
+        certifier = ODCertifier(
+            scenario,
+            obs_sensors,
+            heldout_sensors,
+            obs_ds.payload["counts"],
+            ho_ds.payload["counts"],
+            oracle_flows,
+            ident,
+            certificate,
+        )
+        data_reps.append((task, certifier))
+
+    rows: list[dict[str, Any]] = []
+    bundles: dict[tuple[str, str], Any] = {}
+    for est in estimators:
+        assert_fair_evaluation(est.capabilities, scenario)
+        if stochastic:
+            for dr in range(n_data):
+                task, certifier = data_reps[dr]
+                _score_estimator(
+                    est, task, budget, RngBundle(seed, macrorep=dr),
+                    certifier, dr, scenario, rows, bundles,
+                )
+        else:
+            task, certifier = data_reps[0]
+            reps = 1 if est.capabilities.deterministic else macroreps
+            for m in range(reps):
+                _score_estimator(
+                    est, task, budget, RngBundle(seed, macrorep=m),
+                    certifier, m, scenario, rows, bundles,
+                )
+
+    manifest = {
+        "created_utc": datetime.now(timezone.utc).isoformat(),
+        "task": "t2_estimation",
+        "scenario": scenario.name,
+        "scenario_hash": scenario.content_hash(),
+        "scenario_family": scenario.family,
+        "estimation": {
+            "data_level": estimation.get("data_level", "link_counts"),
+            "sensors": {"links": obs_sensors.tolist(), "n": int(obs_sensors.size)},
+            "heldout": {"links": heldout_sensors.tolist(), "n": int(heldout_sensors.size)},
+            "n_periods": n_periods,
+            "heldout_n_periods": ho_periods,
+            "noise": noise,
+            "prior": {"kind": prior_cfg.get("kind", "stale"), "cv": prior_cv},
+            "stochastic": stochastic,
+        },
+        "certificate": certificate,
+        "identifiability": ident,
+        "estimators": {
+            e.name: {
+                "capabilities": {
+                    "paradigm": e.capabilities.paradigm,
+                    "deterministic": e.capabilities.deterministic,
+                    "seedable": e.capabilities.seedable,
+                    "inputs_required": sorted(e.capabilities.inputs_required),
+                    "outputs": sorted(e.capabilities.outputs),
+                    "trained_on": list(e.capabilities.trained_on),
+                },
+                "factors": e.factor_values,
+            }
+            for e in estimators
+        },
+        "budget": {
+            "iterations": budget.iterations,
+            "sp_calls": budget.sp_calls,
+            "wall_seconds": budget.wall_seconds,
+            "target_relative_gap": budget.target_relative_gap,
+        },
+        "seed": seed,
+        "macroreps": macroreps,
+        "rng": {
+            "root_seed": seed,
+            "schema": (
+                "numpy SeedSequence spawn_key=(macrorep, source, replication) "
+                "with Philox (see tabench.core.rng, P8)"
+            ),
+            "reserved_sources": {
+                "observation": SOURCE_OBSERVATION,
+                "evaluation": SOURCE_EVALUATION,
+                "bootstrap": SOURCE_BOOTSTRAP,
+                "prior": SOURCE_PRIOR,
+            },
+        },
+        "environment": {
+            "python": sys.version.split()[0],
+            "platform": platform.platform(),
+            "numpy": np.__version__,
+            "scipy": scipy.__version__,
+            "tabench": tabench.__version__,
+            "git_commit": _git_commit(),
+        },
+        "notes": (
+            "T2 estimation: each emitted OD matrix is certified through the pinned "
+            "reference assignment; count-fit and OD-fit are a pair, ranked by "
+            "heldout_count_rmse (ADR-002)."
+        ),
+    }
+
+    if out_dir is not None:
+        out = Path(out_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        budget_part = "-".join(
+            f"{axis}{value}"
+            for axis, value in (
+                ("it", budget.iterations),
+                ("sp", budget.sp_calls),
+                ("ws", budget.wall_seconds),
+            )
+            if value is not None
+        )
+        # task_hash[:8] pins the estimation block (sensors, held-out digest,
+        # dataset dials, certificate) so card variants sharing a scenario/budget/
+        # seed can never silently overwrite each other's CSV (ADR-002 Decision 1).
+        task_hash8 = data_reps[0][0].content_hash()[:8]
+        stem = (
+            f"{scenario.name}-{scenario.content_hash()[:8]}_t2-{task_hash8}_"
+            f"{'-'.join(names)}_{budget_part}_seed-{seed}"
+        )
+        with open(out / f"{stem}.csv", "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=_EST_CSV_FIELDS)
             writer.writeheader()
             writer.writerows(rows)
         with open(out / f"{stem}.manifest.json", "w") as f:

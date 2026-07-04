@@ -5,6 +5,7 @@ from .levels import (
     Dataset,
     FullOD,
     LinkCounts,
+    StalePriorOD,
     distinct_nonzero_columns,
     random_sensor_mask,
 )
@@ -14,6 +15,7 @@ __all__ = [
     "DataLevel",
     "FullOD",
     "LinkCounts",
+    "StalePriorOD",
     "distinct_nonzero_columns",
     "random_sensor_mask",
 ]

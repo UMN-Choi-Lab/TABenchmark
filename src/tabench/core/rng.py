@@ -11,7 +11,11 @@ Reserved source ids (documented, never used by models):
 
 * ``SOURCE_OBSERVATION`` — observation-process generation (data levels)
 * ``SOURCE_EVALUATION`` — harness post-evaluations of stochastic responses
+  (e.g. held-out sensor counts on the T2 estimation track)
 * ``SOURCE_BOOTSTRAP`` — bootstrap confidence intervals
+* ``SOURCE_PRIOR`` — prior/seed-matrix generation for T2 estimation
+  (``StalePriorOD``); drawn independently of the observed counts so a stale
+  prior never leaks the same noise realization the counts carry
 """
 
 from __future__ import annotations
@@ -23,11 +27,13 @@ __all__ = [
     "SOURCE_OBSERVATION",
     "SOURCE_EVALUATION",
     "SOURCE_BOOTSTRAP",
+    "SOURCE_PRIOR",
 ]
 
 SOURCE_OBSERVATION = 1_000_000
 SOURCE_EVALUATION = 1_000_001
 SOURCE_BOOTSTRAP = 1_000_002
+SOURCE_PRIOR = 1_000_003
 
 
 class RngBundle:

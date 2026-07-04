@@ -12,8 +12,11 @@ import yaml
 
 from .core.budget import Budget
 from .data import REGISTRY, ChecksumError, citation, fetch, load_scenario
-from .experiments.runner import run_experiment
+from .estimation.base import ESTIMATOR_REGISTRY
+from .experiments.runner import run_estimation_experiment, run_experiment
 from .models.base import MODEL_REGISTRY
+
+_DEFAULT_ESTIMATORS = "prior,gls,vzw-entropy,spiess,spsa"
 
 
 def _cmd_list(_: argparse.Namespace) -> int:
@@ -27,6 +30,11 @@ def _cmd_list(_: argparse.Namespace) -> int:
         cls = MODEL_REGISTRY[name]
         caps = cls.capabilities
         print(f"  {name:<10}{caps.paradigm}, deterministic={caps.deterministic}")
+    print("\nEstimators (T2):")
+    for name in sorted(ESTIMATOR_REGISTRY):
+        cls = ESTIMATOR_REGISTRY[name]
+        caps = cls.capabilities
+        print(f"  {name:<12}{caps.paradigm}, deterministic={caps.deterministic}")
     return 0
 
 
@@ -59,6 +67,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
     iterations = iterations or 100
 
     scenario = load_scenario(scenario_key)
+    if "t2_estimation" in (card.get("tasks") or []):
+        return _run_estimation(args, card, scenario)
     sue = card.get("sue")
     if isinstance(sue, dict) and "theta" in sue:
         theta = float(sue["theta"])
@@ -68,7 +78,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
             # the old one, so drop it rather than mis-score RMSE against it.
             scenario = dataclasses.replace(scenario, sue_theta=theta, reference=None)
     models = []
-    for name in args.models.split(","):
+    for name in (args.models or "aon,msa,fw").split(","):
         name = name.strip()
         if name not in MODEL_REGISTRY:
             print(f"Unknown model {name!r}; see `tabench list`", file=sys.stderr)
@@ -117,6 +127,79 @@ def _cmd_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_estimation(args: argparse.Namespace, card: dict, scenario) -> int:
+    """Dispatch a ``t2_estimation`` card to the OD-estimation runner."""
+    if scenario.sue_theta is not None:
+        # T2 is a UE task this sprint (SUE-pinned certificates are deferred,
+        # ADR-002): score against the deterministic-UE instance.
+        scenario = dataclasses.replace(scenario, sue_theta=None, reference=None)
+    estimation = card.get("estimation") or {}
+    budgets = card.get("budgets") or {}
+    sp_calls = int(budgets.get("sp_calls", 2000))
+    macroreps = int(card.get("macroreps", estimation.get("macroreps", 1)))
+    # ``--models`` defaults to None so a T2 card falls back to the estimator
+    # default, while an *explicit* list is always taken literally (so e.g. an
+    # explicit T1 name like ``aon`` on a T2 card errors cleanly, exit 2).
+    models_arg = args.models or _DEFAULT_ESTIMATORS
+    estimators = []
+    for name in models_arg.split(","):
+        name = name.strip()
+        if name not in ESTIMATOR_REGISTRY:
+            print(f"Unknown estimator {name!r}; see `tabench list`", file=sys.stderr)
+            return 2
+        estimators.append(ESTIMATOR_REGISTRY[name]())
+    budget = Budget(sp_calls=sp_calls)
+    result = run_estimation_experiment(
+        scenario, estimators, budget, seed=args.seed, macroreps=macroreps,
+        out_dir=args.out, estimation=estimation,
+    )
+    ident = result.manifest["identifiability"]
+    print(
+        f"Scenario {scenario.name} (hash {scenario.content_hash()[:16]}), "
+        f"T2 estimation, budget {sp_calls} sp_calls, seed {args.seed}\n"
+    )
+    print(
+        f"identifiability: n_active_pairs={ident['n_active_pairs']} "
+        f"hazelton_condition={ident.get('hazelton_condition')} "
+        f"linear_identifiable={ident['linear_identifiable']} "
+        f"(sensors={result.manifest['estimation']['sensors']['n']}, "
+        f"heldout={result.manifest['estimation']['heldout']['n']})\n"
+    )
+    last: dict[str, dict] = {}
+    for row in result.rows:
+        last[row["estimator"]] = row
+    header = (
+        f"{'estimator':<13}{'sp':>7}{'obs_rmse':>12}{'heldout_rmse':>14}"
+        f"{'od_rmse':>12}{'od_ident':>10}"
+    )
+    print(header)
+    print("-" * len(header))
+    for name, row in sorted(last.items(), key=lambda kv: _rank_key(kv[1])):
+        print(
+            f"{name:<13}{row['sp_calls']:>7}{row['obs_count_rmse']:>12.4e}"
+            f"{row['heldout_count_rmse']:>14.4e}{row['od_rmse']:>12.4e}"
+            f"{int(row['od_identifiable']):>10}"
+        )
+    print(
+        "\nT2 task: ranked by heldout_count_rmse (out-of-sample count fit); "
+        "OD columns are descriptive"
+        + ("" if ident["linear_identifiable"] else " (od_identifiable=0 here)")
+        + " (ADR-002)."
+    )
+    if args.out:
+        print(f"\nWrote CSV + manifest to {args.out}/")
+    return 0
+
+
+def _rank_key(row: dict) -> float:
+    value = row.get("heldout_count_rmse")
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return float("inf")
+    return value if value == value else float("inf")  # NaN sorts last
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="tabench",
@@ -135,7 +218,12 @@ def main(argv: list[str] | None = None) -> int:
     p_run.add_argument(
         "--config", default=None, help="Scenario card YAML (e.g. scenarios/1siouxfalls.yaml)"
     )
-    p_run.add_argument("--models", default="aon,msa,fw", help="Comma-separated model names")
+    p_run.add_argument(
+        "--models",
+        default=None,
+        help="Comma-separated model names (default: aon,msa,fw for T1; "
+        "prior,gls,vzw-entropy,spiess,spsa for T2)",
+    )
     p_run.add_argument("--iterations", type=int, default=None)
     p_run.add_argument(
         "--target-gap",

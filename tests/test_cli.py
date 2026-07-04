@@ -10,6 +10,52 @@ def test_list_runs():
     assert main(["list"]) == 0
 
 
+def _write_t2_card(tmp_path: Path) -> Path:
+    card = tmp_path / "braess-t2.yaml"
+    card.write_text(
+        "scenario: braess\n"
+        "tasks: [t2_estimation]\n"
+        "estimation:\n"
+        "  sensors: {kind: explicit, links: [1, 2, 3]}\n"
+        "  heldout: {kind: explicit, links: [0, 4]}\n"
+        "  n_periods: 1\n"
+        "  noise: none\n"
+        "  prior: {kind: stale, cv: 0.0}\n"
+        "budgets: {sp_calls: 300}\n"
+    )
+    return card
+
+
+def test_run_t2_card_dispatch(tmp_path: Path, capsys):
+    """A t2_estimation card runs end to end via cli.main (exit 0), prints the
+    identifiability line, and writes a CSV + T2 manifest. No --models, so this
+    also exercises the T2 default-estimator resolution (the sentinel)."""
+    card = _write_t2_card(tmp_path)
+    out = tmp_path / "results"
+    code = main(["run", "--config", str(card), "--out", str(out)])
+    assert code == 0
+    captured = capsys.readouterr()
+    assert "identifiability:" in captured.out
+    assert len(list(out.glob("*.csv"))) == 1
+    manifest = json.loads(next(out.glob("*.manifest.json")).read_text())
+    assert manifest["task"] == "t2_estimation"
+    assert "identifiability" in manifest
+
+
+def test_run_t2_unknown_estimator_exit2(tmp_path: Path):
+    """An unknown estimator name on a T2 card exits 2."""
+    card = _write_t2_card(tmp_path)
+    assert main(["run", "--config", str(card), "--models", "nonsense"]) == 2
+
+
+def test_run_t2_explicit_t1_model_exit2(tmp_path: Path):
+    """An explicit T1 model name (aon) on a T2 card is taken literally and
+    errors cleanly (exit 2), rather than being silently replaced by the default
+    estimator set (the --models sentinel fix, ADR-002)."""
+    card = _write_t2_card(tmp_path)
+    assert main(["run", "--config", str(card), "--models", "aon"]) == 2
+
+
 def test_run_braess_writes_outputs(tmp_path: Path):
     out = tmp_path / "results"
     code = main(

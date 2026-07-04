@@ -9,7 +9,16 @@ from .scenario import Scenario
 __all__ = ["Capabilities", "ContaminationError", "assert_fair_evaluation"]
 
 PARADIGMS = frozenset(
-    {"static_ue", "static_so", "sue", "dta", "day_to_day", "learned", "heuristic"}
+    {
+        "static_ue",
+        "static_so",
+        "sue",
+        "dta",
+        "day_to_day",
+        "learned",
+        "heuristic",
+        "estimation",
+    }
 )
 
 

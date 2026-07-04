@@ -1,0 +1,19 @@
+# T2 estimation on the built-in Braess network: recover the (single) OD pair
+# from full-coverage link counts. Hand-checkable; the certificate's held-out
+# sensor is the mechanical defense against the local demand non-identifiability
+# documented in ADR-002 Decision 4.
+scenario: braess
+source: builtin
+family: builtin-braess
+tasks: [t2_estimation]
+estimation:
+  data_level: link_counts
+  sensors: {kind: explicit, links: [1, 2, 3]}     # 1->4, 3->4 (bypass), 3->2
+  heldout: {kind: explicit, links: [0, 4]}        # 1->3, 4->2 (disjoint)
+  n_periods: 10
+  noise: poisson
+  prior: {kind: stale, cv: 0.30}
+  certificate: {assignment: bfw, target_relative_gap: 1.0e-6, max_iterations: 5000}
+  identifiability: reported
+budgets:
+  sp_calls: 2000
