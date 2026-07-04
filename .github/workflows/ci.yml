@@ -22,9 +22,21 @@ jobs:
         with:
           path: ~/.cache/tabench
           key: tabench-data-${{ hashFiles('src/tabench/data/registry.py') }}
+          restore-keys: tabench-data-
       - name: Install
         run: pip install -e ".[dev]"
+      - name: Fetch benchmark data
+        # Explicit prefetch: a failed download fails the job, and a failed
+        # job saves no cache — so a partially-populated cache can never be
+        # frozen in by an exact-key hit.
+        run: >
+          python -c "from tabench.data.registry import REGISTRY;
+          from tabench.data.fetcher import fetch;
+          [fetch(s) for s in REGISTRY.values()]"
       - name: Lint
         run: ruff check src tests demos
       - name: Test
-        run: pytest -q
+        run: pytest -q -ra
+        env:
+          # Data failures must fail CI, never silently skip (tests/conftest.py).
+          TABENCH_REQUIRE_DATA: "1"

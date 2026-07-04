@@ -19,20 +19,23 @@ from .core import (
     Scenario,
     Trace,
 )
-from .data import braess_scenario, load_scenario
+from .data import braess_scenario, load_scenario, two_route_scenario
 from .experiments import run_experiment
 from .metrics import Evaluator, nrmse, rmse
 from .models import (
     MODEL_REGISTRY,
     AllOrNothingModel,
+    BiconjugateFrankWolfeModel,
     CallableModel,
+    ConjugateFrankWolfeModel,
+    DialSUEModel,
     FrankWolfeModel,
     MSAModel,
     TrafficAssignmentModel,
     register_model,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "Budget",
@@ -50,13 +53,17 @@ __all__ = [
     "Trace",
     "braess_scenario",
     "load_scenario",
+    "two_route_scenario",
     "run_experiment",
     "Evaluator",
     "nrmse",
     "rmse",
     "MODEL_REGISTRY",
     "AllOrNothingModel",
+    "BiconjugateFrankWolfeModel",
     "CallableModel",
+    "ConjugateFrankWolfeModel",
+    "DialSUEModel",
     "FrankWolfeModel",
     "MSAModel",
     "TrafficAssignmentModel",

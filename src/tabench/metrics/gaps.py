@@ -11,6 +11,11 @@ docs/ARCHITECTURE.md section 2):
 * average excess cost ``AEC = (TSTT - SPTT) / total demand`` (the convention
   used by the TransportationNetworks best-known solutions)
 * Beckmann objective ``B(v) = sum_a integral_0^{v_a} t_a(s) ds``
+* SUE fixed-point residual (scenarios with ``sue_theta`` only):
+  ``||v - L(t(v), theta)||_1 / total demand`` with ``L`` the pinned
+  Dial-STOCH loading map — misallocated link-traversals per traveler
+  (docs/design/adr-001). On SUE tasks this is the ranking metric; the UE
+  columns remain descriptive (they are strictly positive at SUE by design).
 
 Certification is gated by a **demand-aware feasibility audit** (P7): a flow
 vector only receives a gap if it (a) is finite and nonnegative, (b) conserves
@@ -33,6 +38,7 @@ import numpy as np
 
 from ..core.scenario import Scenario
 from ..models._paths import PathEngine
+from ..models._stoch import StochEngine
 
 __all__ = ["Evaluator", "node_balance_residual"]
 
@@ -73,9 +79,11 @@ class Evaluator:
         self.feasibility_tol = feasibility_tol
         self._engine = PathEngine(scenario.network)
         self._total_demand = scenario.demand.total
+        self._theta = scenario.sue_theta
+        self._stoch = StochEngine(scenario.network) if self._theta is not None else None
 
     def _censored(self, reason: str) -> dict[str, float]:
-        return {
+        metrics = {
             "tstt": float("nan"),
             "sptt": float("nan"),
             "relative_gap": float("nan"),
@@ -84,6 +92,9 @@ class Evaluator:
             "node_balance_residual": float("inf"),
             "feasible": 0.0,
         }
+        if self._theta is not None:
+            metrics["sue_fixed_point_residual"] = float("nan")
+        return metrics
 
     def evaluate(self, link_flows: np.ndarray) -> dict[str, float]:
         """Certified metrics for one emitted flow state.
@@ -127,7 +138,7 @@ class Evaluator:
             metrics["beckmann_objective"] = float(net.link_cost_integral(v).sum())
             return metrics
 
-        return {
+        metrics = {
             "tstt": tstt,
             "sptt": sptt,
             "relative_gap": excess / tstt if tstt > 0 else 0.0,
@@ -138,3 +149,18 @@ class Evaluator:
             "node_balance_residual": balance,
             "feasible": 1.0,
         }
+        if self._stoch is not None:
+            try:
+                v_hat = self._stoch.load(costs, self.scenario.demand, self._theta)
+            except RuntimeError:
+                # The pinned loader cannot certify at these costs (e.g.
+                # float-saturated labels severing every Dial-efficient path):
+                # censor the residual, never raise out of the scoring loop.
+                metrics["sue_fixed_point_residual"] = float("nan")
+            else:
+                metrics["sue_fixed_point_residual"] = (
+                    float(np.abs(v - v_hat).sum() / self._total_demand)
+                    if self._total_demand > 0
+                    else 0.0
+                )
+        return metrics

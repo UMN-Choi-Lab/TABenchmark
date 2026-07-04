@@ -1,10 +1,11 @@
-"""TABenchmark quickstart: certified comparison of three model vintages.
+"""TABenchmark quickstart: certified comparison of five model vintages.
 
 Runs on the built-in Braess scenario (no download needed):
 
 * ``aon``  — all-or-nothing, the capacity-blind pre-1956 practice
 * ``msa``  — method of successive averages
 * ``fw``   — Frank-Wolfe (LeBlanc et al. 1975)
+* ``cfw``/``bfw`` — conjugate direction FW (Mitradjieva & Lindberg 2013)
 * a black-box callable wrapper, certified by the same external gap (P1)
 
 Usage: python demos/demo_quickstart.py
@@ -14,8 +15,10 @@ import numpy as np
 
 from tabench import (
     AllOrNothingModel,
+    BiconjugateFrankWolfeModel,
     Budget,
     CallableModel,
+    ConjugateFrankWolfeModel,
     FrankWolfeModel,
     MSAModel,
     braess_scenario,
@@ -35,6 +38,8 @@ def main() -> None:
         AllOrNothingModel(),
         MSAModel(),
         FrankWolfeModel(),
+        ConjugateFrankWolfeModel(),
+        BiconjugateFrankWolfeModel(),
         CallableModel(fn=naive_surrogate, name="toy-surrogate", seedable=True),
     ]
 

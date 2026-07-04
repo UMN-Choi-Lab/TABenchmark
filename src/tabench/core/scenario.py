@@ -73,6 +73,15 @@ class Network:
             )
         if np.any(self.capacity <= 0):
             raise ValueError(f"Network '{self.name}': capacity must be strictly positive")
+        if np.any(self.b < 0):
+            raise ValueError(
+                f"Network '{self.name}': BPR coefficient b (alpha) must be nonnegative "
+                "(negative b makes link costs decrease in flow, voiding Beckmann convexity)"
+            )
+        if np.any(self.power < 0):
+            raise ValueError(
+                f"Network '{self.name}': BPR exponent power (beta) must be nonnegative"
+            )
         if np.any((self.init_node < 1) | (self.init_node > self.n_nodes)) or np.any(
             (self.term_node < 1) | (self.term_node > self.n_nodes)
         ):
@@ -99,6 +108,31 @@ class Network:
         ratio = v / self.capacity
         variable = self.free_flow_time * (v + self.b * v * ratio**self.power / (self.power + 1.0))
         return variable + self.fixed_cost * v
+
+    def link_cost_derivative(self, link_flows: np.ndarray) -> np.ndarray:
+        """Per-link derivative dt_a/dv_a — the diagonal Hessian of the Beckmann
+        objective, used by conjugate-direction Frank-Wolfe variants.
+
+        For BPR, t'(v) = fft * b * p * (v/cap)^(p-1) / cap. Edge cases: p = 0
+        or b = 0 gives exactly 0 (constant cost); p = 1 gives the constant
+        fft*b/cap (numpy 0**0 = 1); 0 < p < 1 has an unbounded derivative at
+        v = 0, where H is defined as 0 (it is only a conjugacy scale) and
+        0**(negative) is never evaluated.
+        """
+        v = np.maximum(np.asarray(link_flows, dtype=np.float64), 0.0)
+        ratio = v / self.capacity
+        exponent = self.power - 1.0
+        coeff = self.free_flow_time * self.b * self.power / self.capacity
+        # Zero wherever the analytic value is 0 (p or b zero) or defined as 0
+        # (v = 0 with p < 1) — without ever evaluating 0**(negative). For
+        # 0 < p < 1 at subnormal positive flows the analytic value exceeds
+        # float64 range: clamp to the largest finite float (H is only a
+        # conjugacy scale) so no inf/RuntimeWarning ever escapes.
+        zero = (coeff == 0.0) | ((exponent < 0) & (ratio <= 0.0))
+        safe = np.where(zero, 1.0, ratio)
+        with np.errstate(over="ignore"):
+            h = np.minimum(coeff * safe**exponent, np.finfo(np.float64).max)
+        return np.where(zero, 0.0, h)
 
 
 @dataclass(frozen=True)
@@ -139,6 +173,12 @@ class Scenario:
     ``family`` names the scenario lineage used by the fairness gate (P7):
     a learned model whose ``trained_on`` includes this family is refused
     evaluation on this scenario.
+
+    ``sue_theta`` (optional) makes this an SUE task: the logit dispersion of
+    the pinned Dial-STOCH loading map, in 1/(native cost unit) — so its
+    meaning is network-specific (P9; scenario cards state the unit). It is
+    task data, never a model factor, and it is content-hashed when set (two
+    scenarios differing only in theta are different benchmark instances).
     """
 
     name: str
@@ -146,6 +186,7 @@ class Scenario:
     demand: Demand
     reference: ReferenceSolution | None = None
     family: str = field(default="")
+    sue_theta: float | None = None
 
     def __post_init__(self) -> None:
         if self.demand.n_zones != self.network.n_zones:
@@ -155,6 +196,13 @@ class Scenario:
             )
         if not self.family:
             object.__setattr__(self, "family", self.name)
+        if self.sue_theta is not None and not (
+            np.isfinite(self.sue_theta) and self.sue_theta > 0
+        ):
+            raise ValueError(
+                f"Scenario '{self.name}': sue_theta must be finite and > 0, "
+                f"got {self.sue_theta!r}"
+            )
 
     def content_hash(self) -> str:
         """SHA-256 over the canonical serialization of all scored content (P2)."""
@@ -177,4 +225,8 @@ class Scenario:
         ):
             h.update(label.encode())
             h.update(_as_f64(arr).tobytes())
+        # Conditional, appended last: scenarios without a theta hash exactly
+        # as before this field existed (pinned by a golden-hash test).
+        if self.sue_theta is not None:
+            h.update(f"sue_theta={float(self.sue_theta)!r};".encode())
         return h.hexdigest()

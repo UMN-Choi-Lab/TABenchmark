@@ -82,12 +82,18 @@ VERDICT_MARK = {
     "partial_match": "partial",
 }
 
-# bibkeys whose method (or formulation) ships in the current release
+# bibkeys whose method (or formulation) ships, as (version, description)
 SHIPPED = {
-    "frank1956algorithm": "Frank-Wolfe solver",
-    "leblanc1975efficient": "Frank-Wolfe solver",
-    "wardrop1952some": "equilibrium conditions in the certified gap",
-    "beckmann1956studies": "Beckmann objective in metrics",
+    "frank1956algorithm": ("v0", "Frank-Wolfe solver"),
+    "leblanc1975efficient": ("v0", "Frank-Wolfe solver"),
+    "wardrop1952some": ("v0", "equilibrium conditions in the certified gap"),
+    "beckmann1956studies": ("v0", "Beckmann objective in metrics"),
+    "mitradjieva2013stiff": ("v0.x", "conjugate and bi-conjugate FW solvers"),
+    "boyce2004convergence": ("v0.x", "convergence target protocol (Budget.target_relative_gap)"),
+    "dial1971probabilistic": ("v0.x", "STOCH loading map (models/_stoch.py)"),
+    "fisk1980some": ("v0.x", "logit SUE task (fixed-point certificate, ADR-001)"),
+    "powell1982convergence": ("v0.x", "MSA-SUE solver step sizes"),
+    "stabler2016transportation": ("v0.x", "checksummed TNTP fetcher + 4 registered networks"),
 }
 
 
@@ -186,10 +192,11 @@ def write_roadmap_md(refs: list[dict]) -> None:
         "[REFERENCES.md](REFERENCES.md)), staged by version. Checked items ship in the",
         "current release (v0 also ships MSA and all-or-nothing as baselines).",
         "",
-        "Version staging: **v0** core harness + link-based solvers (this release) ->",
-        "**v0.x** accelerated FW, logit SUE, plugin registry, profiles -> **v1** bush-based",
-        "solvers, SUE variants, static extensions, T2 estimation track -> **v2** DTA,",
-        "network loading, engine adapters, day-to-day, T3 interventions.",
+        "Version staging: **v0** core harness + link-based solvers -> **v0.x** accelerated",
+        "FW, logit SUE, Anaheim/Barcelona/Winnipeg rungs (this release; plugin registry and",
+        "profiles still open) -> **v1** bush-based solvers, SUE variants, static extensions,",
+        "T2 estimation track -> **v2** DTA, network loading, engine adapters, day-to-day,",
+        "T3 interventions.",
     ]
 
     for family in FAMILY_TITLES:
@@ -203,7 +210,7 @@ def write_roadmap_md(refs: list[dict]) -> None:
         for e in tier1:
             shipped = SHIPPED.get(e.get("bibkey"))
             mark = "x" if shipped else " "
-            suffix = f" — **shipped in v0** ({shipped})" if shipped else ""
+            suffix = f" — **shipped in {shipped[0]}** ({shipped[1]})" if shipped else ""
             role = e.get("implement_as") or ""
             lines.append(
                 f"- [{mark}] {_authors_short(e)} ({e.get('year', '?')}) — "

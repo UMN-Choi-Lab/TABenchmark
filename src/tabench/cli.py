@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import sys
 import urllib.error
 from pathlib import Path
@@ -18,6 +19,7 @@ from .models.base import MODEL_REGISTRY
 def _cmd_list(_: argparse.Namespace) -> int:
     print("Scenarios:")
     print("  braess        (built-in, analytic UE oracle)")
+    print("  tworoute      (built-in, analytic logit-SUE oracle)")
     for key, spec in sorted(REGISTRY.items()):
         print(f"  {key:<14}({spec.repo_dir}, download-on-demand)")
     print("\nModels:")
@@ -43,6 +45,7 @@ def _cmd_fetch(args: argparse.Namespace) -> int:
 def _cmd_run(args: argparse.Namespace) -> int:
     scenario_key = args.scenario
     iterations = args.iterations
+    card: dict = {}
     if args.config:
         card = yaml.safe_load(Path(args.config).read_text())
         if not isinstance(card, dict) or "scenario" not in card:
@@ -51,11 +54,19 @@ def _cmd_run(args: argparse.Namespace) -> int:
         if scenario_key is None:
             scenario_key = card["scenario"]
         if iterations is None:
-            iterations = int(card.get("budgets", {}).get("iterations", 100))
+            iterations = int((card.get("budgets") or {}).get("iterations", 100))
     scenario_key = scenario_key or "braess"
     iterations = iterations or 100
 
     scenario = load_scenario(scenario_key)
+    sue = card.get("sue")
+    if isinstance(sue, dict) and "theta" in sue:
+        theta = float(sue["theta"])
+        if theta != scenario.sue_theta:
+            # A different theta is a different benchmark instance (the hash
+            # changes) — and any built-in reference oracle was certified for
+            # the old one, so drop it rather than mis-score RMSE against it.
+            scenario = dataclasses.replace(scenario, sue_theta=theta, reference=None)
     models = []
     for name in args.models.split(","):
         name = name.strip()
@@ -63,7 +74,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
             print(f"Unknown model {name!r}; see `tabench list`", file=sys.stderr)
             return 2
         models.append(MODEL_REGISTRY[name]())
-    budget = Budget(iterations=iterations)
+    budget = Budget(iterations=iterations, target_relative_gap=args.target_gap)
     result = run_experiment(
         scenario, models, budget, seed=args.seed, out_dir=args.out
     )
@@ -72,13 +83,24 @@ def _cmd_run(args: argparse.Namespace) -> int:
         last_by_model[row["model"]] = row
     print(f"Scenario {scenario.name} (hash {scenario.content_hash()[:16]}), "
           f"budget {iterations} iterations, seed {args.seed}\n")
+    is_sue = scenario.sue_theta is not None
     header = f"{'model':<10}{'iters':>6}{'rel. gap':>14}{'AEC':>14}{'Beckmann obj.':>18}"
+    if is_sue:
+        header += f"{'SUE residual':>16}"
     print(header)
     print("-" * len(header))
     for name, row in sorted(last_by_model.items()):
-        print(
+        line = (
             f"{name:<10}{row['iterations']:>6}{row['relative_gap']:>14.3e}"
             f"{row['average_excess_cost']:>14.3e}{row['beckmann_objective']:>18.6e}"
+        )
+        if is_sue:
+            line += f"{row['sue_fixed_point_residual']:>16.3e}"
+        print(line)
+    if is_sue:
+        print(
+            "\nSUE task: ranked by the certified SUE residual; the UE columns "
+            "are descriptive (docs/design/adr-001)."
         )
     if args.out:
         print(f"\nWrote CSV + manifest to {args.out}/")
@@ -105,6 +127,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_run.add_argument("--models", default="aon,msa,fw", help="Comma-separated model names")
     p_run.add_argument("--iterations", type=int, default=None)
+    p_run.add_argument(
+        "--target-gap",
+        type=float,
+        default=None,
+        dest="target_gap",
+        help="Convergence early-stop on the self-monitored relative gap "
+        "(Boyce et al. 2004 recommend 1e-4); iterations still bound the run",
+    )
     p_run.add_argument("--seed", type=int, default=0)
     p_run.add_argument("--out", default=None, help="Directory for CSV + manifest output")
 
@@ -117,6 +147,9 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     except urllib.error.URLError as exc:
         print(f"download failed (network unavailable?): {exc}", file=sys.stderr)
+        return 2
+    except yaml.YAMLError as exc:
+        print(f"error: invalid scenario card YAML: {exc}", file=sys.stderr)
         return 2
     except (KeyError, ValueError, FileNotFoundError) as exc:
         print(f"error: {exc}", file=sys.stderr)

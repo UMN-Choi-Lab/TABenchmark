@@ -41,6 +41,8 @@ model             certified rel. gap  feasible
 aon                        1.912e-01         1
 msa                        1.577e-03         1
 fw                         7.188e-14         1
+cfw                       -2.060e-16         1
+bfw                       -2.060e-16         1
 toy-surrogate                    nan         0   <- black box failed the demand
                                                     audit: censored, not scored
 ```
@@ -48,7 +50,8 @@ toy-surrogate                    nan         0   <- black box failed the demand
 Run the classic Sioux Falls instance (data downloaded on demand, checksummed):
 
 ```bash
-tabench run --scenario siouxfalls --models aon,msa,fw --iterations 300 --out results/
+tabench run --scenario siouxfalls --models fw,cfw,bfw --iterations 300 --out results/
+tabench run --scenario winnipeg --models bfw --iterations 500 --target-gap 1e-4 --out results/
 tabench list                            # available scenarios and models
 ```
 
@@ -64,20 +67,32 @@ result = run_experiment(load_scenario("siouxfalls"), [model], Budget(iterations=
 (If `trained_on` intersects the evaluation scenario's lineage, the harness refuses to
 run it — that's the point.)
 
-## What ships in v0
+## What ships in v0.x
 
 | Component | Contents |
 |---|---|
-| Core | `Scenario` (frozen, content-hashed), `Capabilities`, `Budget`, `Trace`, spawn-key RNG schema |
-| Data | Defensive TNTP parser, commit-pinned checksummed fetcher, per-network units metadata, built-in analytic Braess scenario |
-| Models | All-or-nothing, MSA, Frank–Wolfe (exact line search), black-box `CallableModel` adapter |
-| Metrics | Certified relative gap / average excess cost / Beckmann objective, feasibility audit, flow RMSE vs best-known |
+| Core | `Scenario` (frozen, content-hashed, optional SUE θ), `Capabilities`, `Budget` (incl. Boyce-style convergence target), `Trace`, spawn-key RNG schema |
+| Data | Defensive TNTP parser, commit-pinned checksummed fetcher, per-network units metadata; scenario ladder Braess → Sioux Falls → Anaheim → Barcelona → Winnipeg (+ analytic two-route SUE anchor) |
+| Models | All-or-nothing, MSA, Frank–Wolfe, conjugate & bi-conjugate FW (Mitradjieva & Lindberg 2013), logit SUE via Dial-STOCH + MSA, black-box `CallableModel` adapter |
+| Metrics | Certified relative gap / average excess cost / Beckmann objective, SUE fixed-point residual ([ADR-001](docs/design/adr-001-logit-sue-dial-certificate.md)), feasibility audit, flow RMSE vs best-known |
 | Observe | `FullOD`, `LinkCounts` (sensor mask × periods × noise), Hazelton identifiability check |
 | Experiments | Grid runner, CSV results, full provenance manifests |
-| Tests | Analytic Braess UE oracle; Sioux Falls regression against the published best-known solution |
+| Tests | Analytic Braess UE + two-route logit-SUE oracles; best-known-solution regressions on Sioux Falls, Anaheim, Barcelona, Winnipeg; conjugacy-identity and golden-hash regressions |
 
-The staged roadmap toward the full canon (bush-based solvers, SUE, DTA, day-to-day,
-estimation tasks, engine adapters) is in [docs/ROADMAP.md](docs/ROADMAP.md).
+The certified solver ladder on Winnipeg (147 zones, 2,836 links; iterations to
+self-monitored relative gap 1e-4, then the externally certified gap at a fixed
+100-iteration budget):
+
+| model | iters to RG 1e-4 | certified gap @ 100 iters |
+|---|---|---|
+| aon | – | 3.2e-01 |
+| msa | – | 1.4e-03 |
+| fw  | 161 | 2.2e-04 |
+| cfw | 70 | 5.6e-05 |
+| bfw | 57 | 2.8e-05 |
+
+The staged roadmap toward the full canon (bush-based solvers, probit SUE, DTA,
+day-to-day, estimation tasks, engine adapters) is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Data licensing
 

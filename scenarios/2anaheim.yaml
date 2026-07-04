@@ -1,0 +1,18 @@
+# Scenario ladder rung 2: Anaheim (38 zones, 416 nodes, 914 links).
+# First rung where zone centroids carry no through traffic (first_thru_node=39).
+scenario: anaheim
+source: tntp
+family: tntp-anaheim
+tasks: [t1_equilibrium]
+oracle:
+  kind: best-known
+  file: Anaheim_flow.tntp
+  aec: 1e-15
+  note: >
+    Best-known UE link flows from TransportationNetworks; certifies at
+    relative gap 5.7e-15 under tabench's pure-BPR cost model.
+units:
+  free_flow_time: minutes
+  demand: vehicle trips (total 104694.4)
+budgets:
+  iterations: 500

@@ -10,21 +10,15 @@ skipped automatically when the data cannot be fetched.
 
 import numpy as np
 import pytest
+from conftest import load_or_skip
 
 from tabench import Budget, Evaluator, FrankWolfeModel, RngBundle, Trace
-from tabench.data import load_scenario
 
 
 @pytest.fixture(scope="module")
 def scenario():
-    try:
-        return load_scenario("siouxfalls")
-    except Exception as exc:  # download/offline failure -> skip, checksum error -> fail
-        from tabench.data import ChecksumError
-
-        if isinstance(exc, ChecksumError):
-            raise
-        pytest.skip(f"Sioux Falls data unavailable: {exc}")
+    # Offline -> skip; checksum mismatch or TABENCH_REQUIRE_DATA=1 -> fail.
+    return load_or_skip("siouxfalls")
 
 
 def test_parsed_dimensions(scenario):

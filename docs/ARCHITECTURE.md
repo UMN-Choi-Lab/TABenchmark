@@ -97,10 +97,13 @@ engine images).
   post-replications; metric = certified relative gap versus budget, reported as
   progress curves and Moré–Wild-style data profiles; regression against best-known
   objectives.
-- **Stochastic track** (SUE, day-to-day, simulators, ML surrogates): M macroreplications
-  with a fixed random-stream schema, N independent post-evaluations for unbiased
-  estimates at recommended solutions, bootstrap confidence intervals (never parametric),
-  mean/quantile progress curves and α-solve-time solvability profiles.
+- **Stochastic track** (simulation-based SUE such as probit, day-to-day, simulators, ML
+  surrogates): M macroreplications with a fixed random-stream schema, N independent
+  post-evaluations for unbiased estimates at recommended solutions, bootstrap confidence
+  intervals (never parametric), mean/quantile progress curves and α-solve-time
+  solvability profiles. (Logit SUE via Dial's closed-form loading is deterministic —
+  "stochastic" there refers to traveler perception — and runs on the deterministic
+  track; see docs/design/adr-001.)
 
 Models that cannot certify equilibrium are **first-class, not excluded**: they appear
 with externally computed gap-at-budget where feasible-flow output permits, as censored
@@ -190,6 +193,12 @@ Experiment= (Task × Model) grid runner: macroreps -> records -> profiles
 - **Average excess cost** `AEC(v) = (TSTT − SPTT) / total demand` (the convention used by
   the TransportationNetworks best-known solutions).
 - **Beckmann objective** `B(v) = Σ_a ∫₀^{v_a} t_a(s) ds`, closed-form for BPR.
+- **SUE fixed-point residual** (scenarios with `sue_theta` set):
+  `‖v − L(t(v), θ)‖₁ / total demand`, with `L` the pinned Dial-STOCH loading map —
+  misallocated link-traversals per traveler, zero exactly at the logit SUE. Fisk's
+  objective cannot serve here (its entropy term needs path flows, which link flows do
+  not determine). On SUE tasks this ranks; UE columns remain descriptive. See
+  docs/design/adr-001.
 - Flow errors vs oracle: RMSE, NRMSE (normalized by mean oracle flow).
 - Distributional: log-likelihood of held-out per-period counts (MC-estimated where
   exact evaluation is infeasible), CRPS, 95%-interval empirical coverage.
@@ -210,7 +219,8 @@ TABenchmark/
 │   │                      # factors.py, budget.py, results.py, rng.py
 │   ├── data/              # tntp.py (defensive parser), fetcher.py (checksums+citations),
 │   │                      # registry.py (networks + units metadata + defects), builtin.py
-│   ├── models/            # base.py, aon.py, msa.py, frank_wolfe.py
+│   ├── models/            # base.py, aon.py, msa.py, frank_wolfe.py (FW/CFW/BFW),
+│   │   │                  # sue_logit.py, _paths.py, _stoch.py (Dial loading map)
 │   │   └── adapters/      # callable_adapter.py (planned: subprocess.py, docker.py)
 │   ├── observe/           # data levels + identifiability checks
 │   ├── metrics/           # gaps.py, flows.py (planned: distributional.py)
@@ -226,9 +236,10 @@ TABenchmark/
 planned for v0.x.)
 
 Scenario ladder (BO4Mob convention — strictly increasing scale):
-`0braess` (hand-checkable analytic UE) → `1siouxfalls` (24z/76l) →
-`2anaheim`/`2easternmass` → `3barcelona`/`3winnipeg`/`3chicagosketch` →
-`4chicagoregional`/`4philadelphia`/… (with per-scenario budget tables).
+`0braess` (hand-checkable analytic UE) / `0tworoute-sue` (analytic logit-SUE) →
+`1siouxfalls` (24z/76l) → `2anaheim` (38z/914l) → `3barcelona` (110z/2522l) →
+`4winnipeg` (147z/2836l) → planned: `chicagosketch` (needs the fixed-cost-positive
+link relaxation), `chicagoregional`, … (with per-scenario budget tables).
 
 ---
 
@@ -265,9 +276,12 @@ Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 172 refe
   callable black-box adapter; certified gap/AEC/Beckmann metrics; LinkCounts/FullOD
   observation levels with identifiability check; experiment runner with manifests; tests
   incl. analytic Braess UE and the Sioux Falls best-known-objective regression.
-- **v0.x:** conjugate/bi-conjugate FW, gradient projection (path-based), Dial's STOCH and
-  logit SUE via MSA (route-choice components), progress-curve/solvability-profile
-  plotting, `tabench validate` conformance suite, entry-point plugin registry.
+- **v0.x (this release):** conjugate/bi-conjugate FW (shipped); Dial's STOCH and logit
+  SUE via MSA with the fixed-point certificate (shipped, docs/design/adr-001); Anaheim,
+  Barcelona, Winnipeg scenario rungs with best-known oracles (shipped); convergence
+  target protocol per Boyce et al. 2004 (shipped). Still open in v0.x: gradient
+  projection (path-based), progress-curve/solvability-profile plotting, `tabench
+  validate` conformance suite, entry-point plugin registry.
 - **v1:** Algorithm B / TAPAS-class bush solvers; probit SUE; elastic demand & combined
   models; T2 estimation track with Hazelton-style samplers as validated baselines;
   frozen v1.0 core grid (3 networks × 4 data levels × T1/T2) with budget tables.

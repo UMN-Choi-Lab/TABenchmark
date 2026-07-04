@@ -64,7 +64,7 @@ class MSAModel(TrafficAssignmentModel):
             )
             trace.record(v, coords, relative_gap=gap, tstt=tstt, sptt=sptt)
 
-            if budget.exhausted(coords):
+            if budget.exhausted(coords) or budget.target_met(gap):
                 break
             v = v + (y - v) / k
 

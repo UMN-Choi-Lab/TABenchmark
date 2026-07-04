@@ -10,7 +10,21 @@ import numpy as np
 
 from ..core.scenario import Demand, Network, ReferenceSolution, Scenario
 
-__all__ = ["braess_scenario"]
+__all__ = ["braess_scenario", "two_route_scenario"]
+
+_EPS = 1e-6
+
+
+def _bpr_linear(intercept: float, slope: float) -> tuple[float, float, float]:
+    """Return (fft, b, capacity) so that t(v) = intercept + slope*v (power=1).
+
+    Zero intercepts use a tiny fft = 1e-6 (Network requires fft > 0); the
+    induced equilibrium error is far below test tolerances.
+    """
+    fft = intercept if intercept > 0 else _EPS
+    cap = 1.0
+    b = slope * cap / fft
+    return fft, b, cap
 
 
 def braess_scenario(demand: float = 6.0) -> Scenario:
@@ -33,24 +47,15 @@ def braess_scenario(demand: float = 6.0) -> Scenario:
     For the zero-intercept links a tiny ``fft = 1e-6`` is used; the induced
     error in the equilibrium is far below test tolerances.
     """
-    eps = 1e-6
-
-    def bpr_linear(intercept: float, slope: float) -> tuple[float, float, float]:
-        """Return (fft, b, capacity) so that t(v) = intercept + slope*v (power=1)."""
-        fft = intercept if intercept > 0 else eps
-        cap = 1.0
-        b = slope * cap / fft
-        return fft, b, cap
-
     # Link order: 1->3, 1->4, 3->4, 3->2, 4->2
     init = np.array([1, 1, 3, 3, 4], dtype=np.int64)
     term = np.array([3, 4, 4, 2, 2], dtype=np.int64)
     params = [
-        bpr_linear(0.0, 10.0),  # 1->3: 10v
-        bpr_linear(50.0, 1.0),  # 1->4: 50 + v
-        bpr_linear(10.0, 1.0),  # 3->4: 10 + v
-        bpr_linear(50.0, 1.0),  # 3->2: 50 + v
-        bpr_linear(0.0, 10.0),  # 4->2: 10v
+        _bpr_linear(0.0, 10.0),  # 1->3: 10v
+        _bpr_linear(50.0, 1.0),  # 1->4: 50 + v
+        _bpr_linear(10.0, 1.0),  # 3->4: 10 + v
+        _bpr_linear(50.0, 1.0),  # 3->2: 50 + v
+        _bpr_linear(0.0, 10.0),  # 4->2: 10v
     ]
     fft = np.array([p[0] for p in params])
     b = np.array([p[1] for p in params])
@@ -89,4 +94,70 @@ def braess_scenario(demand: float = 6.0) -> Scenario:
         demand=Demand(matrix=od),
         reference=reference,
         family="builtin-braess",
+    )
+
+
+def two_route_scenario(demand: float = 4.0, sue_theta: float | None = 0.5) -> Scenario:
+    """Two disjoint 2-link routes: the analytic anchor for the logit-SUE task.
+
+    Nodes: 1 = origin zone, 2 = destination zone, 3 and 4 = intersections.
+    Route A = 1->3->2 with cost ``c_A = 2 + f_A``; route B = 1->4->2 with
+    cost ``c_B = 1.5 + 2 f_B`` (linear latencies via BPR power=1; parallel
+    links are forbidden by Network validation, hence the 2-link routes).
+
+    The first legs cost a constant 1, so ``r(3) = r(4) = 1`` is below every
+    route cost and BOTH routes are Dial-efficient at all nonnegative flows:
+    Dial's loading reduces exactly to a binary logit, and the SUE fixed point
+    to the scalar equation ``f_A = D / (1 + exp(theta (c_A(f_A) -
+    c_B(D - f_A))))`` — solvable by brentq in tests, no trusted digits.
+    The deterministic UE (theta -> infinity limit) puts f_A = 2.5 at D = 4.
+    """
+    # Link order: 1->3, 3->2, 1->4, 4->2
+    init = np.array([1, 3, 1, 4], dtype=np.int64)
+    term = np.array([3, 2, 4, 2], dtype=np.int64)
+    params = [
+        _bpr_linear(1.0, 0.0),  # 1->3: constant 1
+        _bpr_linear(1.0, 1.0),  # 3->2: 1 + f
+        _bpr_linear(1.0, 0.0),  # 1->4: constant 1
+        _bpr_linear(0.5, 2.0),  # 4->2: 0.5 + 2f
+    ]
+    fft = np.array([p[0] for p in params])
+    b = np.array([p[1] for p in params])
+    cap = np.array([p[2] for p in params])
+
+    network = Network(
+        name="two-route",
+        n_nodes=4,
+        n_zones=2,
+        first_thru_node=1,
+        init_node=init,
+        term_node=term,
+        capacity=cap,
+        length=np.zeros(4),
+        free_flow_time=fft,
+        b=b,
+        power=np.ones(4),
+        toll=np.zeros(4),
+        link_type=np.ones(4, dtype=np.int64),
+        units=(("time", "abstract"), ("flow", "abstract")),
+    )
+
+    od = np.zeros((2, 2))
+    od[0, 1] = demand
+    reference = None
+    if demand == 4.0 and sue_theta == 0.5:
+        f_a = 2.2990959494  # scalar logit fixed point; tests recompute via brentq
+        reference = ReferenceSolution(
+            link_flows=np.array([f_a, f_a, 4.0 - f_a, 4.0 - f_a]),
+            source="analytic",
+            note="Binary-logit SUE fixed point at theta=0.5, demand=4.",
+        )
+
+    return Scenario(
+        name="tworoute",
+        network=network,
+        demand=Demand(matrix=od),
+        reference=reference,
+        family="builtin-tworoute",
+        sue_theta=sue_theta,
     )

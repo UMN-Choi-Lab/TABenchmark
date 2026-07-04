@@ -1,0 +1,18 @@
+# Scenario ladder rung 3: Barcelona (110 zones, 1020 nodes, 2522 links).
+# Mixed BPR powers (0 on connectors, up to 16.83) exercise heterogeneous costs.
+scenario: barcelona
+source: tntp
+family: tntp-barcelona
+tasks: [t1_equilibrium]
+oracle:
+  kind: best-known
+  file: Barcelona_flow.tntp
+  aec: 2e-14
+  note: >
+    Best-known UE link flows; the published optimal Beckmann objective
+    1265654.92203176 is reproduced to all digits by tabench's implementation.
+units:
+  time: native (upstream units undocumented)
+  demand: native units (total 184679.561)
+budgets:
+  iterations: 500

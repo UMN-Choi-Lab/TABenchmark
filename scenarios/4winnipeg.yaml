@@ -1,0 +1,18 @@
+# Scenario ladder rung 4: Winnipeg (147 zones, 1052 nodes, 2836 links).
+# Largest v0 rung; capacity is 1 on all links with b encoding B/capacity^power.
+scenario: winnipeg
+source: tntp
+family: tntp-winnipeg
+tasks: [t1_equilibrium]
+oracle:
+  kind: best-known
+  file: Winnipeg_flow.tntp
+  aec: 2.8e-15
+  note: >
+    Best-known UE link flows; the published optimal Beckmann objective
+    827911.494629963 is reproduced to all digits by tabench's implementation.
+units:
+  time: native (upstream units undocumented)
+  demand: native units (total 64784)
+budgets:
+  iterations: 500

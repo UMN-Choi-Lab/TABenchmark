@@ -1,0 +1,19 @@
+# Scenario ladder rung 0 (SUE variant): two disjoint routes, analytic
+# binary-logit fixed point. The theta below is part of the task definition
+# and is content-hashed (a different theta is a different instance).
+scenario: tworoute
+source: builtin
+family: builtin-tworoute
+tasks: [t1_sue]
+sue:
+  theta: 0.5
+  theta_units: 1 / native time unit (abstract here; Sioux Falls would be 1/0.01h = 100/h)
+  loading: dial-stoch  # pinned map - Dial double-pass, origin-based efficiency, strict ties
+oracle:
+  kind: analytic
+  link_flows: [2.2990959494, 2.2990959494, 1.7009040506, 1.7009040506]
+  note: >
+    Scalar logit fixed point f_A = D / (1 + exp(theta (c_A - c_B))); tests
+    recompute it with brentq rather than trusting these digits.
+budgets:
+  iterations: 500

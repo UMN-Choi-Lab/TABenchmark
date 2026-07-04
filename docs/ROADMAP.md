@@ -4,10 +4,11 @@ The tier-1 canon (57 must-implement references from
 [REFERENCES.md](REFERENCES.md)), staged by version. Checked items ship in the
 current release (v0 also ships MSA and all-or-nothing as baselines).
 
-Version staging: **v0** core harness + link-based solvers (this release) ->
-**v0.x** accelerated FW, logit SUE, plugin registry, profiles -> **v1** bush-based
-solvers, SUE variants, static extensions, T2 estimation track -> **v2** DTA,
-network loading, engine adapters, day-to-day, T3 interventions.
+Version staging: **v0** core harness + link-based solvers -> **v0.x** accelerated
+FW, logit SUE, Anaheim/Barcelona/Winnipeg rungs (this release; plugin registry and
+profiles still open) -> **v1** bush-based solvers, SUE variants, static extensions,
+T2 estimation track -> **v2** DTA, network loading, engine adapters, day-to-day,
+T3 interventions.
 
 ## Foundations — v0-v1 (formulations underpin metrics)
 
@@ -22,8 +23,8 @@ network loading, engine adapters, day-to-day, T3 interventions.
 
 - [x] Frank & Wolfe (1956) — *An Algorithm for Quadratic Programming* (white-box solver) — **shipped in v0** (Frank-Wolfe solver)
 - [x] LeBlanc et al. (1975) — *An Efficient Approach to Solving the Road Network Equilibrium Traffic Assignment Problem* (white-box solver) — **shipped in v0** (Frank-Wolfe solver)
-- [ ] Boyce et al. (2004) — *Convergence of Traffic Assignments: How Much Is Enough?* (metric/protocol)
-- [ ] Mitradjieva & Lindberg (2013) — *The Stiff Is Moving—Conjugate Direction Frank-Wolfe Methods with Applications to Traffic Assignment* (white-box solver)
+- [x] Boyce et al. (2004) — *Convergence of Traffic Assignments: How Much Is Enough?* (metric/protocol) — **shipped in v0.x** (convergence target protocol (Budget.target_relative_gap))
+- [x] Mitradjieva & Lindberg (2013) — *The Stiff Is Moving—Conjugate Direction Frank-Wolfe Methods with Applications to Traffic Assignment* (white-box solver) — **shipped in v0.x** (conjugate and bi-conjugate FW solvers)
 
 ## Path/bush-based UE algorithms — v1
 
@@ -34,10 +35,10 @@ network loading, engine adapters, day-to-day, T3 interventions.
 
 ## Stochastic UE & route choice — v0.x (Dial, logit-SUE MSA) / v1 (probit)
 
-- [ ] Dial (1971) — *A probabilistic multipath traffic assignment model which obviates path enumeration* (network-loading component)
+- [x] Dial (1971) — *A probabilistic multipath traffic assignment model which obviates path enumeration* (network-loading component) — **shipped in v0.x** (STOCH loading map (models/_stoch.py))
 - [ ] Daganzo & Sheffi (1977) — *On stochastic models of traffic assignment* (white-box solver)
-- [ ] Fisk (1980) — *Some developments in equilibrium traffic assignment* (white-box solver)
-- [ ] Powell & Sheffi (1982) — *The convergence of equilibrium algorithms with predetermined step sizes* (white-box solver)
+- [x] Fisk (1980) — *Some developments in equilibrium traffic assignment* (white-box solver) — **shipped in v0.x** (logit SUE task (fixed-point certificate, ADR-001))
+- [x] Powell & Sheffi (1982) — *The convergence of equilibrium algorithms with predetermined step sizes* (white-box solver) — **shipped in v0.x** (MSA-SUE solver step sizes)
 
 ## System optimum & pricing — v1
 
@@ -98,7 +99,7 @@ network loading, engine adapters, day-to-day, T3 interventions.
 - [ ] Spiess (1990) — *A gradient approach for the O-D matrix adjustment problem* (white-box solver)
 - [ ] Yang et al. (1992) — *Estimation of origin-destination matrices from link traffic counts on congested networks* (white-box solver)
 - [ ] Balakrishna et al. (2007) — *Offline calibration of dynamic traffic assignment: Simultaneous demand-and-supply estimation* (black-box wrapper)
-- [ ] Stabler et al. (2016) — *Transportation Networks for Research* (data/scenario)
+- [x] Stabler et al. (2016) — *Transportation Networks for Research* (data/scenario) — **shipped in v0.x** (checksummed TNTP fetcher + 4 registered networks)
 - [ ] Eckman et al. (2023) — *SimOpt: A testbed for simulation-optimization experiments* (metric/protocol)
 - [ ] Ryu et al. (2025) — *BO4Mob: Bayesian Optimization Benchmarks for High-Dimensional Urban Mobility Problem* (data/scenario)
 

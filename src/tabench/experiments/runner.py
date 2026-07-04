@@ -49,8 +49,10 @@ _CSV_FIELDS = [
     "beckmann_objective",
     "node_balance_residual",
     "feasible",
+    "sue_fixed_point_residual",
     "flow_rmse_vs_reference",
     "self_relative_gap",
+    "self_sue_residual",
 ]
 
 
@@ -100,6 +102,7 @@ def _score_bundle(
                 rmse(state.link_flows, reference.link_flows) if reference is not None else ""
             ),
             "self_relative_gap": state.self_report.get("relative_gap", ""),
+            "self_sue_residual": state.self_report.get("sue_fixed_point_residual", ""),
         }
         rows.append(row)
     return rows
@@ -145,6 +148,7 @@ def run_experiment(
         "scenario": scenario.name,
         "scenario_hash": scenario.content_hash(),
         "scenario_family": scenario.family,
+        "scenario_sue_theta": scenario.sue_theta,
         "models": {
             model.name: {
                 "capabilities": {
@@ -162,6 +166,7 @@ def run_experiment(
             "iterations": budget.iterations,
             "sp_calls": budget.sp_calls,
             "wall_seconds": budget.wall_seconds,
+            "target_relative_gap": budget.target_relative_gap,
         },
         "seed": seed,
         "macroreps": macroreps,
@@ -199,17 +204,23 @@ def run_experiment(
         out = Path(out_dir)
         out.mkdir(parents=True, exist_ok=True)
         # Encode the experiment factors in the file name (BO4Mob convention)
-        # so distinct runs can never silently overwrite each other.
+        # so distinct runs can never silently overwrite each other. The short
+        # content hash covers every instance-defining scenario field (e.g.
+        # sue_theta), present and future.
         budget_part = "-".join(
             f"{axis}{value}"
             for axis, value in (
                 ("it", budget.iterations),
                 ("sp", budget.sp_calls),
                 ("ws", budget.wall_seconds),
+                ("gap", budget.target_relative_gap),
             )
             if value is not None
         )
-        stem = f"{scenario.name}_{'-'.join(names)}_{budget_part}_seed-{seed}"
+        stem = (
+            f"{scenario.name}-{scenario.content_hash()[:8]}_"
+            f"{'-'.join(names)}_{budget_part}_seed-{seed}"
+        )
         with open(out / f"{stem}.csv", "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=_CSV_FIELDS)
             writer.writeheader()

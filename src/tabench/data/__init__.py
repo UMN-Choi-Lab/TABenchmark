@@ -3,13 +3,14 @@
 from pathlib import Path
 
 from ..core.scenario import Demand, ReferenceSolution, Scenario
-from .builtin import braess_scenario
+from .builtin import braess_scenario, two_route_scenario
 from .fetcher import ChecksumError, cache_dir, citation, fetch
 from .registry import REGISTRY, NetworkSpec
 from .tntp import align_flows_to_network, load_network, parse_flow, parse_net, parse_trips
 
 __all__ = [
     "braess_scenario",
+    "two_route_scenario",
     "ChecksumError",
     "cache_dir",
     "citation",
@@ -28,13 +29,18 @@ __all__ = [
 def load_scenario(key: str) -> Scenario:
     """Load a benchmark scenario by registry key (downloading data if needed).
 
-    ``braess`` is built in; all other keys resolve through the network
-    registry and the checksummed fetcher.
+    ``braess`` and ``tworoute`` (the logit-SUE anchor) are built in; all
+    other keys resolve through the network registry and the checksummed
+    fetcher.
     """
     if key == "braess":
         return braess_scenario()
+    if key == "tworoute":
+        return two_route_scenario()
     if key not in REGISTRY:
-        raise KeyError(f"Unknown scenario {key!r}; available: braess, {sorted(REGISTRY)}")
+        raise KeyError(
+            f"Unknown scenario {key!r}; available: braess, tworoute, {sorted(REGISTRY)}"
+        )
     spec = REGISTRY[key]
     paths: dict[str, Path] = fetch(spec)
     network = load_network(
