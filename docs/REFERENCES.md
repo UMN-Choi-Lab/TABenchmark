@@ -14,7 +14,7 @@ hand-checked @book entry; *partial*: verified after correcting the originally
 compiled metadata (corrections are recorded in the entry's `contribution` field
 in `references.json`).
 
-**245 references** — 63 tier-1, 133 tier-2, 49 tier-3.
+**246 references** — 63 tier-1, 134 tier-2, 49 tier-3.
 
 ## Foundations of Static Equilibrium Assignment
 
@@ -317,6 +317,7 @@ in `references.json`).
 | Cascetta & Postorino (2001) | [Fixed Point Approaches to the Estimation of O/D Matrices Using Traffic Counts on Congested Networks](https://doi.org/10.1287/trsc.35.2.134.10138) | Transportation Science | 2 | white-box solver | ✓ |
 | Dowling et al. (2004) | [Guidelines for Calibration of Microsimulation Models: Framework and Applications](https://doi.org/10.3141/1876-01) | Transportation Research Record: Journal of the Transportation Research Board | 2 | metric/protocol | ✓ |
 | Hazelton (2015) | [Network tomography for integer-valued traffic](https://doi.org/10.1214/15-AOAS805) | Annals of Applied Statistics | 2 | white-box solver | ✓ |
+| Ma & Qian (2018) | [Estimating multi-year 24/7 origin-destination demand using high-granular multi-source traffic data](https://doi.org/10.1016/j.trc.2018.09.002) | Transportation Research Part C: Emerging Technologies | 2 | white-box solver | ✓ |
 | Osorio (2019) | [High-dimensional offline origin-destination (OD) demand calibration for stochastic traffic simulators of large-scale road networks](https://doi.org/10.1016/j.trb.2019.01.005) | Transportation Research Part B: Methodological | 2 | black-box wrapper | ✓ |
 | Camargo (2024) | AequilibraE: Transportation modeling in Python | Open-source software | 2 | black-box wrapper | book |
 | Cascetta & Nguyen (1988) | [A unified framework for estimating or updating origin/destination matrices from traffic counts](https://doi.org/10.1016/0191-2615(88)90024-0) | Transportation Research Part B: Methodological | 3 | survey/context | ✓ |

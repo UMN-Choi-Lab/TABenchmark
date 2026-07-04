@@ -2906,6 +2906,25 @@
   "confidence": 1.0
  },
  {
+  "bibkey": "ma2018estimating",
+  "title": "Estimating multi-year 24/7 origin-destination demand using high-granular multi-source traffic data",
+  "authors": [
+   "Ma",
+   "Qian"
+  ],
+  "year": 2018,
+  "venue": "Transportation Research Part C: Emerging Technologies",
+  "doi": "10.1016/j.trc.2018.09.002",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 2,
+  "contribution": "User-requested addition (verified via Crossref, 2026-07). Static/multi-year OD estimation from heterogeneous data on a differentiable computational graph - the predecessor of the forward-backward dynamic-OD line (Ma, Pi & Qian 2020; Wu et al. 2018).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.97
+ },
+ {
   "bibkey": "ma2020estimating",
   "title": "Estimating multi-class dynamic origin-destination demand through a forward-backward algorithm on computational graphs",
   "authors": [

@@ -283,8 +283,15 @@ Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 172 refe
   projection (path-based), progress-curve/solvability-profile plotting, `tabench
   validate` conformance suite, entry-point plugin registry.
 - **v1:** Algorithm B / TAPAS-class bush solvers; probit SUE; elastic demand & combined
-  models; T2 estimation track with Hazelton-style samplers as validated baselines;
-  frozen v1.0 core grid (3 networks × 4 data levels × T1/T2) with budget tables.
+  models; T2 estimation track with Hazelton-style samplers as validated baselines and
+  **computational-graph estimators** — assignment/estimation expressed as a layered
+  differentiable graph solved by forward-backward passes (Wu, Guo, Xian & Zhou 2018;
+  Ma & Qian 2018; Ma, Pi & Qian 2020) or iterative backpropagation through the solver
+  (Patwary et al. 2023). This is the natural generalization of the planned
+  `WhiteBoxMixin`: a model that exposes gradients of its outputs w.r.t. demand/cost
+  parameters unlocks gradient-based T2 baselines and end-to-end learned pipelines,
+  while still being certified purely from its emitted flows (P1).
+  Frozen v1.0 core grid (3 networks × 4 data levels × T1/T2) with budget tables.
 - **v2:** DTA — CTM/LTM network loading components, analytical DUE, subprocess adapters
   for DTALite/MATSim/SUMO; day-to-day dynamics track; T3 intervention suite; Docker
   images per engine; public leaderboard.
