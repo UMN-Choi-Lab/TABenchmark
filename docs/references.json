@@ -42,6 +42,26 @@
   "confidence": 0.95
  },
  {
+  "bibkey": "ameli2020cross",
+  "title": "Cross-comparison of convergence algorithms to solve trip-based dynamic traffic assignment problems",
+  "authors": [
+   "Ameli",
+   "Lebacque",
+   "Leclercq"
+  ],
+  "year": 2020,
+  "venue": "Computer-Aided Civil and Infrastructure Engineering",
+  "doi": "10.1111/mice.12524",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Standardized cross-comparison protocol and metrics for convergence algorithms (MSA variants, gap-based swapping) of trip-based simulation DTA",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "ameli2026from",
   "title": "From Optimization to Prediction: Transformer-Based Path-Flow Estimation to the Traffic Assignment Problem",
   "authors": [
@@ -86,7 +106,7 @@
   "title": "Towards a generic benchmarking platform for origin-destination flows estimation/updating algorithms: Design, demonstration and validation",
   "authors": [
    "Antoniou",
-   "Barcel\u00f3",
+   "Barceló",
    "Breen",
    "Bullejos",
    "Casas",
@@ -136,6 +156,25 @@
   "confidence": 0.98
  },
  {
+  "bibkey": "ashok2000alternative",
+  "title": "Alternative Approaches for Real-Time Estimation and Prediction of Time-Dependent Origin–Destination Flows",
+  "authors": [
+   "Ashok",
+   "Ben-Akiva"
+  ],
+  "year": 2000,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.34.1.21.12282",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Kalman-filter state-space estimation of deviations of time-dependent OD flows from historical values",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "auld2016polaris",
   "title": "POLARIS: Agent-based modeling framework development and implementation for integrated travel demand and network and operations simulations",
   "authors": [
@@ -159,6 +198,27 @@
   "confidence": 0.99
  },
  {
+  "bibkey": "babazadeh2020reduced",
+  "title": "Reduced gradient algorithm for user equilibrium traffic assignment problem",
+  "authors": [
+   "Babazadeh",
+   "Javani",
+   "Gentile",
+   "Florian"
+  ],
+  "year": 2020,
+  "venue": "Transportmetrica A: Transport Science",
+  "doi": "10.1080/23249935.2020.1722279",
+  "families": [
+   "path-and-bush-based"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Path-based reduced gradient method that moves flow within OD path sets along reduced-gradient directions (distinct from projection-based GP), with computational comparison against GP and bush-based codes.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "bai2019deep",
   "title": "Deep Equilibrium Models",
   "authors": [
@@ -175,6 +235,25 @@
   "tier": 3,
   "contribution": "Verified via arXiv 1909.01377; NeurIPS 2019 (proceedings not in Crossref).",
   "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "baillon2006markovian",
+  "title": "Markovian traffic equilibrium",
+  "authors": [
+   "Baillon",
+   "Cominetti"
+  ],
+  "year": 2006,
+  "venue": "Mathematical Programming",
+  "doi": "10.1007/s10107-006-0076-2",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Markovian traffic equilibrium: link-based logit SUE with congestion via expected-utility Bellman operators and a smooth dual convex formulation",
+  "implement_as": "white-box solver",
   "verdict": "verified",
   "confidence": 0.95
  },
@@ -223,7 +302,7 @@
   "bibkey": "barcelo2010fundamentals",
   "title": "Fundamentals of Traffic Simulation",
   "authors": [
-   "Barcel\u00f3"
+   "Barceló"
   ],
   "year": 2010,
   "venue": "Springer (International Series in Operations Research & Management Science)",
@@ -292,6 +371,26 @@
   "confidence": 0.99
  },
  {
+  "bibkey": "bargera2012user",
+  "title": "User-equilibrium route flows and the condition of proportionality",
+  "authors": [
+   "Bar-Gera",
+   "Boyce",
+   "Nie"
+  ],
+  "year": 2012,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2011.10.010",
+  "families": [
+   "foundations"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Condition of proportionality as a behaviorally motivated criterion for selecting unique route flows among UE-optimal solutions, with algorithmic evaluation",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "beckmann1956studies",
   "title": "Studies in the Economics of Transportation",
   "authors": [
@@ -311,6 +410,25 @@
   "contribution": "Crossref only indexes book reviews (1957-59); hand-written @book from well-known Yale UP 1956 data.",
   "implement_as": "white-box solver",
   "verdict": "book-manual",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "bekhor2001stochastic",
+  "title": "Stochastic User Equilibrium Formulation for Generalized Nested Logit Model",
+  "authors": [
+   "Bekhor",
+   "Prashker"
+  ],
+  "year": 2001,
+  "venue": "Transportation Research Record: Journal of the Transportation Research Board",
+  "doi": "10.3141/1752-12",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Equivalent mathematical-program SUE formulations for GEV route choice (generalized nested logit, subsuming CNL/PCL) with entropy-based objective",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
   "confidence": 0.95
  },
  {
@@ -389,6 +507,27 @@
   "confidence": 0.98
  },
  {
+  "bibkey": "bell1997stochastic",
+  "title": "A stochastic user equilibrium path flow estimator",
+  "authors": [
+   "Bell",
+   "Shield",
+   "Busch",
+   "Kruse"
+  ],
+  "year": 1997,
+  "venue": "Transportation Research Part C: Emerging Technologies",
+  "doi": "10.1016/s0968-090x(97)00009-0",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). One-stage logit SUE-based path flow estimator recovering path flows and OD demand from link counts",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "benakiva1999discrete",
   "title": "Discrete choice methods and their applications to short term travel decisions",
   "authors": [
@@ -447,6 +586,26 @@
   "implement_as": "survey/context",
   "verdict": "verified",
   "confidence": 0.97
+ },
+ {
+  "bibkey": "bertsimas2014data",
+  "title": "Data-driven estimation in equilibrium using inverse optimization",
+  "authors": [
+   "Bertsimas",
+   "Gupta",
+   "Paschalidis"
+  ],
+  "year": 2014,
+  "venue": "Mathematical Programming",
+  "doi": "10.1007/s10107-014-0819-4",
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Inverse variational-inequality / inverse optimization framework to estimate cost (latency) functions of Wardrop equilibrium from observed flow data with statistical consistency guarantees",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "bie2010stability",
@@ -585,7 +744,7 @@
  },
  {
   "bibkey": "braess1968uber",
-  "title": "\u00dcber ein Paradoxon aus der Verkehrsplanung",
+  "title": "Über ein Paradoxon aus der Verkehrsplanung",
   "authors": [
    "Braess"
   ],
@@ -660,6 +819,24 @@
   "confidence": 0.97
  },
  {
+  "bibkey": "cantarella1997general",
+  "title": "A General Fixed-Point Approach to Multimode Multi-User Equilibrium Assignment with Elastic Demand",
+  "authors": [
+   "Cantarella"
+  ],
+  "year": 1997,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.31.2.107",
+  "families": [
+   "foundations"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Fixed-point formulation of (stochastic) user equilibrium with multiple modes/user classes and elastic demand, with existence/uniqueness conditions and convergent MSA-type algorithms",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "cantarella2016modelling",
   "title": "Modelling road traffic assignment as a day-to-day dynamic, deterministic process: a unified approach to discrete- and continuous-time models",
   "authors": [
@@ -718,6 +895,24 @@
   "confidence": 0.99
  },
  {
+  "bibkey": "carey1992nonconvexity",
+  "title": "Nonconvexity of the dynamic traffic assignment problem",
+  "authors": [
+   "Carey"
+  ],
+  "year": 1992,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(92)90003-F",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 3,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Proves that FIFO/flow-propagation constraints make the DTA feasible region nonconvex and identifies the holding-back pathology, defining what optimality certificates are attainable for SO-DTA.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "casas2010traffic",
   "title": "Traffic Simulation with Aimsun",
   "authors": [
@@ -728,7 +923,7 @@
    "Torday"
   ],
   "year": 2010,
-  "venue": "Fundamentals of Traffic Simulation (Springer, ed. Barcel\u00f3)",
+  "venue": "Fundamentals of Traffic Simulation (Springer, ed. Barceló)",
   "doi": "10.1007/978-1-4419-6142-6_5",
   "families": [
    "dta-simulation-software"
@@ -795,6 +990,45 @@
   "confidence": 0.97
  },
  {
+  "bibkey": "cascetta1991day",
+  "title": "A day-to-day and within-day dynamic stochastic assignment model",
+  "authors": [
+   "Cascetta",
+   "Cantarella"
+  ],
+  "year": 1991,
+  "venue": "Transportation Research Part A: General",
+  "doi": "10.1016/0191-2607(91)90144-f",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Doubly dynamic stochastic process assignment: day-to-day Markov learning/choice updating coupled with within-day dynamic network loading (STODYN).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "cascetta1993dynamic",
+  "title": "Dynamic Estimators of Origin-Destination Matrices Using Traffic Counts",
+  "authors": [
+   "Cascetta",
+   "Inaudi",
+   "Marquis"
+  ],
+  "year": 1993,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.27.4.363",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 1,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Simultaneous and sequential GLS estimators of time-varying OD matrices from time-series link counts",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "cascetta1996modified",
   "title": "A modified logit route choice model overcoming path overlapping problems: specification and some calibration results for interurban networks",
   "authors": [
@@ -814,6 +1048,44 @@
   "implement_as": "route-choice component",
   "verdict": "book-manual",
   "confidence": 0.9
+ },
+ {
+  "bibkey": "cascetta2001fixed",
+  "title": "Fixed Point Approaches to the Estimation of O/D Matrices Using Traffic Counts on Congested Networks",
+  "authors": [
+   "Cascetta",
+   "Postorino"
+  ],
+  "year": 2001,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.35.2.134.10138",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Fixed-point formulation of congested-network OD estimation with MSA-based solution algorithms",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "chen1998model",
+  "title": "A model and an algorithm for the dynamic user-optimal route choice problem",
+  "authors": [
+   "Chen",
+   "Hsueh"
+  ],
+  "year": 1998,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/S0191-2615(97)00026-X",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Link-based discrete-time dynamic user-optimal VI with explicit flow-propagation constraints, solved by a nested diagonalization algorithm.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "chiu2011dynamic",
@@ -840,6 +1112,26 @@
   "confidence": 0.9
  },
  {
+  "bibkey": "cominetti2010payoff",
+  "title": "A payoff-based learning procedure and its application to traffic games",
+  "authors": [
+   "Cominetti",
+   "Melo",
+   "Sorin"
+  ],
+  "year": 2010,
+  "venue": "Games and Economic Behavior",
+  "doi": "10.1016/j.geb.2008.11.012",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 3,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Payoff-based (reinforcement-learning) adaptive dynamics with stochastic-approximation analysis proving convergence of day-to-day play to logit/quantal-response equilibrium in congestion (traffic) games.",
+  "implement_as": "route-choice component",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "correa2004selfish",
   "title": "Selfish Routing in Capacitated Networks",
   "authors": [
@@ -858,6 +1150,27 @@
   "implement_as": "metric/protocol",
   "verdict": "verified",
   "confidence": 0.98
+ },
+ {
+  "bibkey": "corthout2012non",
+  "title": "Non-unique flows in macroscopic first-order intersection models",
+  "authors": [
+   "Corthout",
+   "Flötteröd",
+   "Viti",
+   "Tampère"
+  ],
+  "year": 2012,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2011.10.011",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 3,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Demonstrates and characterizes solution non-uniqueness in first-order node models (memoryless conflict-respecting flux problems) and analyzes resolution rules",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "dafermos1969traffic",
@@ -973,6 +1286,62 @@
   "confidence": 1.0
  },
  {
+  "bibkey": "daganzo1995properties",
+  "title": "Properties of link travel time functions under dynamic loads",
+  "authors": [
+   "Daganzo"
+  ],
+  "year": 1995,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(94)00026-v",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 3,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Proof that volume-based link travel-time functions violate FIFO and causality under time-varying loads, establishing the admissibility criteria (FIFO, causality) for DNL link models",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "daganzo2005variational",
+  "title": "A variational formulation of kinematic waves: basic theory and complex boundary conditions",
+  "authors": [
+   "Daganzo"
+  ],
+  "year": 2005,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2004.04.003",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Variational (Hamilton-Jacobi) theory of kinematic waves: LWR solutions as shortest paths in a time-space network of cumulative counts, generalizing Newell's method to arbitrary boundary conditions",
+  "implement_as": "network-loading component",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "damberg1996algorithm",
+  "title": "An algorithm for the stochastic user equilibrium problem",
+  "authors": [
+   "Damberg",
+   "Lundgren",
+   "Patriksson"
+  ],
+  "year": 1996,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(95)00026-7",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Path-based (disaggregated simplicial decomposition) SUE algorithm with column generation of the working path set",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "davis1993large",
   "title": "Large population approximations of a general stochastic traffic assignment model",
   "authors": [
@@ -990,6 +1359,25 @@
   "implement_as": "white-box solver",
   "verdict": "verified",
   "confidence": 0.97
+ },
+ {
+  "bibkey": "decea1993transit",
+  "title": "Transit Assignment for Congested Public Transport Systems: An Equilibrium Model",
+  "authors": [
+   "de Cea",
+   "Fernández"
+  ],
+  "year": 1993,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.27.2.133",
+  "families": [
+   "extensions-static"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Congested transit equilibrium on route-section networks with flow-dependent waiting times (effective frequencies) solved by diagonalization",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "di2013boundedly",
@@ -1050,6 +1438,24 @@
   "confidence": 0.98
  },
  {
+  "bibkey": "dial1996bicriterion",
+  "title": "Bicriterion Traffic Assignment: Basic Theory and Elementary Algorithms",
+  "authors": [
+   "Dial"
+  ],
+  "year": 1996,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.30.2.93",
+  "families": [
+   "extensions-static"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Equilibrium with continuously distributed value of time over cost and time criteria, with efficient-path characterization and algorithms",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "dial2006path",
   "title": "A path-based user-equilibrium traffic assignment algorithm that obviates path storage and enumeration",
   "authors": [
@@ -1066,6 +1472,28 @@
   "implement_as": "white-box solver",
   "verdict": "verified",
   "confidence": 0.99
+ },
+ {
+  "bibkey": "dowling2004guidelines",
+  "title": "Guidelines for Calibration of Microsimulation Models: Framework and Applications",
+  "authors": [
+   "Dowling",
+   "Skabardonis",
+   "Halkias",
+   "McHale",
+   "Zammit"
+  ],
+  "year": 2004,
+  "venue": "Transportation Research Record: Journal of the Transportation Research Board",
+  "doi": "10.3141/1876-01",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Three-stage calibration protocol with quantitative acceptance targets (GEH < 5 on link flows, volume/speed criteria) — the peer-reviewed companion to FHWA Traffic Analysis Toolbox Vol. III",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "eckman2023simopt",
@@ -1166,7 +1594,7 @@
   "title": "An Efficient Implementation of the \"PARTAN\" Variant of the Linear Approximation Method for the Network Equilibrium Problem",
   "authors": [
    "Florian",
-   "Gu\u00e9lat",
+   "Guélat",
    "Spiess"
   ],
   "year": 1987,
@@ -1205,7 +1633,7 @@
   "bibkey": "flotterod2011operational",
   "title": "Operational macroscopic modeling of complex urban road intersections",
   "authors": [
-   "Fl\u00f6tter\u00f6d",
+   "Flötteröd",
    "Rohde"
   ],
   "year": 2011,
@@ -1221,12 +1649,32 @@
   "confidence": 1.0
  },
  {
+  "bibkey": "fltterd2011bayesian",
+  "title": "Bayesian Demand Calibration for Dynamic Traffic Simulations",
+  "authors": [
+   "Flötteröd",
+   "Bierlaire",
+   "Nagel"
+  ],
+  "year": 2011,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.1100.0367",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Cadyts: Bayesian plan-choice calibration that perturbs agent route/plan choice probabilities from link counts inside iterative agent-based simulators",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "fosgerau2013link",
   "title": "A link based network route choice model with unrestricted choice set",
   "authors": [
    "Fosgerau",
    "Frejinger",
-   "Karlstr\u00f6m"
+   "Karlström"
   ],
   "year": 2013,
   "venue": "Transportation Research Part B: Methodological",
@@ -1258,6 +1706,27 @@
   "implement_as": "white-box solver",
   "verdict": "verified",
   "confidence": 0.99
+ },
+ {
+  "bibkey": "friesz1989dynamic",
+  "title": "Dynamic Network Traffic Assignment Considered as a Continuous Time Optimal Control Problem",
+  "authors": [
+   "Friesz",
+   "Luque",
+   "Tobin",
+   "Wie"
+  ],
+  "year": 1989,
+  "venue": "Operations Research",
+  "doi": "10.1287/opre.37.6.893",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Continuous-time optimal-control formulations of both system-optimal and user-optimal DTA, generalizing Merchant-Nemhauser to multiple origin-destination pairs and stating DUE optimality conditions as a Nash game.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "friesz1993variational",
@@ -1304,6 +1773,25 @@
   "confidence": 0.97
  },
  {
+  "bibkey": "friesz2006solving",
+  "title": "Solving the dynamic network user equilibrium problem with state-dependent time shifts",
+  "authors": [
+   "Friesz",
+   "Mookherjee"
+  ],
+  "year": 2006,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2005.03.002",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Reformulates continuous-time DUE as a differential variational inequality / fixed-point problem in Hilbert space and gives an implementable fixed-point algorithm with a continuous-time optimal-control subproblem.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "fukushima1984modified",
   "title": "A Modified Frank-Wolfe Algorithm for Solving the Traffic Assignment Problem",
   "authors": [
@@ -1322,6 +1810,25 @@
   "confidence": 0.99
  },
  {
+  "bibkey": "gabriel1997traffic",
+  "title": "The Traffic Equilibrium Problem with Nonadditive Path Costs",
+  "authors": [
+   "Gabriel",
+   "Bernstein"
+  ],
+  "year": 1997,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.31.4.337",
+  "families": [
+   "foundations"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). NCP formulation and smoothing-based solver for user equilibrium when path costs are not sums of link costs (nonlinear value of time, path-specific tolls)",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "gartner1980optimal",
   "title": "Optimal Traffic Assignment with Elastic Demands: A Review Part I. Analysis Framework",
   "authors": [
@@ -1338,6 +1845,24 @@
   "implement_as": "white-box solver",
   "verdict": "verified",
   "confidence": 0.99
+ },
+ {
+  "bibkey": "gawron1998iterative",
+  "title": "An Iterative Algorithm to Determine the Dynamic User Equilibrium in a Traffic Simulation Model",
+  "authors": [
+   "Gawron"
+  ],
+  "year": 1998,
+  "venue": "International Journal of Modern Physics C",
+  "doi": "10.1142/S0129183198000303",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Iterative day-to-day link-cost feedback algorithm computing dynamic user equilibrium over a queue-based traffic simulation",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "gentile2010general",
@@ -1376,6 +1901,44 @@
   "confidence": 0.97
  },
  {
+  "bibkey": "ghali1995model",
+  "title": "A model for the dynamic system optimum traffic assignment problem",
+  "authors": [
+   "Ghali",
+   "Smith"
+  ],
+  "year": 1995,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(94)00024-T",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Dynamic system optimum with deterministic bottleneck queues computed via time-varying link marginal costs (path-marginal-cost routing heuristic).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "guo2011bounded",
+  "title": "Bounded rationality and irreversible network change",
+  "authors": [
+   "Guo",
+   "Liu"
+  ],
+  "year": 2011,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2011.05.026",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Boundedly-rational day-to-day dynamics with indifference bands yielding sets of invariant flow states and irreversible/hysteretic responses to network changes.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "han2013existence",
   "title": "Existence of Simultaneous Route and Departure Choice Dynamic User Equilibrium",
   "authors": [
@@ -1394,6 +1957,26 @@
   "implement_as": "survey/context",
   "verdict": "verified",
   "confidence": 0.98
+ },
+ {
+  "bibkey": "han2019computing",
+  "title": "Computing Dynamic User Equilibria on Large-Scale Networks with Software Implementation",
+  "authors": [
+   "Han",
+   "Eve",
+   "Friesz"
+  ],
+  "year": 2019,
+  "venue": "Networks and Spatial Economics",
+  "doi": "10.1007/s11067-018-9433-y",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). End-to-end computational framework for simultaneous route-and-departure-time DUE (fixed-point iterations over multiple DNL sub-models) with an open-source software implementation and large-network experiments.",
+  "implement_as": "black-box wrapper",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "hazelton2004computation",
@@ -1433,6 +2016,25 @@
   "confidence": 0.98
  },
  {
+  "bibkey": "hazelton2016statistical",
+  "title": "Statistical methods for comparison of day-to-day traffic models",
+  "authors": [
+   "Hazelton",
+   "Parry"
+  ],
+  "year": 2016,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2015.08.005",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 3,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Formal statistical procedures (likelihood-based model comparison and goodness-of-fit) for discriminating between competing day-to-day traffic models given observed flow time series.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "he2010linkbased",
   "title": "A link-based day-to-day traffic assignment model",
   "authors": [
@@ -1451,6 +2053,25 @@
   "implement_as": "white-box solver",
   "verdict": "verified",
   "confidence": 0.97
+ },
+ {
+  "bibkey": "he2012modeling",
+  "title": "Modeling the day-to-day traffic evolution process after an unexpected network disruption",
+  "authors": [
+   "He",
+   "Liu"
+  ],
+  "year": 2012,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2011.07.012",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Prediction-correction day-to-day link-flow evolution model in which drivers correct imperfect predictions of network states; calibrated/validated on I-35W bridge-collapse field data.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "hearn1982gap",
@@ -1548,6 +2169,64 @@
   "confidence": 0.97
  },
  {
+  "bibkey": "huang2002modeling",
+  "title": "Modeling and solving the dynamic user equilibrium route and departure time choice problem in network with queues",
+  "authors": [
+   "Huang",
+   "Lam"
+  ],
+  "year": 2002,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/S0191-2615(00)00049-7",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Discrete VI formulation of simultaneous route-and-departure-time DUE with deterministic point queues, solved by an implementable route/time-swapping algorithm.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "jahn2005system",
+  "title": "System-Optimal Routing of Traffic Flows with User Constraints in Networks with Congestion",
+  "authors": [
+   "Jahn",
+   "Möhring",
+   "Schulz",
+   "Stier-Moses"
+  ],
+  "year": 2005,
+  "venue": "Operations Research",
+  "doi": "10.1287/opre.1040.0197",
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Constrained system optimum (CSO): minimize total travel time subject to 'normal-length' path constraints bounding user unfairness; Frank-Wolfe-type algorithm tested on real road networks.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "janson1991dynamic",
+  "title": "Dynamic traffic assignment for urban road networks",
+  "authors": [
+   "Janson"
+  ],
+  "year": 1991,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(91)90020-J",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). First nonlinear-programming discrete-time DUE formulation (DYMOD) with temporal flow-propagation constraints, solved by a convex-combinations heuristic.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "jayakrishnan1994evaluation",
   "title": "An evaluation tool for advanced traffic information and management systems in urban networks",
   "authors": [
@@ -1587,6 +2266,45 @@
   "implement_as": "white-box solver",
   "verdict": "verified-manual",
   "confidence": 0.9
+ },
+ {
+  "bibkey": "jha1998perception",
+  "title": "Perception updating and day-to-day travel choice dynamics in traffic networks with information provision",
+  "authors": [
+   "Jha",
+   "Madanat",
+   "Peeta"
+  ],
+  "year": 1998,
+  "venue": "Transportation Research Part C: Emerging Technologies",
+  "doi": "10.1016/s0968-090x(98)00015-1",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 3,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Bayesian perception-updating model of day-to-day travel-time learning combining experienced and ATIS-provided information within a stochastic route-choice framework.",
+  "implement_as": "route-choice component",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "jin2003distribution",
+  "title": "On the distribution schemes for determining flows through a merge",
+  "authors": [
+   "Jin",
+   "Zhang"
+  ],
+  "year": 2003,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/s0191-2615(02)00026-7",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Distribution-scheme merge model: continuous demand-proportional flux allocation at merges as an alternative to Daganzo's priority-parameter merge, with well-posedness analysis in kinematic wave theory",
+  "implement_as": "network-loading component",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "jin2021introduction",
@@ -1665,6 +2383,45 @@
   "confidence": 0.97
  },
  {
+  "bibkey": "koch2010nash",
+  "title": "Nash Equilibria and the Price of Anarchy for Flows over Time",
+  "authors": [
+   "Koch",
+   "Skutella"
+  ],
+  "year": 2010,
+  "venue": "Theory of Computing Systems",
+  "doi": "10.1007/s00224-010-9299-y",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 3,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Defines dynamic (Nash) equilibrium for deterministic-queue flows over time, characterizes equilibria via thin flows with resetting, and proves price-of-anarchy bounds.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "krichene2015online",
+  "title": "Online Learning of Nash Equilibria in Congestion Games",
+  "authors": [
+   "Krichene",
+   "Drighès",
+   "Bayen"
+  ],
+  "year": 2015,
+  "venue": "SIAM Journal on Control and Optimization",
+  "doi": "10.1137/140980685",
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Mirror-descent / no-regret online learning dynamics with proven convergence to Nash (Wardrop) equilibria in nonatomic congestion games",
+  "implement_as": "route-choice component",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "larsson1992simplicial",
   "title": "Simplicial decomposition with disaggregated representation for the traffic assignment problem",
   "authors": [
@@ -1704,7 +2461,7 @@
  },
  {
   "bibkey": "larsson1999side",
-  "title": "Side constrained traffic equilibrium models \u2014 analysis, computation and applications",
+  "title": "Side constrained traffic equilibrium models — analysis, computation and applications",
   "authors": [
    "Larsson",
    "Patriksson"
@@ -1784,6 +2541,24 @@
   "confidence": 0.97
  },
  {
+  "bibkey": "lebacque1996godunov",
+  "title": "The Godunov scheme and what it means for first order traffic flow models",
+  "authors": [
+   "Lebacque"
+  ],
+  "year": 1996,
+  "venue": "Proceedings of the 13th International Symposium on Transportation and Traffic Theory",
+  "doi": null,
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 1,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Godunov discretization of LWR with local link demand/supply functions and the demand-supply node flux framework that underlies CTM, LTM and all first-order node models",
+  "implement_as": "network-loading component",
+  "verdict": "verified-manual",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "leblanc1975efficient",
   "title": "An Efficient Approach to Solving the Road Network Equilibrium Traffic Assignment Problem",
   "authors": [
@@ -1824,6 +2599,26 @@
   "confidence": 0.99
  },
  {
+  "bibkey": "leventhal1973column",
+  "title": "A Column Generation Algorithm for Optimal Traffic Assignment",
+  "authors": [
+   "Leventhal",
+   "Nemhauser",
+   "Trotter"
+  ],
+  "year": 1973,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.7.2.168",
+  "families": [
+   "link-based-algorithms"
+  ],
+  "tier": 3,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Earliest column-generation (path-generation) algorithm for traffic assignment, the bridge between link-based FW and simplicial-decomposition/path-based methods.",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "lighthill1955kinematic",
   "title": "On kinematic waves. II. A theory of traffic flow on long crowded roads",
   "authors": [
@@ -1841,6 +2636,49 @@
   "implement_as": "survey/context",
   "verdict": "verified",
   "confidence": 1.0
+ },
+ {
+  "bibkey": "liu2009method",
+  "title": "Method of Successive Weighted Averages (MSWA) and Self-Regulated Averaging Schemes for Solving Stochastic User Equilibrium Problem",
+  "authors": [
+   "Liu",
+   "He",
+   "He"
+  ],
+  "year": 2009,
+  "venue": "Networks and Spatial Economics",
+  "doi": "10.1007/s11067-007-9023-x",
+  "families": [
+   "link-based-algorithms"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). MSWA and self-regulated averaging step-size schedules that accelerate MSA-type averaging loops used in link-based and simulation-based assignment.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "liu2023alternating",
+  "title": "An alternating direction method of multipliers for solving user equilibrium problem",
+  "authors": [
+   "Liu",
+   "Chen",
+   "Hu",
+   "Wang",
+   "Zhang",
+   "Zhang"
+  ],
+  "year": 2023,
+  "venue": "European Journal of Operational Research",
+  "doi": "10.1016/j.ejor.2023.04.008",
+  "families": [
+   "link-based-algorithms"
+  ],
+  "tier": 3,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). ADMM operator-splitting formulation of user equilibrium with link-based decomposition, enabling parallel/distributed solution without path enumeration.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "liu2023end",
@@ -1940,6 +2778,26 @@
   "confidence": 0.98
  },
  {
+  "bibkey": "lo2006degradable",
+  "title": "Degradable transport network: Travel time budget of travelers with heterogeneous risk aversion",
+  "authors": [
+   "Lo",
+   "Luo",
+   "Siu"
+  ],
+  "year": 2006,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2005.10.003",
+  "families": [
+   "extensions-static"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Travel-time-budget user equilibrium on networks with stochastic degradable link capacities and heterogeneous risk-averse classes",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "lopez2018microscopic",
   "title": "Microscopic Traffic Simulation using SUMO",
   "authors": [
@@ -1947,9 +2805,9 @@
    "Behrisch",
    "Bieker-Walz",
    "Erdmann",
-   "Fl\u00f6tter\u00f6d",
+   "Flötteröd",
    "Hilbrich",
-   "L\u00fccken",
+   "Lücken",
    "Rummel",
    "Wagner",
    "Wiessner"
@@ -1985,6 +2843,26 @@
   "implement_as": "white-box solver",
   "verdict": "verified",
   "confidence": 0.99
+ },
+ {
+  "bibkey": "lu2009equivalent",
+  "title": "Equivalent gap function-based reformulation and solution algorithm for the dynamic user equilibrium problem",
+  "authors": [
+   "Lu",
+   "Mahmassani",
+   "Zhou"
+  ],
+  "year": 2009,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2008.07.005",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Equivalent gap-function reformulation of simulation-based DUE solved by column generation with path-swapping descent",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "lu2015enhanced",
@@ -2026,6 +2904,63 @@
   "implement_as": "network-loading component",
   "verdict": "verified",
   "confidence": 1.0
+ },
+ {
+  "bibkey": "ma2020estimating",
+  "title": "Estimating multi-class dynamic origin-destination demand through a forward-backward algorithm on computational graphs",
+  "authors": [
+   "Ma",
+   "Pi",
+   "Qian"
+  ],
+  "year": 2020,
+  "venue": "Transportation Research Part C: Emerging Technologies",
+  "doi": "10.1016/j.trc.2020.102747",
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Forward-backward automatic differentiation through a full dynamic traffic assignment computational graph for multi-class dynamic OD estimation",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "maher1983inferences",
+  "title": "Inferences on trip matrices from observations on link volumes: A Bayesian statistical approach",
+  "authors": [
+   "Maher"
+  ],
+  "year": 1983,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(83)90030-9",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Bayesian (multivariate normal conjugate) trip-matrix estimation from link volumes with prior OD matrix",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "maher1997probit",
+  "title": "A probit-based stochastic user equilibrium assignment model",
+  "authors": [
+   "Maher",
+   "Hughes"
+  ],
+  "year": 1997,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/s0191-2615(96)00028-8",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Probit SUE solver using Clark's moment approximation for link-based probit loading with optimized step lengths (SAM-based)",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "maher1998algorithms",
@@ -2122,7 +3057,7 @@
  },
  {
   "bibkey": "mitradjieva2013stiff",
-  "title": "The Stiff Is Moving\u2014Conjugate Direction Frank-Wolfe Methods with Applications to Traffic Assignment",
+  "title": "The Stiff Is Moving—Conjugate Direction Frank-Wolfe Methods with Applications to Traffic Assignment",
   "authors": [
    "Mitradjieva",
    "Lindberg"
@@ -2193,6 +3128,25 @@
   "implement_as": "network-loading component",
   "verdict": "verified",
   "confidence": 1.0
+ },
+ {
+  "bibkey": "nguyen1984efficient",
+  "title": "An Efficient Method for Computing Traffic Equilibria in Networks with Asymmetric Transportation Costs",
+  "authors": [
+   "Nguyen",
+   "Dupuis"
+  ],
+  "year": 1984,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.18.2.185",
+  "families": [
+   "foundations"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Convex-approximation solver for asymmetric-cost equilibria; introduces the 13-node Nguyen-Dupuis test network used across the SUE/DTA literature",
+  "implement_as": "data/scenario",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "nie2005comparative",
@@ -2307,6 +3261,45 @@
   "confidence": 0.99
  },
  {
+  "bibkey": "parry2013bayesian",
+  "title": "Bayesian inference for day-to-day dynamic traffic models",
+  "authors": [
+   "Parry",
+   "Hazelton"
+  ],
+  "year": 2013,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2013.01.003",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 3,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). MCMC-based Bayesian estimation of day-to-day (Markov) traffic model parameters from daily link-flow observations, including latent path-flow imputation.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "patil2020convergence",
+  "title": "Convergence behavior for traffic assignment characterization metrics",
+  "authors": [
+   "Patil",
+   "Ross",
+   "Boyles"
+  ],
+  "year": 2020,
+  "venue": "Transportmetrica A: Transport Science",
+  "doi": "10.1080/23249935.2020.1857883",
+  "families": [
+   "link-based-algorithms"
+  ],
+  "tier": 3,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Protocol linking relative-gap convergence levels to the stability of derived planning metrics (VMT, link flows, skims), prescribing how tight convergence must be per use case.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "patriksson1994traffic",
   "title": "The Traffic Assignment Problem: Models and Methods",
   "authors": [
@@ -2324,6 +3317,63 @@
   "contribution": "Monograph not found in Crossref search; hand-written @book (VSP 1994, Dover reprint 2015).",
   "implement_as": "survey/context",
   "verdict": "book-manual",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "patriksson2004sensitivity",
+  "title": "Sensitivity Analysis of Traffic Equilibria",
+  "authors": [
+   "Patriksson"
+  ],
+  "year": 2004,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.1030.0043",
+  "families": [
+   "foundations"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Rigorous directional-derivative framework for equilibrium sensitivity that corrects the Tobin-Friesz approach, with the derivative computable as an auxiliary traffic assignment problem",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "patwary2023iterative",
+  "title": "Iterative Backpropagation Method for Efficient Gradient Estimation in Bilevel Network Equilibrium Optimization Problems",
+  "authors": [
+   "Patwary",
+   "Wang",
+   "Lo"
+  ],
+  "year": 2023,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.2021.0110",
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Backpropagation through the fixed-point iterations of an equilibrium assignment solver to estimate gradients for bilevel network optimization without explicit sensitivity matrices",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "peeta1995system",
+  "title": "System optimal and user equilibrium time-dependent traffic assignment in congested networks",
+  "authors": [
+   "Peeta",
+   "Mahmassani"
+  ],
+  "year": 1995,
+  "venue": "Annals of Operations Research",
+  "doi": "10.1007/BF02031941",
+  "families": [
+   "dta-simulation-software"
+  ],
+  "tier": 1,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Rolling-horizon time-dependent UE and SO assignment solved by MSA with a mesoscopic traffic simulator in the loop (the DYNASMART methodology paper)",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
   "confidence": 0.95
  },
  {
@@ -2425,6 +3475,26 @@
   "confidence": 0.98
  },
  {
+  "bibkey": "raadsen2016efficient",
+  "title": "An efficient and exact event-based algorithm for solving simplified first order dynamic network loading problems in continuous time",
+  "authors": [
+   "Raadsen",
+   "Bliemer",
+   "Bell"
+  ],
+  "year": 2016,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2015.08.004",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Event-based (clock-free) exact solution algorithm for first-order DNL with triangular fundamental diagrams: propagates shockwave events instead of time-stepping, giving machine-precision solutions independent of time discretization",
+  "implement_as": "network-loading component",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "rahman2023data",
   "title": "Data-Driven Traffic Assignment: A Novel Approach for Learning Traffic Flow Patterns Using Graph Convolutional Neural Network",
   "authors": [
@@ -2484,7 +3554,7 @@
  },
  {
   "bibkey": "rasmussen2015stochastic",
-  "title": "Stochastic user equilibrium with equilibrated choice sets: Part II \u2013 Solving the restricted SUE for the logit family",
+  "title": "Stochastic user equilibrium with equilibrated choice sets: Part II – Solving the restricted SUE for the logit family",
   "authors": [
    "Rasmussen",
    "Watling",
@@ -2622,6 +3692,25 @@
   "confidence": 0.98
  },
  {
+  "bibkey": "sheffi1982algorithm",
+  "title": "An algorithm for the equilibrium assignment problem with random link times",
+  "authors": [
+   "Sheffi",
+   "Powell"
+  ],
+  "year": 1982,
+  "venue": "Networks",
+  "doi": "10.1002/net.3230120209",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 1,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Unconstrained-minimization equivalent program for SUE (probit or any RUM loading) solved by MSA with descent-direction proof - the canonical SUE solver template",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "sheffi1985urban",
   "title": "Urban Transportation Networks: Equilibrium Analysis with Mathematical Programming Methods",
   "authors": [
@@ -2683,7 +3772,7 @@
  },
  {
   "bibkey": "smith1984stability",
-  "title": "The stability of a dynamic model of traffic assignment \u2014 an application of a method of Lyapunov",
+  "title": "The stability of a dynamic model of traffic assignment — an application of a method of Lyapunov",
   "authors": [
    "Smith"
   ],
@@ -2698,6 +3787,24 @@
   "implement_as": "white-box solver",
   "verdict": "verified",
   "confidence": 0.97
+ },
+ {
+  "bibkey": "smith1993new",
+  "title": "A new dynamic traffic model and the existence and calculation of dynamic user equilibria on congested capacity-constrained road networks",
+  "authors": [
+   "Smith"
+  ],
+  "year": 1993,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(93)90011-X",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Capacity-constrained deterministic-queue dynamic traffic model with DUE existence proof and a route-swap calculation procedure (the dynamic extension of Smith's equilibration dynamics).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "smith2016routeswapping",
@@ -2719,6 +3826,61 @@
   "confidence": 0.97
  },
  {
+  "bibkey": "spall1992multivariate",
+  "title": "Multivariate stochastic approximation using a simultaneous perturbation gradient approximation",
+  "authors": [
+   "Spall"
+  ],
+  "year": 1992,
+  "venue": "IEEE Transactions on Automatic Control",
+  "doi": "10.1109/9.119632",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 1,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). SPSA: stochastic gradient approximation from two noisy loss evaluations per iteration regardless of dimension",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "spiess1987maximum",
+  "title": "A maximum likelihood model for estimating origin-destination matrices",
+  "authors": [
+   "Spiess"
+  ],
+  "year": 1987,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(87)90037-3",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Maximum-likelihood OD estimator treating observed counts and sampled prior matrix as Poisson realizations",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "spiess1989optimal",
+  "title": "Optimal strategies: A new assignment model for transit networks",
+  "authors": [
+   "Spiess",
+   "Florian"
+  ],
+  "year": 1989,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(89)90034-9",
+  "families": [
+   "extensions-static"
+  ],
+  "tier": 1,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Strategy (hyperpath) based transit assignment: optimal-strategy LP with label-setting algorithm and frequency-based network loading",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "spiess1990gradient",
   "title": "A gradient approach for the O-D matrix adjustment problem",
   "authors": [
@@ -2735,6 +3897,24 @@
   "implement_as": "white-box solver",
   "verdict": "book-manual",
   "confidence": 0.9
+ },
+ {
+  "bibkey": "spiess1990technical",
+  "title": "Technical Note—Conical Volume-Delay Functions",
+  "authors": [
+   "Spiess"
+  ],
+  "year": 1990,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.24.2.153",
+  "families": [
+   "foundations"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Conical volume-delay function family: a strictly increasing, bounded-derivative alternative to the BPR curve with closed-form evaluation and well-behaved convergence properties",
+  "implement_as": "network-loading component",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "stabler2016transportation",
@@ -2760,7 +3940,7 @@
   "bibkey": "tampere2011generic",
   "title": "A generic class of first order node models for dynamic macroscopic simulation of traffic flows",
   "authors": [
-   "Tamp\u00e8re",
+   "Tampère",
    "Corthout",
    "Cattrysse",
    "Immers"
@@ -2795,6 +3975,25 @@
   "implement_as": "white-box solver",
   "verdict": "verified",
   "confidence": 0.99
+ },
+ {
+  "bibkey": "tobin1988sensitivity",
+  "title": "Sensitivity Analysis for Equilibrium Network Flow",
+  "authors": [
+   "Tobin",
+   "Friesz"
+  ],
+  "year": 1988,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.22.4.242",
+  "families": [
+   "foundations"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). First method for computing derivatives of equilibrium link flows with respect to cost/demand perturbations via a restricted VI at a nondegenerate solution",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "vanwageningenkessels2015genealogy",
@@ -2912,6 +4111,24 @@
   "confidence": 0.95
  },
  {
+  "bibkey": "vonhohenbalken1977simplicial",
+  "title": "Simplicial decomposition in nonlinear programming algorithms",
+  "authors": [
+   "Von Hohenbalken"
+  ],
+  "year": 1977,
+  "venue": "Mathematical Programming",
+  "doi": "10.1007/bf01584323",
+  "families": [
+   "link-based-algorithms"
+  ],
+  "tier": 3,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). The original simplicial decomposition algorithm: alternating column generation of extreme points and a master problem over their convex hull.",
+  "implement_as": "survey/context",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "vovsha1998link",
   "title": "Link-Nested Logit Model of Route Choice: Overcoming Route Overlapping Problem",
   "authors": [
@@ -3013,6 +4230,24 @@
   "confidence": 0.97
  },
  {
+  "bibkey": "watling1996asymmetric",
+  "title": "Asymmetric problems and stochastic process models of traffic assignment",
+  "authors": [
+   "Watling"
+  ],
+  "year": 1996,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(96)00006-9",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 3,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Stochastic-process day-to-day treatment of asymmetric assignment problems with multiple equilibria, showing a unique stationary distribution exists where deterministic SUE/UE is non-unique.",
+  "implement_as": "metric/protocol",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "watling1999stability",
   "title": "Stability of the stochastic equilibrium assignment problem: a dynamical systems approach",
   "authors": [
@@ -3048,6 +4283,68 @@
   "implement_as": "survey/context",
   "verdict": "verified",
   "confidence": 0.97
+ },
+ {
+  "bibkey": "watling2015stochastic",
+  "title": "Stochastic user equilibrium with equilibrated choice sets: Part I – Model formulations under alternative distributions and restrictions",
+  "authors": [
+   "Watling",
+   "Rasmussen",
+   "Prato",
+   "Nielsen"
+  ],
+  "year": 2015,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2015.03.008",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Restricted SUE (RSUE) formulation family with endogenously equilibrated choice sets under alternative error distributions - the model whose logit-family solution is canon's Part II",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "wu1998continuous",
+  "title": "The continuous dynamic network loading problem: a mathematical formulation and solution method",
+  "authors": [
+   "Wu",
+   "Chen",
+   "Florian"
+  ],
+  "year": 1998,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/s0191-2615(97)00023-4",
+  "families": [
+   "dnl-models"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). First rigorous formulation of the continuous dynamic network loading problem as a system of functional equations with a discretized fixed-point solution algorithm (link travel-time function class)",
+  "implement_as": "network-loading component",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "wu2018hierarchical",
+  "title": "Hierarchical travel demand estimation using multiple data sources: A forward and backward propagation algorithmic framework on a layered computational graph",
+  "authors": [
+   "Wu",
+   "Guo",
+   "Xian",
+   "Zhou"
+  ],
+  "year": 2018,
+  "venue": "Transportation Research Part C: Emerging Technologies",
+  "doi": "10.1016/j.trc.2018.09.021",
+  "families": [
+   "ml-based-ta"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). First layered computational-graph (differentiable programming) formulation of the travel demand/assignment chain with forward-backward gradient propagation for estimation",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "xie2015origin",
@@ -3172,6 +4469,24 @@
   "confidence": 0.99
  },
  {
+  "bibkey": "yang1995heuristic",
+  "title": "Heuristic algorithms for the bilevel origin-destination matrix estimation problem",
+  "authors": [
+   "Yang"
+  ],
+  "year": 1995,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/0191-2615(95)00003-v",
+  "families": [
+   "data-calibration-benchmarks"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Sensitivity-analysis-based and iterative-estimation-assignment algorithms for solving the bilevel OD estimation problem",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "yang1998optimal",
   "title": "Optimal traffic counting locations for origin-destination matrix estimation",
   "authors": [
@@ -3210,6 +4525,25 @@
   "confidence": 0.97
  },
  {
+  "bibkey": "yang2004multi",
+  "title": "The multi-class, multi-criteria traffic network equilibrium and systems optimum problem",
+  "authors": [
+   "Yang",
+   "Huang"
+  ],
+  "year": 2004,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/S0191-2615(02)00074-7",
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Multiclass equilibrium with continuously/discretely distributed values of time; distinguishes time-based vs cost-based system optimum and derives anonymous link tolls decentralizing each.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
   "bibkey": "yang2005mathematical",
   "title": "Mathematical and Economic Theory of Road Pricing",
   "authors": [
@@ -3227,6 +4561,44 @@
   "implement_as": "survey/context",
   "verdict": "verified",
   "confidence": 0.9
+ },
+ {
+  "bibkey": "yang2009day",
+  "title": "Day-to-day stationary link flow pattern",
+  "authors": [
+   "Yang",
+   "Zhang"
+  ],
+  "year": 2009,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2008.05.005",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Rational Behavior Adjustment Process (RBAP): general class of day-to-day flow dynamics whose aggregate path cost decreases, with proportional-swap, network tatonnement, projection dynamics etc. as special cases; stationary link flows = UE.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "yang2011managing",
+  "title": "Managing network mobility with tradable credits",
+  "authors": [
+   "Yang",
+   "Wang"
+  ],
+  "year": 2011,
+  "venue": "Transportation Research Part B: Methodological",
+  "doi": "10.1016/j.trb.2010.10.002",
+  "families": [
+   "so-and-pricing"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Tradable credit scheme: UE with a network-wide credit cap and link-specific credit charges; equilibrium link flows and market credit price characterized and computed via a convex program / VI fixed point.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "youn2008price",
@@ -3284,6 +4656,45 @@
   "implement_as": "white-box solver",
   "verdict": "verified",
   "confidence": 0.96
+ },
+ {
+  "bibkey": "zheng2011network",
+  "title": "A Network Flow Algorithm for the Cell-Based Single-Destination System Optimal Dynamic Traffic Assignment Problem",
+  "authors": [
+   "Zheng",
+   "Chiu"
+  ],
+  "year": 2011,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.1100.0343",
+  "families": [
+   "dta-analytical"
+  ],
+  "tier": 3,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Shows the CTM-based single-destination SO-DTA is equivalent to an earliest-arrival-flow problem and solves it exactly with a combinatorial network-flow algorithm, avoiding the LP entirely.",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
+ },
+ {
+  "bibkey": "zhou2012c",
+  "title": "C-logit stochastic user equilibrium model: formulations and solution algorithm",
+  "authors": [
+   "Zhou",
+   "Chen",
+   "Bekhor"
+  ],
+  "year": 2012,
+  "venue": "Transportmetrica",
+  "doi": "10.1080/18128600903489629",
+  "families": [
+   "stochastic-ue"
+  ],
+  "tier": 2,
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Length-based and congestion-based equivalent MP formulations of C-logit SUE plus a path-based partial-linearization solution algorithm",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.95
  },
  {
   "bibkey": "zhou2014dtalite",
