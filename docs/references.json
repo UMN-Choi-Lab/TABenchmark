@@ -239,20 +239,20 @@
   "confidence": 0.95
  },
  {
-  "bibkey": "baillon2006markovian",
+  "bibkey": "baillon2008markovian",
   "title": "Markovian traffic equilibrium",
   "authors": [
    "Baillon",
    "Cominetti"
   ],
-  "year": 2006,
+  "year": 2008,
   "venue": "Mathematical Programming",
   "doi": "10.1007/s10107-006-0076-2",
   "families": [
    "stochastic-ue"
   ],
   "tier": 2,
-  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Markovian traffic equilibrium: link-based logit SUE with congestion via expected-utility Bellman operators and a smooth dual convex formulation",
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Markovian traffic equilibrium: link-based logit SUE with congestion via expected-utility Bellman operators and a smooth dual convex formulation Year corrected to print/issue convention (2008).",
   "implement_as": "white-box solver",
   "verdict": "verified",
   "confidence": 0.95
@@ -588,21 +588,21 @@
   "confidence": 0.97
  },
  {
-  "bibkey": "bertsimas2014data",
+  "bibkey": "bertsimas2015data",
   "title": "Data-driven estimation in equilibrium using inverse optimization",
   "authors": [
    "Bertsimas",
    "Gupta",
    "Paschalidis"
   ],
-  "year": 2014,
+  "year": 2015,
   "venue": "Mathematical Programming",
   "doi": "10.1007/s10107-014-0819-4",
   "families": [
    "ml-based-ta"
   ],
   "tier": 2,
-  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Inverse variational-inequality / inverse optimization framework to estimate cost (latency) functions of Wardrop equilibrium from observed flow data with statistical consistency guarantees",
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Inverse variational-inequality / inverse optimization framework to estimate cost (latency) functions of Wardrop equilibrium from observed flow data with statistical consistency guarantees Year corrected to print/issue convention (2015).",
   "implement_as": "white-box solver",
   "verdict": "verified",
   "confidence": 0.95
@@ -2383,20 +2383,20 @@
   "confidence": 0.97
  },
  {
-  "bibkey": "koch2010nash",
+  "bibkey": "koch2011nash",
   "title": "Nash Equilibria and the Price of Anarchy for Flows over Time",
   "authors": [
    "Koch",
    "Skutella"
   ],
-  "year": 2010,
+  "year": 2011,
   "venue": "Theory of Computing Systems",
   "doi": "10.1007/s00224-010-9299-y",
   "families": [
    "dta-analytical"
   ],
   "tier": 3,
-  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Defines dynamic (Nash) equilibrium for deterministic-queue flows over time, characterizes equilibria via thin flows with resetting, and proves price-of-anarchy bounds.",
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Defines dynamic (Nash) equilibrium for deterministic-queue flows over time, characterizes equilibria via thin flows with resetting, and proves price-of-anarchy bounds. Year corrected to print/issue convention (2011).",
   "implement_as": "white-box solver",
   "verdict": "verified",
   "confidence": 0.95
@@ -3280,21 +3280,21 @@
   "confidence": 0.95
  },
  {
-  "bibkey": "patil2020convergence",
+  "bibkey": "patil2021convergence",
   "title": "Convergence behavior for traffic assignment characterization metrics",
   "authors": [
    "Patil",
    "Ross",
    "Boyles"
   ],
-  "year": 2020,
+  "year": 2021,
   "venue": "Transportmetrica A: Transport Science",
   "doi": "10.1080/23249935.2020.1857883",
   "families": [
    "link-based-algorithms"
   ],
   "tier": 3,
-  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Protocol linking relative-gap convergence levels to the stability of derived planning metrics (VMT, link flows, skims), prescribing how tight convergence must be per use case.",
+  "contribution": "Completeness-sweep addition (verified via Crossref, 2026-07). Protocol linking relative-gap convergence levels to the stability of derived planning metrics (VMT, link flows, skims), prescribing how tight convergence must be per use case. Year corrected to print/issue convention (2021).",
   "implement_as": "metric/protocol",
   "verdict": "verified",
   "confidence": 0.95

@@ -60,7 +60,7 @@ in `references.json`).
 | Leventhal et al. (1973) | [A Column Generation Algorithm for Optimal Traffic Assignment](https://doi.org/10.1287/trsc.7.2.168) | Transportation Science | 3 | survey/context | ✓ |
 | Von Hohenbalken (1977) | [Simplicial decomposition in nonlinear programming algorithms](https://doi.org/10.1007/bf01584323) | Mathematical Programming | 3 | survey/context | ✓ |
 | Perederieieva et al. (2015) | [A Framework for and Empirical Study of Algorithms for Traffic Assignment](https://doi.org/10.1016/j.cor.2014.08.024) | Computers & Operations Research | 3 | metric/protocol | ✓ |
-| Patil et al. (2020) | [Convergence behavior for traffic assignment characterization metrics](https://doi.org/10.1080/23249935.2020.1857883) | Transportmetrica A: Transport Science | 3 | metric/protocol | ✓ |
+| Patil et al. (2021) | [Convergence behavior for traffic assignment characterization metrics](https://doi.org/10.1080/23249935.2020.1857883) | Transportmetrica A: Transport Science | 3 | metric/protocol | ✓ |
 | Liu et al. (2023) | [An alternating direction method of multipliers for solving user equilibrium problem](https://doi.org/10.1016/j.ejor.2023.04.008) | European Journal of Operational Research | 3 | white-box solver | ✓ |
 
 ## Path-Based and Bush/Origin-Based UE Algorithms
@@ -100,8 +100,8 @@ in `references.json`).
 | Ben-Akiva & Bierlaire (1999) | [Discrete choice methods and their applications to short term travel decisions](https://doi.org/10.1007/978-1-4615-5203-1_2) | Handbook of Transportation Science (Kluwer Academic Publishers) | 2 | route choice | ✓ |
 | Bekhor & Prashker (2001) | [Stochastic User Equilibrium Formulation for Generalized Nested Logit Model](https://doi.org/10.3141/1752-12) | Transportation Research Record: Journal of the Transportation Research Board | 2 | white-box solver | ✓ |
 | Bekhor & Toledo (2005) | [Investigating path-based solution algorithms to the stochastic user equilibrium problem](https://doi.org/10.1016/S0191-2615(04)00049-9) | Transportation Research Part B: Methodological | 2 | white-box solver | ✓ |
-| Baillon & Cominetti (2006) | [Markovian traffic equilibrium](https://doi.org/10.1007/s10107-006-0076-2) | Mathematical Programming | 2 | white-box solver | ✓ |
 | Bekhor et al. (2006) | [Evaluation of choice set generation algorithms for route choice models](https://doi.org/10.1007/s10479-006-0009-8) | Annals of Operations Research | 2 | route choice | ✓ |
+| Baillon & Cominetti (2008) | [Markovian traffic equilibrium](https://doi.org/10.1007/s10107-006-0076-2) | Mathematical Programming | 2 | white-box solver | ✓ |
 | Zhou et al. (2012) | [C-logit stochastic user equilibrium model: formulations and solution algorithm](https://doi.org/10.1080/18128600903489629) | Transportmetrica | 2 | white-box solver | ✓ |
 | Fosgerau et al. (2013) | [A link based network route choice model with unrestricted choice set](https://doi.org/10.1016/j.trb.2013.07.012) | Transportation Research Part B: Methodological | 2 | route choice | ✓ |
 | Kitthamkesorn & Chen (2013) | [A path-size weibit stochastic user equilibrium model](https://doi.org/10.1016/j.trb.2013.06.001) | Transportation Research Part B: Methodological | 2 | white-box solver | ✓ |
@@ -180,7 +180,7 @@ in `references.json`).
 | Ran & Boyce (1996) | [Modeling Dynamic Transportation Networks: An Intelligent Transportation System Oriented Approach](https://doi.org/10.1007/978-3-642-80230-0) | Springer | 3 | survey/context | book |
 | Zhu & Marcotte (2000) | [On the Existence of Solutions to the Dynamic User Equilibrium Problem](https://doi.org/10.1287/trsc.34.4.402.12322) | Transportation Science | 3 | survey/context | ✓ |
 | Peeta & Ziliaskopoulos (2001) | [Foundations of Dynamic Traffic Assignment: The Past, the Present and the Future](https://doi.org/10.1023/A:1012827724856) | Networks and Spatial Economics | 3 | survey/context | ✓ |
-| Koch & Skutella (2010) | [Nash Equilibria and the Price of Anarchy for Flows over Time](https://doi.org/10.1007/s00224-010-9299-y) | Theory of Computing Systems | 3 | white-box solver | ✓ |
+| Koch & Skutella (2011) | [Nash Equilibria and the Price of Anarchy for Flows over Time](https://doi.org/10.1007/s00224-010-9299-y) | Theory of Computing Systems | 3 | white-box solver | ✓ |
 | Zheng & Chiu (2011) | [A Network Flow Algorithm for the Cell-Based Single-Destination System Optimal Dynamic Traffic Assignment Problem](https://doi.org/10.1287/trsc.1100.0343) | Transportation Science | 3 | white-box solver | ✓ |
 | Han et al. (2013) | [Existence of Simultaneous Route and Departure Choice Dynamic User Equilibrium](https://doi.org/10.1016/j.trb.2013.01.009) | Transportation Research Part B: Methodological | 3 | survey/context | ✓ |
 | Wang et al. (2018) | [Dynamic Traffic Assignment: A Review of the Methodological Advances for Environmentally Sustainable Road Transportation Applications](https://doi.org/10.1016/j.trb.2018.03.011) | Transportation Research Part B: Methodological | 3 | survey/context | ✓ |
@@ -274,7 +274,7 @@ in `references.json`).
 | Rahman & Hasan (2023) | [Data-Driven Traffic Assignment: A Novel Approach for Learning Traffic Flow Patterns Using Graph Convolutional Neural Network](https://doi.org/10.1007/s42421-023-00073-y) | Data Science for Transportation (Springer) | 1 | black-box wrapper | ✓ |
 | Liu & Meidani (2024) | [End-to-end heterogeneous graph neural networks for traffic assignment](https://doi.org/10.1016/j.trc.2024.104695) | Transportation Research Part C: Emerging Technologies | 1 | black-box wrapper | ✓ |
 | Xu et al. (2024) | [A unified dataset for the city-scale traffic assignment model in 20 U.S. cities](https://doi.org/10.1038/s41597-024-03149-8) | Scientific Data (Nature) | 1 | data/scenario | ✓ |
-| Bertsimas et al. (2014) | [Data-driven estimation in equilibrium using inverse optimization](https://doi.org/10.1007/s10107-014-0819-4) | Mathematical Programming | 2 | white-box solver | ✓ |
+| Bertsimas et al. (2015) | [Data-driven estimation in equilibrium using inverse optimization](https://doi.org/10.1007/s10107-014-0819-4) | Mathematical Programming | 2 | white-box solver | ✓ |
 | Krichene et al. (2015) | [Online Learning of Nash Equilibria in Congestion Games](https://doi.org/10.1137/140980685) | SIAM Journal on Control and Optimization | 2 | route choice | ✓ |
 | Wu et al. (2018) | [Hierarchical travel demand estimation using multiple data sources: A forward and backward propagation algorithmic framework on a layered computational graph](https://doi.org/10.1016/j.trc.2018.09.021) | Transportation Research Part C: Emerging Technologies | 2 | white-box solver | ✓ |
 | Agrawal et al. (2019) | Differentiable Convex Optimization Layers | NeurIPS | 2 | white-box solver | ✓ |
