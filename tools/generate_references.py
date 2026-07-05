@@ -110,6 +110,7 @@ SHIPPED = {
     "florian1974method": ("v1", "elastic (variable) demand UE task/problem (ADR-005)"),
     "gartner1980optimal": ("v1", "excess-demand augmented-network transformation the fw-elastic solver implements (ADR-005)"),
     "sheffi1985urban": ("v1", "elastic-demand objective + excess-demand certificate anchor (ADR-005)"),
+    "rahman2023data": ("v1", "learned-model wrapper + a ridge reference surrogate (not the GCN itself) certified by P1 (learned-surrogate, ADR-006)"),
 }
 
 

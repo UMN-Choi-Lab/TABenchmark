@@ -31,7 +31,7 @@ def _cmd_list(_: argparse.Namespace) -> int:
     for name in sorted(MODEL_REGISTRY):
         cls = MODEL_REGISTRY[name]
         caps = cls.capabilities
-        print(f"  {name:<16}{caps.paradigm}, deterministic={caps.deterministic}")
+        print(f"  {name:<18}{caps.paradigm}, deterministic={caps.deterministic}")
     print("\nEstimators (T2):")
     for name in sorted(ESTIMATOR_REGISTRY):
         cls = ESTIMATOR_REGISTRY[name]

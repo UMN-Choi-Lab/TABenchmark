@@ -224,7 +224,8 @@ TABenchmark/
 │   │   │                  # gradient_projection.py, algb.py (Dial 2006 bush),
 │   │   │                  # tapas.py (Bar-Gera 2010 PAS), _bush.py (shared bush machinery),
 │   │   │                  # so.py (marginal-cost SO), elastic.py (elastic-demand
-│   │   │                  # FW, Gartner excess-demand transform), sue_logit.py, sue_probit.py,
+│   │   │                  # FW, Gartner excess-demand transform), learned.py (first
+│   │   │                  # learned/black-box surrogate), sue_logit.py, sue_probit.py,
 │   │   │                  # _paths.py, _stoch.py (Dial map), _probit.py (MC map)
 │   │   └── adapters/      # callable_adapter.py (planned: subprocess.py, docker.py)
 │   ├── observe/           # data levels + identifiability checks
@@ -306,7 +307,12 @@ Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 172 refe
   elastic (variable) demand UE via the Gartner excess-demand transform with a P1-pure
   demand-recomputing certificate (shipped: `fw-elastic`, paradigm `static_ue_elastic`,
   [ADR-005](design/adr-005-elastic-demand.md); Florian & Nguyen 1974 / Gartner 1980 /
-  Sheffi 1985). Still open: a *scored* route-flow proportionality certificate (ADR-004
+  Sheffi 1985); the first **learned** (black-box) model certified by the same P1 harness —
+  a per-link surrogate trained on a synthetic family and gated off the disjoint TNTP test
+  set by `trained_on` (shipped: `learned-surrogate`, paradigm `learned`,
+  [ADR-006](design/adr-006-learned-model-certification.md); Rahman & Hasan 2023 line, with
+  the Xu et al. 2024 dataset a future cross-domain axis — link-flow accuracy is shown *not*
+  to imply certification). Still open: a *scored* route-flow proportionality certificate (ADR-004
   proposes it; the diagnostic ships now); combined
   distribution–assignment models (Evans 1976, a natural reuse of the elastic
   machinery); distribution-emitting T2 estimators (Hazelton-style samplers) and

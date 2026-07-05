@@ -92,7 +92,7 @@ T3 interventions.
 ## ML-based traffic assignment — v1 (baseline wrappers)
 
 - [ ] Liu et al. (2023) — *End-to-end learning of user equilibrium with implicit neural networks* (black-box wrapper)
-- [ ] Rahman & Hasan (2023) — *Data-Driven Traffic Assignment: A Novel Approach for Learning Traffic Flow Patterns Using Graph Convolutional Neural Network* (black-box wrapper)
+- [x] Rahman & Hasan (2023) — *Data-Driven Traffic Assignment: A Novel Approach for Learning Traffic Flow Patterns Using Graph Convolutional Neural Network* (black-box wrapper) — **shipped in v1** (learned-model wrapper + a ridge reference surrogate (not the GCN itself) certified by P1 (learned-surrogate, ADR-006))
 - [ ] Liu & Meidani (2024) — *End-to-end heterogeneous graph neural networks for traffic assignment* (black-box wrapper)
 - [ ] Xu et al. (2024) — *A unified dataset for the city-scale traffic assignment model in 20 U.S. cities* (data/scenario)
 

@@ -7,6 +7,7 @@ from .base import MODEL_REGISTRY, TrafficAssignmentModel, register_model
 from .elastic import ElasticDemandFWModel
 from .frank_wolfe import BiconjugateFrankWolfeModel, ConjugateFrankWolfeModel, FrankWolfeModel
 from .gradient_projection import GradientProjectionModel
+from .learned import LearnedSurrogateModel
 from .msa import MSAModel
 from .so import SystemOptimumModel, marginal_network
 from .sue_logit import DialSUEModel
@@ -27,6 +28,7 @@ __all__ = [
     "SueProbitMsaModel",
     "FrankWolfeModel",
     "GradientProjectionModel",
+    "LearnedSurrogateModel",
     "MSAModel",
     "SystemOptimumModel",
     "TapasModel",
