@@ -1,0 +1,29 @@
+# Scenario ladder rung 0 (probit-SUE variant): two disjoint routes with an
+# analytic probit fixed point. Probit SUE has no closed-form loading map, so
+# the harness certifies against a pinned Monte Carlo residual (ADR-003) rather
+# than a closed-form one. theta (= beta, perception variance per unit
+# free-flow time) and sue_family are content-hashed: this is a distinct
+# instance from the logit rung (0tworoute-sue.yaml) even at the same theta.
+scenario: tworoute
+source: builtin
+family: builtin-tworoute
+tasks: [t1_sue]
+sue:
+  theta: 0.1
+  family: probit
+  theta_units: variance per unit free-flow time (abstract here)
+  r_cert: 6400  # pinned MC certificate sample count (ADR-003 Decision 1); the
+                # tworoute noise floor at this R_cert is ~1.9e-2
+oracle:
+  kind: analytic
+  note: >
+    Disjoint routes make the perceived route costs independent normals, so
+    P(A) = Phi((c_B - c_A)/sqrt(3.5 beta)) and the SUE fixed point solves
+    f_A = D Phi((c_B(D - f_A) - c_A(f_A))/sqrt(3.5 beta)); at beta=0.1,
+    f_A = 2.4443574168 (tests recompute via brentq, never trusting the digit).
+    No ReferenceSolution is attached: flow_rmse_vs_reference is undefined for a
+    probit task (the logit oracle is a different equilibrium).
+budgets:
+  iterations: 2000
+macroreps: 10  # stochastic track: the certified residual's macrorep spread
+               # dominates the certificate SE, so CIs need M > 1 (ADR-003 Dec. 4)

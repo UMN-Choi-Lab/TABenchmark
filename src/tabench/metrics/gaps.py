@@ -36,12 +36,43 @@ from __future__ import annotations
 
 import numpy as np
 
+from ..core.rng import SOURCE_EVALUATION, RngBundle
 from ..core.scenario import Scenario
 from ..models._paths import PathEngine
+from ..models._probit import ProbitEngine
 from ..models._stoch import StochEngine
 from ..models.so import marginal_network
 
 __all__ = ["Evaluator", "node_balance_residual"]
+
+
+def _probit_certificate(
+    v: np.ndarray, samples: np.ndarray, total_demand: float
+) -> tuple[float, float, float]:
+    """Certified probit residual, jackknife SE, and CLT noise floor (adr-003).
+
+    ``samples`` are the ``R_cert`` per-draw AON link flows at the pinned
+    perturbations. Returns ``(residual, se, floor)`` where
+
+    * residual ``= ||v - mean(samples)||_1 / D`` — the ranking column;
+    * se ``=`` jackknife standard error of that residual over the samples
+      (conservative at the fixed point, where the |.| kink makes it
+      inconsistent — hence the floor);
+    * floor ``= sum_a sqrt(2 s_a^2 / (pi R_cert)) / D`` with ``s_a^2`` the
+      across-sample link-flow variance — the expected residual when ``v`` is
+      exactly the fixed point (the certificate's own O(1/sqrt(R_cert)) bias).
+    """
+    r_cert = samples.shape[0]
+    d = total_demand if total_demand > 0 else 1.0
+    vhat = samples.mean(axis=0)
+    residual = float(np.abs(v - vhat).sum() / d)
+    # Jackknife over the R_cert samples: leave-one-out residuals.
+    total = samples.sum(axis=0)
+    jackknife = np.abs(v[None, :] - (total - samples) / (r_cert - 1)).sum(axis=1) / d
+    se = float(np.sqrt((r_cert - 1) / r_cert * ((jackknife - jackknife.mean()) ** 2).sum()))
+    variance = samples.var(axis=0, ddof=1)
+    floor = float(np.sqrt(2.0 * variance / (np.pi * r_cert)).sum() / d)
+    return residual, se, floor
 
 
 def node_balance_residual(scenario: Scenario, link_flows: np.ndarray) -> float:
@@ -80,13 +111,42 @@ class Evaluator:
         scenario: Scenario,
         feasibility_tol: float = 1e-6,
         so_metrics: bool = False,
+        root_seed: int = 0,
+        r_cert: int = 2000,
     ) -> None:
         self.scenario = scenario
         self.feasibility_tol = feasibility_tol
         self._engine = PathEngine(scenario.network)
         self._total_demand = scenario.demand.total
         self._theta = scenario.sue_theta
-        self._stoch = StochEngine(scenario.network) if self._theta is not None else None
+        # Logit SUE certifies through the closed-form Dial-STOCH map; probit
+        # SUE has no closed form, so the harness pins ONE Monte Carlo
+        # perturbation matrix E per task, drawn from the reserved evaluation
+        # stream under macrorep=0 (adr-003 Decision 1). Pinning E is legal
+        # because the perception variance is flow-independent, so E never
+        # depends on t(v): every macrorep and checkpoint shares one sampled
+        # map (common random numbers), and the certificate stays a pure
+        # function of (link_flows, scenario, root_seed).
+        self._stoch = None
+        self._probit = None
+        self._probit_perturbations = None
+        if self._theta is not None:
+            if scenario.sue_family == "probit":
+                if r_cert < 2:
+                    # The jackknife SE divides by r_cert-1 and the CLT floor by
+                    # a ddof=1 variance; below 2 both are NaN, which is the
+                    # censoring signal — a feasible row must never emit it.
+                    raise ValueError(
+                        "probit certificate needs r_cert >= 2 (jackknife SE and "
+                        f"CLT floor are undefined below 2), got {r_cert}"
+                    )
+                self._probit = ProbitEngine(scenario.network)
+                gen = RngBundle(root_seed, macrorep=0).generator(SOURCE_EVALUATION)
+                self._probit_perturbations = self._probit.perturbations(
+                    self._theta, gen, r_cert
+                )
+            else:
+                self._stoch = StochEngine(scenario.network)
         # Certified SO gap columns (one extra AON per checkpoint): enabled by
         # the runner when the grid contains a static_so model, or explicitly.
         # No scenario field: the SO gap needs no instance data — UE and SO
@@ -106,6 +166,9 @@ class Evaluator:
         }
         if self._theta is not None:
             metrics["sue_fixed_point_residual"] = float("nan")
+        if self._probit is not None:
+            metrics["sue_residual_se"] = float("nan")
+            metrics["sue_residual_floor"] = float("nan")
         if self.so_metrics:
             for key in ("so_relative_gap", "so_average_excess_cost", "tstt_mc", "sptt_mc"):
                 metrics[key] = float("nan")
@@ -184,7 +247,19 @@ class Evaluator:
             metrics["so_average_excess_cost"] = (
                 excess_mc / self._total_demand if self._total_demand > 0 else 0.0
             )
-        if self._stoch is not None:
+        if self._probit is not None:
+            # Probit certificate: MC loading at the pinned perturbations, scored
+            # with its own uncertainty (residual ranks; se + floor bound the
+            # certificate's own noise — adr-003 Decision 1). The pinned E makes
+            # this a pure, byte-reproducible function of (v, scenario, root_seed).
+            _, samples = self._probit.load_perturbed(
+                costs, self.scenario.demand, self._probit_perturbations, return_samples=True
+            )
+            residual, se, floor = _probit_certificate(v, samples, self._total_demand)
+            metrics["sue_fixed_point_residual"] = residual
+            metrics["sue_residual_se"] = se
+            metrics["sue_residual_floor"] = floor
+        elif self._stoch is not None:
             try:
                 v_hat = self._stoch.load(costs, self.scenario.demand, self._theta)
             except RuntimeError:

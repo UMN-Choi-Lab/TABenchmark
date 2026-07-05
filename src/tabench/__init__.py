@@ -35,7 +35,12 @@ from .estimation import (
     VZWEntropyEstimator,
     register_estimator,
 )
-from .experiments import identifiability_report, run_estimation_experiment, run_experiment
+from .experiments import (
+    bootstrap_ci,
+    identifiability_report,
+    run_estimation_experiment,
+    run_experiment,
+)
 from .metrics import (
     CERTIFICATE_DEFAULTS,
     Evaluator,
@@ -49,6 +54,7 @@ from .metrics import (
 )
 from .models import (
     MODEL_REGISTRY,
+    AlgorithmBModel,
     AllOrNothingModel,
     BiconjugateFrankWolfeModel,
     CallableModel,
@@ -57,6 +63,7 @@ from .models import (
     FrankWolfeModel,
     GradientProjectionModel,
     MSAModel,
+    SueProbitMsaModel,
     SystemOptimumModel,
     TrafficAssignmentModel,
     register_model,
@@ -84,6 +91,7 @@ __all__ = [
     "run_experiment",
     "run_estimation_experiment",
     "identifiability_report",
+    "bootstrap_ci",
     "Evaluator",
     "ODCertifier",
     "CERTIFICATE_DEFAULTS",
@@ -107,6 +115,7 @@ __all__ = [
     "rmse",
     "tolled_network",
     "MODEL_REGISTRY",
+    "AlgorithmBModel",
     "AllOrNothingModel",
     "BiconjugateFrankWolfeModel",
     "CallableModel",
@@ -115,6 +124,7 @@ __all__ = [
     "FrankWolfeModel",
     "GradientProjectionModel",
     "MSAModel",
+    "SueProbitMsaModel",
     "SystemOptimumModel",
     "TrafficAssignmentModel",
     "register_model",

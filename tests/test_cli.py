@@ -10,6 +10,38 @@ def test_list_runs():
     assert main(["list"]) == 0
 
 
+def test_run_sue_card_without_theta_exit2(tmp_path: Path):
+    """A sue block declaring family/r_cert but no theta is rejected (exit 2):
+    theta defines (and hashes) the SUE instance, so silently defaulting it
+    would run the wrong benchmark and blame the scenario."""
+    card = tmp_path / "bad-probit.yaml"
+    card.write_text(
+        "scenario: tworoute\ntasks: [t1_sue]\nsue: {family: probit, r_cert: 64}\n"
+    )
+    assert main(["run", "--config", str(card), "--models", "sue-probit-msa"]) == 2
+
+
+def test_run_probit_card_dispatch(tmp_path: Path, capsys):
+    """A probit sue card runs end to end (exit 0), prints the ADR-003 tie rule,
+    and the manifest records the pinned r_cert and a macrorep bootstrap CI."""
+    card = tmp_path / "tworoute-probit.yaml"
+    card.write_text(
+        "scenario: tworoute\ntasks: [t1_sue]\n"
+        "sue: {theta: 0.1, family: probit, r_cert: 64}\n"
+    )
+    out = tmp_path / "results"
+    code = main(
+        ["run", "--config", str(card), "--models", "sue-probit-msa",
+         "--iterations", "8", "--macroreps", "3", "--out", str(out)]
+    )
+    assert code == 0
+    assert "sue_residual_floor" in capsys.readouterr().out
+    manifest = json.loads(next(out.glob("*.manifest.json")).read_text())
+    assert manifest["certificate_r_cert"] == 64
+    assert manifest["scenario_sue_family"] == "probit"
+    assert manifest["bootstrap"]["sue-probit-msa"]["n_macroreps"] == 3
+
+
 def _write_t2_card(tmp_path: Path) -> Path:
     card = tmp_path / "braess-t2.yaml"
     card.write_text(

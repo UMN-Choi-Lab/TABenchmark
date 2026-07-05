@@ -30,16 +30,16 @@ T3 interventions.
 
 - [x] Jayakrishnan et al. (1994) — *A faster path-based algorithm for traffic assignment* (white-box solver) — **shipped in v1** (path-based gradient projection solver (gp))
 - [ ] Bar-Gera (2002) — *Origin-based algorithm for the traffic assignment problem* (white-box solver)
-- [ ] Dial (2006) — *A path-based user-equilibrium traffic assignment algorithm that obviates path storage and enumeration* (white-box solver)
+- [x] Dial (2006) — *A path-based user-equilibrium traffic assignment algorithm that obviates path storage and enumeration* (white-box solver) — **shipped in v1** (Algorithm B bush-based solver (algb))
 - [ ] Bar-Gera (2010) — *Traffic assignment by paired alternative segments* (white-box solver)
 
 ## Stochastic UE & route choice — v0.x (Dial, logit-SUE MSA) / v1 (probit)
 
 - [x] Dial (1971) — *A probabilistic multipath traffic assignment model which obviates path enumeration* (network-loading component) — **shipped in v0.x** (STOCH loading map (models/_stoch.py))
-- [ ] Daganzo & Sheffi (1977) — *On stochastic models of traffic assignment* (white-box solver)
+- [x] Daganzo & Sheffi (1977) — *On stochastic models of traffic assignment* (white-box solver) — **shipped in v1** (SUE definition underlying the probit task)
 - [x] Fisk (1980) — *Some developments in equilibrium traffic assignment* (white-box solver) — **shipped in v0.x** (logit SUE task (fixed-point certificate, ADR-001))
 - [x] Powell & Sheffi (1982) — *The convergence of equilibrium algorithms with predetermined step sizes* (white-box solver) — **shipped in v0.x** (MSA-SUE solver step sizes)
-- [ ] Sheffi & Powell (1982) — *An algorithm for the equilibrium assignment problem with random link times* (white-box solver)
+- [x] Sheffi & Powell (1982) — *An algorithm for the equilibrium assignment problem with random link times* (white-box solver) — **shipped in v1** (probit SUE solver (sue-probit-msa) + MC certificate (ADR-003))
 
 ## System optimum & pricing — v1
 

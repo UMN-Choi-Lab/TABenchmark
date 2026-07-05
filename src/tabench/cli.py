@@ -29,7 +29,7 @@ def _cmd_list(_: argparse.Namespace) -> int:
     for name in sorted(MODEL_REGISTRY):
         cls = MODEL_REGISTRY[name]
         caps = cls.capabilities
-        print(f"  {name:<10}{caps.paradigm}, deterministic={caps.deterministic}")
+        print(f"  {name:<16}{caps.paradigm}, deterministic={caps.deterministic}")
     print("\nEstimators (T2):")
     for name in sorted(ESTIMATOR_REGISTRY):
         cls = ESTIMATOR_REGISTRY[name]
@@ -70,13 +70,29 @@ def _cmd_run(args: argparse.Namespace) -> int:
     if "t2_estimation" in (card.get("tasks") or []):
         return _run_estimation(args, card, scenario)
     sue = card.get("sue")
+    r_cert = 2000
+    if isinstance(sue, dict) and "theta" not in sue and (set(sue) & {"family", "r_cert"}):
+        # theta defines the SUE instance (it is content-hashed); declaring a
+        # family or r_cert without it would silently run the wrong (default)
+        # instance instead of the one the card asked for.
+        keys = sorted(set(sue) & {"family", "r_cert"})
+        print(
+            f"{args.config}: sue block declares {keys} but no 'theta'; "
+            "theta is required to define the SUE instance.",
+            file=sys.stderr,
+        )
+        return 2
     if isinstance(sue, dict) and "theta" in sue:
         theta = float(sue["theta"])
-        if theta != scenario.sue_theta:
-            # A different theta is a different benchmark instance (the hash
-            # changes) — and any built-in reference oracle was certified for
+        family = str(sue.get("family", scenario.sue_family))
+        r_cert = int(sue.get("r_cert", r_cert))
+        if theta != scenario.sue_theta or family != scenario.sue_family:
+            # A different theta or family is a different benchmark instance (the
+            # hash changes) — and any built-in reference oracle was certified for
             # the old one, so drop it rather than mis-score RMSE against it.
-            scenario = dataclasses.replace(scenario, sue_theta=theta, reference=None)
+            scenario = dataclasses.replace(
+                scenario, sue_theta=theta, sue_family=family, reference=None
+            )
     models = []
     for name in (args.models or "aon,msa,fw").split(","):
         name = name.strip()
@@ -86,7 +102,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
         models.append(MODEL_REGISTRY[name]())
     budget = Budget(iterations=iterations, target_relative_gap=args.target_gap)
     result = run_experiment(
-        scenario, models, budget, seed=args.seed, out_dir=args.out
+        scenario, models, budget, seed=args.seed, macroreps=args.macroreps,
+        out_dir=args.out, r_cert=r_cert,
     )
     last_by_model: dict[str, dict] = {}
     for row in result.rows:
@@ -117,6 +134,12 @@ def _cmd_run(args: argparse.Namespace) -> int:
             "\nSUE task: ranked by the certified SUE residual; the UE columns "
             "are descriptive (docs/design/adr-001)."
         )
+        if scenario.sue_family == "probit":
+            print(
+                f"Probit-SUE (adr-003, R_cert={r_cert}): the residual is a "
+                "Monte Carlo estimate on a pinned evaluation stream. Differences "
+                "below max(sue_residual_floor, 2*sue_residual_se) are ties."
+            )
     if has_so:
         print(
             "\nSO goal: static_so models are ranked by the certified SO relative "
@@ -234,6 +257,14 @@ def main(argv: list[str] | None = None) -> int:
         "(Boyce et al. 2004 recommend 1e-4); iterations still bound the run",
     )
     p_run.add_argument("--seed", type=int, default=0)
+    p_run.add_argument(
+        "--macroreps",
+        type=int,
+        default=1,
+        help="Independent macroreplications for non-deterministic models "
+        "(stochastic track, P5); deterministic models always run once. With "
+        ">1 the manifest carries a bootstrap CI of the certified metric.",
+    )
     p_run.add_argument("--out", default=None, help="Directory for CSV + manifest output")
 
     args = parser.parse_args(argv)

@@ -1,6 +1,7 @@
 """Benchmark models: white-box solvers and black-box adapters."""
 
 from .adapters import CallableModel
+from .algb import AlgorithmBModel
 from .aon import AllOrNothingModel
 from .base import MODEL_REGISTRY, TrafficAssignmentModel, register_model
 from .frank_wolfe import BiconjugateFrankWolfeModel, ConjugateFrankWolfeModel, FrankWolfeModel
@@ -8,8 +9,10 @@ from .gradient_projection import GradientProjectionModel
 from .msa import MSAModel
 from .so import SystemOptimumModel, marginal_network
 from .sue_logit import DialSUEModel
+from .sue_probit import SueProbitMsaModel
 
 __all__ = [
+    "AlgorithmBModel",
     "CallableModel",
     "AllOrNothingModel",
     "MODEL_REGISTRY",
@@ -18,6 +21,7 @@ __all__ = [
     "BiconjugateFrankWolfeModel",
     "ConjugateFrankWolfeModel",
     "DialSUEModel",
+    "SueProbitMsaModel",
     "FrankWolfeModel",
     "GradientProjectionModel",
     "MSAModel",

@@ -52,6 +52,12 @@ class DialSUEModel(TrafficAssignmentModel):
                 "sue-msa requires an SUE scenario (scenario.sue_theta is None); "
                 "theta is task data, not a model factor"
             )
+        if scenario.sue_family != "logit":
+            raise ValueError(
+                f"sue-msa is the logit-SUE solver but scenario '{scenario.name}' "
+                f"declares sue_family={scenario.sue_family!r}; use sue-probit-msa "
+                "for the probit-SUE task"
+            )
         start = time.perf_counter()
         network = scenario.network
         engine = StochEngine(network)

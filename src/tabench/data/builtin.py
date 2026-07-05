@@ -97,8 +97,12 @@ def braess_scenario(demand: float = 6.0) -> Scenario:
     )
 
 
-def two_route_scenario(demand: float = 4.0, sue_theta: float | None = 0.5) -> Scenario:
-    """Two disjoint 2-link routes: the analytic anchor for the logit-SUE task.
+def two_route_scenario(
+    demand: float = 4.0,
+    sue_theta: float | None = 0.5,
+    sue_family: str = "logit",
+) -> Scenario:
+    """Two disjoint 2-link routes: the analytic anchor for the SUE tasks.
 
     Nodes: 1 = origin zone, 2 = destination zone, 3 and 4 = intersections.
     Route A = 1->3->2 with cost ``c_A = 2 + f_A``; route B = 1->4->2 with
@@ -111,6 +115,12 @@ def two_route_scenario(demand: float = 4.0, sue_theta: float | None = 0.5) -> Sc
     to the scalar equation ``f_A = D / (1 + exp(theta (c_A(f_A) -
     c_B(D - f_A))))`` — solvable by brentq in tests, no trusted digits.
     The deterministic UE (theta -> infinity limit) puts f_A = 2.5 at D = 4.
+
+    ``sue_family="probit"`` selects the probit task (adr-003) on the same
+    network: disjoint routes make the perceived route costs independent
+    normals, so ``P(A) = Phi((c_B - c_A)/sqrt(3.5 beta))`` — again a scalar
+    fixed point tests recompute via brentq. The default ``"logit"`` leaves
+    every existing scenario (and its content hash) untouched.
     """
     # Link order: 1->3, 3->2, 1->4, 4->2
     init = np.array([1, 3, 1, 4], dtype=np.int64)
@@ -145,7 +155,11 @@ def two_route_scenario(demand: float = 4.0, sue_theta: float | None = 0.5) -> Sc
     od = np.zeros((2, 2))
     od[0, 1] = demand
     reference = None
-    if demand == 4.0 and sue_theta == 0.5:
+    if demand == 4.0 and sue_theta == 0.5 and sue_family == "logit":
+        # The analytic oracle is the binary-LOGIT fixed point; it must not be
+        # attached to a probit instance (whose fixed point differs: f_A=2.444
+        # at beta=0.1), or flow_rmse_vs_reference would score against the wrong
+        # equilibrium. Probit tasks certify through the ADR-003 MC residual.
         f_a = 2.2990959494  # scalar logit fixed point; tests recompute via brentq
         reference = ReferenceSolution(
             link_flows=np.array([f_a, f_a, 4.0 - f_a, 4.0 - f_a]),
@@ -160,4 +174,5 @@ def two_route_scenario(demand: float = 4.0, sue_theta: float | None = 0.5) -> Sc
         reference=reference,
         family="builtin-tworoute",
         sue_theta=sue_theta,
+        sue_family=sue_family,
     )

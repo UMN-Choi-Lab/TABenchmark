@@ -48,6 +48,7 @@ from ..observe.levels import (
     StalePriorOD,
     distinct_nonzero_columns,
 )
+from .bootstrap import bootstrap_ci
 
 __all__ = [
     "ExperimentResult",
@@ -76,6 +77,8 @@ _CSV_FIELDS = [
     "node_balance_residual",
     "feasible",
     "sue_fixed_point_residual",
+    "sue_residual_se",
+    "sue_residual_floor",
     "so_relative_gap",
     "so_average_excess_cost",
     "tstt_mc",
@@ -147,6 +150,7 @@ def run_experiment(
     macroreps: int = 1,
     out_dir: str | Path | None = None,
     so_metrics: bool | None = None,
+    r_cert: int = 2000,
 ) -> ExperimentResult:
     """Run every model on the scenario and certify all checkpoints.
 
@@ -155,6 +159,10 @@ def run_experiment(
     (``so_metrics``) are enabled automatically when the grid contains a
     ``static_so`` model, uniformly for every model in the run; pass
     ``so_metrics=True``/``False`` to override.
+
+    ``r_cert`` is the probit-SUE certificate's pinned Monte Carlo sample count
+    (adr-003); it is ignored for non-probit scenarios and never hashed into the
+    instance (certificate protocol, not instance data).
     """
     names = [model.name for model in models]
     duplicates = {n for n in names if names.count(n) > 1}
@@ -167,7 +175,9 @@ def run_experiment(
 
     if so_metrics is None:
         so_metrics = any(m.capabilities.paradigm == "static_so" for m in models)
-    evaluator = Evaluator(scenario, so_metrics=so_metrics)
+    # The certificate pins its evaluation stream on root_seed = the run seed, so
+    # every macrorep and model is certified against one common sampled map.
+    evaluator = Evaluator(scenario, so_metrics=so_metrics, root_seed=seed, r_cert=r_cert)
 
     rows: list[dict[str, Any]] = []
     bundles: dict[tuple[str, str], ResultBundle] = {}
@@ -189,12 +199,46 @@ def run_experiment(
             bundles[(model.name, f"m{m}")] = bundle
             rows.extend(_score_bundle(score_scenario, bundle, m, evaluator))
 
+    # Stochastic track (P5/P8): aggregate the final certified metric across
+    # macroreps into a percentile bootstrap CI (adr-003 Decision 4). Only
+    # non-deterministic models run more than once carry one; deterministic
+    # models have a single trajectory and no sampling spread.
+    bootstrap_block: dict[str, Any] = {}
+    if macroreps > 1:
+        metric_key = (
+            "sue_fixed_point_residual"
+            if scenario.sue_family == "probit"
+            else "relative_gap"
+        )
+        for model in models:
+            if model.capabilities.deterministic:
+                continue
+            finals: dict[int, float] = {}
+            for row in rows:
+                if row["model"] == model.name:
+                    finals[row["macrorep"]] = row.get(metric_key, float("nan"))
+            values = np.array([finals[m] for m in sorted(finals)], dtype=float)
+            if values.size > 1 and np.isfinite(values).all():
+                ci = bootstrap_ci(values, root_seed=seed)
+                bootstrap_block[model.name] = {
+                    "metric": metric_key,
+                    "point": ci.point,
+                    "lo": ci.lo,
+                    "hi": ci.hi,
+                    "level": ci.level,
+                    "n_macroreps": int(values.size),
+                }
+
     manifest = {
         "created_utc": datetime.now(timezone.utc).isoformat(),
         "scenario": scenario.name,
         "scenario_hash": scenario.content_hash(),
         "scenario_family": scenario.family,
         "scenario_sue_theta": scenario.sue_theta,
+        "scenario_sue_family": scenario.sue_family,
+        # Certificate protocol, recorded not hashed (adr-003): the pinned MC
+        # sample count only matters for probit scenarios.
+        "certificate_r_cert": r_cert if scenario.sue_family == "probit" else None,
         "models": {
             model.name: {
                 "capabilities": {
@@ -216,6 +260,9 @@ def run_experiment(
         },
         "seed": seed,
         "macroreps": macroreps,
+        # Percentile bootstrap CIs of the final certified metric across
+        # macroreps (empty unless macroreps > 1 with a stochastic model).
+        "bootstrap": bootstrap_block,
         "rng": {
             "root_seed": seed,
             "schema": (

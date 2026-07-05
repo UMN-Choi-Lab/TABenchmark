@@ -103,6 +103,9 @@ SHIPPED = {
     "spiess1990gradient": ("v1", "T2 gradient OD adjustment (spiess, ADR-002)"),
     "spall1992multivariate": ("v1", "T2 SPSA calibration baseline (spsa, ADR-002)"),
     "hazelton2015network": ("v1", "T2 identifiability report + held-out ranking protocol"),
+    "dial2006path": ("v1", "Algorithm B bush-based solver (algb)"),
+    "sheffi1982algorithm": ("v1", "probit SUE solver (sue-probit-msa) + MC certificate (ADR-003)"),
+    "daganzo1977stochastic": ("v1", "SUE definition underlying the probit task"),
 }
 
 

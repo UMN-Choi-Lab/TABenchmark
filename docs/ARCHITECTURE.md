@@ -220,12 +220,14 @@ TABenchmark/
 │   ├── data/              # tntp.py (defensive parser), fetcher.py (checksums+citations),
 │   │                      # registry.py (networks + units metadata + defects), builtin.py
 │   ├── models/            # base.py, aon.py, msa.py, frank_wolfe.py (FW/CFW/BFW),
-│   │   │                  # gradient_projection.py, so.py (marginal-cost SO),
-│   │   │                  # sue_logit.py, _paths.py, _stoch.py (Dial loading map)
+│   │   │                  # gradient_projection.py, algb.py (Dial 2006 bush),
+│   │   │                  # so.py (marginal-cost SO), sue_logit.py, sue_probit.py,
+│   │   │                  # _paths.py, _stoch.py (Dial map), _probit.py (MC map)
 │   │   └── adapters/      # callable_adapter.py (planned: subprocess.py, docker.py)
 │   ├── observe/           # data levels + identifiability checks
-│   ├── metrics/           # gaps.py, flows.py (planned: distributional.py)
-│   ├── experiments/       # runner.py incl. manifests (planned: profiles.py, bootstrap.py)
+│   ├── estimation/        # T2 OD-estimation track (base, entropy/gls/spiess/spsa)
+│   ├── metrics/           # gaps.py, flows.py, so.py, estimation.py (planned: distributional.py)
+│   ├── experiments/       # runner.py incl. manifests, bootstrap.py (planned: profiles.py)
 │   └── cli.py             # tabench fetch | list | run (planned: validate)
 ├── scenarios/             # declarative YAML scenario cards (ladder: 0braess, 1siouxfalls, …)
 ├── demos/                 # demo_quickstart.py (planned ladder: scenario/model/experiment)
@@ -285,10 +287,15 @@ Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 172 refe
   validate` conformance suite, entry-point plugin registry.
 - **v1 (in progress):** path-based gradient projection (shipped: `gp`, the first
   solver reaching certified gaps below 1e-8 within ~100 iterations — a regime the
-  FW family needs thousands to cross); system optimum + certified SO gap +
-  price of anarchy + first-best tolls (shipped: `so-bfw`, `metrics.so`). Still open:
-  Algorithm B / TAPAS-class bush solvers; probit SUE; elastic demand & combined
-  models; T2 estimation track with Hazelton-style samplers as validated baselines and
+  FW family needs thousands to cross); Dial's Algorithm B bush solver (shipped:
+  `algb`, certified 1e-10 on Sioux Falls in ~18 iterations); system optimum +
+  certified SO gap + price of anarchy + first-best tolls (shipped: `so-bfw`,
+  `metrics.so`); probit SUE via MC-MSA with a pinned Monte-Carlo fixed-point
+  certificate (shipped: `sue-probit-msa`, [ADR-003](design/adr-003-probit-sue-mc-certificate.md);
+  the first stochastic-track model — macroreplication + bootstrap CIs); the T2
+  OD-estimation track (shipped: `estimation/`, [ADR-002](design/adr-002-t2-estimation-certificate.md)).
+  Still open: TAPAS-class paired-alternative-segment solvers; elastic demand &
+  combined models; distribution-emitting T2 estimators (Hazelton-style samplers) and
   **computational-graph estimators** — assignment/estimation expressed as a layered
   differentiable graph solved by forward-backward passes (Wu, Guo, Xian & Zhou 2018;
   Ma & Qian 2018; Ma, Pi & Qian 2020) or iterative backpropagation through the solver

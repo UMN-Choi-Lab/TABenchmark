@@ -174,11 +174,20 @@ class Scenario:
     a learned model whose ``trained_on`` includes this family is refused
     evaluation on this scenario.
 
-    ``sue_theta`` (optional) makes this an SUE task: the logit dispersion of
-    the pinned Dial-STOCH loading map, in 1/(native cost unit) — so its
-    meaning is network-specific (P9; scenario cards state the unit). It is
-    task data, never a model factor, and it is content-hashed when set (two
-    scenarios differing only in theta are different benchmark instances).
+    ``sue_theta`` (optional) makes this an SUE task: the dispersion dial of the
+    pinned loading map, in 1/(native cost unit) — so its meaning is
+    network-specific (P9; scenario cards state the unit). It is task data,
+    never a model factor, and it is content-hashed when set (two scenarios
+    differing only in theta are different benchmark instances).
+
+    ``sue_family`` selects the choice-model family of that SUE task —
+    ``"logit"`` (Dial-STOCH closed-form loading, docs/design/adr-001) or
+    ``"probit"`` (Monte Carlo loading + pinned certificate, adr-003). For
+    probit, ``sue_theta`` carries ``beta``, the perception variance per unit
+    free-flow time. This is unrelated to ``family``, which is *data lineage*
+    for the ``trained_on`` fairness gate (P7); ``sue_family`` names the task's
+    equilibrium definition. It is hashed only when non-default so every logit
+    scenario keeps the byte-identical hash it had before this field existed.
     """
 
     name: str
@@ -187,6 +196,7 @@ class Scenario:
     reference: ReferenceSolution | None = None
     family: str = field(default="")
     sue_theta: float | None = None
+    sue_family: str = "logit"
 
     def __post_init__(self) -> None:
         if self.demand.n_zones != self.network.n_zones:
@@ -202,6 +212,16 @@ class Scenario:
             raise ValueError(
                 f"Scenario '{self.name}': sue_theta must be finite and > 0, "
                 f"got {self.sue_theta!r}"
+            )
+        if self.sue_family not in ("logit", "probit"):
+            raise ValueError(
+                f"Scenario '{self.name}': sue_family must be 'logit' or 'probit', "
+                f"got {self.sue_family!r}"
+            )
+        if self.sue_family == "probit" and self.sue_theta is None:
+            raise ValueError(
+                f"Scenario '{self.name}': sue_family='probit' requires sue_theta "
+                "(beta, the perception variance per unit free-flow time)"
             )
 
     def content_hash(self) -> str:
@@ -229,4 +249,9 @@ class Scenario:
         # as before this field existed (pinned by a golden-hash test).
         if self.sue_theta is not None:
             h.update(f"sue_theta={float(self.sue_theta)!r};".encode())
+        # Appended after theta and only when non-default, so every logit
+        # scenario hashes exactly as before this field existed (golden test):
+        # a probit task can never collide with the logit task at the same theta.
+        if self.sue_family != "logit":
+            h.update(f"sue_family={self.sue_family};".encode())
         return h.hexdigest()

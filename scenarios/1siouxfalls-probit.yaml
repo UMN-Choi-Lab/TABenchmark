@@ -1,0 +1,17 @@
+# Scenario ladder rung 1 (probit-SUE variant): the classic Sioux Falls network
+# under probit route choice, certified against the pinned Monte Carlo residual
+# (ADR-003). beta is in native cost units (Sioux Falls times are in 0.01 h).
+scenario: siouxfalls
+source: tntp
+family: tntp-siouxfalls
+tasks: [t1_sue]
+sue:
+  theta: 0.5
+  family: probit
+  theta_units: variance per unit free-flow time (native 0.01 h)
+  r_cert: 2000  # pinned MC certificate sample count (ADR-003); Sioux Falls
+                # noise floor ~1.5e-2, ~3-4 s per certified checkpoint
+budgets:
+  iterations: 500
+macroreps: 5  # ADR-003 Decision 4: certified-residual macrorep spread (~0.023
+              # at k=100) dominates the certificate SE (~0.004)
