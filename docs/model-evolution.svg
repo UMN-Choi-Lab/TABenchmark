@@ -1,0 +1,231 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2790 1756" font-family="Helvetica,Arial,sans-serif">
+<rect width="2790" height="1756" fill="#fafafa"/>
+<rect x="20" y="0" width="250" height="1756" fill="#e8e8e8" opacity="0.18"/>
+<text x="145.0" y="24" text-anchor="middle" font-size="12" font-weight="bold" fill="#222">foundations</text>
+<rect x="270" y="0" width="250" height="1756" fill="#d6e4ff" opacity="0.18"/>
+<text x="395.0" y="24" text-anchor="middle" font-size="12" font-weight="bold" fill="#222">link-based-algorithms</text>
+<rect x="520" y="0" width="250" height="1756" fill="#c9f0d0" opacity="0.18"/>
+<text x="645.0" y="24" text-anchor="middle" font-size="12" font-weight="bold" fill="#222">path-and-bush-based</text>
+<rect x="770" y="0" width="250" height="1756" fill="#ffe9c7" opacity="0.18"/>
+<text x="895.0" y="24" text-anchor="middle" font-size="12" font-weight="bold" fill="#222">stochastic-ue</text>
+<rect x="1020" y="0" width="250" height="1756" fill="#ffd6d6" opacity="0.18"/>
+<text x="1145.0" y="24" text-anchor="middle" font-size="12" font-weight="bold" fill="#222">so-and-pricing</text>
+<rect x="1270" y="0" width="250" height="1756" fill="#e6d6ff" opacity="0.18"/>
+<text x="1395.0" y="24" text-anchor="middle" font-size="12" font-weight="bold" fill="#222">extensions-static</text>
+<rect x="1520" y="0" width="250" height="1756" fill="#d6f5f0" opacity="0.18"/>
+<text x="1645.0" y="24" text-anchor="middle" font-size="12" font-weight="bold" fill="#222">day-to-day</text>
+<rect x="1770" y="0" width="250" height="1756" fill="#f5e6d6" opacity="0.18"/>
+<text x="1895.0" y="24" text-anchor="middle" font-size="12" font-weight="bold" fill="#222">dnl-models</text>
+<rect x="2020" y="0" width="250" height="1756" fill="#f0d6e6" opacity="0.18"/>
+<text x="2145.0" y="24" text-anchor="middle" font-size="12" font-weight="bold" fill="#222">dta-analytical</text>
+<rect x="2270" y="0" width="250" height="1756" fill="#d6f0ff" opacity="0.18"/>
+<text x="2395.0" y="24" text-anchor="middle" font-size="12" font-weight="bold" fill="#222">ml-based-ta</text>
+<rect x="2520" y="0" width="250" height="1756" fill="#eeeed6" opacity="0.18"/>
+<text x="2645.0" y="24" text-anchor="middle" font-size="12" font-weight="bold" fill="#222">data-calibration-benchmarks</text>
+<line x1="0" y1="246" x2="2790" y2="246" stroke="#ddd"/>
+<text x="4" y="244" font-size="10" fill="#999">1960</text>
+<line x1="0" y1="466" x2="2790" y2="466" stroke="#ddd"/>
+<text x="4" y="464" font-size="10" fill="#999">1970</text>
+<line x1="0" y1="686" x2="2790" y2="686" stroke="#ddd"/>
+<text x="4" y="684" font-size="10" fill="#999">1980</text>
+<line x1="0" y1="906" x2="2790" y2="906" stroke="#ddd"/>
+<text x="4" y="904" font-size="10" fill="#999">1990</text>
+<line x1="0" y1="1126" x2="2790" y2="1126" stroke="#ddd"/>
+<text x="4" y="1124" font-size="10" fill="#999">2000</text>
+<line x1="0" y1="1346" x2="2790" y2="1346" stroke="#ddd"/>
+<text x="4" y="1344" font-size="10" fill="#999">2010</text>
+<line x1="0" y1="1566" x2="2790" y2="1566" stroke="#ddd"/>
+<text x="4" y="1564" font-size="10" fill="#999">2020</text>
+<defs><marker id="a" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#888"/></marker></defs>
+<path d="M1044,165 C1044,334.0 44,334.0 44,503" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M44,77 C44,367.0 44,367.0 44,657" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1044,165 C1044,411.0 44,411.0 44,657" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M44,671 C44,675.0 44,675.0 44,679" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1044,165 C1044,422.0 44,422.0 44,679" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M44,517 C44,598.0 44,598.0 44,679" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M294,165 C294,367.0 294,367.0 294,569" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1044,165 C1044,367.0 294,367.0 294,569" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1044,165 C1044,477.0 294,477.0 294,789" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M294,583 C294,994.0 294,994.0 294,1405" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M294,165 C294,785.0 294,785.0 294,1405" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M294,583 C294,785.0 544,785.0 544,987" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M544,1001 C544,1082.0 544,1082.0 544,1163" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1044,165 C1044,664.0 544,664.0 544,1163" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M544,1177 C544,1214.0 544,1214.0 544,1251" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M544,1265 C544,1302.0 544,1302.0 544,1339" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M544,1177 C544,1258.0 544,1258.0 544,1339" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M794,495 C794,554.0 794,554.0 794,613" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M44,77 C44,345.0 794,345.0 794,613" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M794,627 C794,653.0 794,653.0 794,679" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M794,495 C794,587.0 794,587.0 794,679" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1044,165 C1044,422.0 794,422.0 794,679" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M794,693 C794,708.0 794,708.0 794,723" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M794,627 C794,675.0 794,675.0 794,723" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M794,627 C794,675.0 906,675.0 906,723" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M794,737 C794,730.0 906,730.0 906,723" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M794,693 C794,708.0 906,708.0 906,723" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M44,77 C44,114.0 1044,114.0 1044,151" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1044,165 C1044,620.0 1044,620.0 1044,1075" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1044,165 C1044,664.0 1044,664.0 1044,1163" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1044,165 C1044,356.0 1294,356.0 1294,547" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1044,165 C1044,378.0 1294,378.0 1294,591" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1294,561 C1294,576.0 1294,576.0 1294,591" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M44,77 C44,455.0 1294,455.0 1294,833" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1044,165 C1044,587.0 1294,587.0 1294,1009" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M794,627 C794,697.0 1544,697.0 1544,767" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M44,671 C44,719.0 1656,719.0 1656,767" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M44,77 C44,422.0 1656,422.0 1656,767" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1544,781 C1544,829.0 1544,829.0 1544,877" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1656,781 C1656,884.0 1544,884.0 1544,987" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1544,891 C1544,950.0 1544,950.0 1544,1009" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1656,781 C1656,895.0 1544,895.0 1544,1009" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1544,781 C1544,895.0 1544,895.0 1544,1009" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1656,781 C1656,1060.0 1544,1060.0 1544,1339" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1656,781 C1656,1126.0 1544,1126.0 1544,1471" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M794,693 C794,1082.0 1544,1082.0 1544,1471" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1794,1001 C1794,1005.0 1794,1005.0 1794,1009" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1794,1001 C1794,1016.0 1794,1016.0 1794,1031" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1794,979 C1794,1126.0 1794,1126.0 1794,1273" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1794,1001 C1794,1137.0 1794,1137.0 1794,1273" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1794,1023 C1794,1192.0 1794,1192.0 1794,1361" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1794,1045 C1794,1203.0 1794,1203.0 1794,1361" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M44,77 C44,257.0 2044,257.0 2044,437" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1044,165 C1044,400.0 2044,400.0 2044,635" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M2044,649 C2044,807.0 2044,807.0 2044,965" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M2044,649 C2044,884.0 2044,884.0 2044,1119" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1794,1001 C1794,1060.0 2044,1060.0 2044,1119" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M2406,1639 C2406,1632.0 2294,1632.0 2294,1625" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1044,165 C1044,895.0 2294,895.0 2294,1625" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M44,77 C44,851.0 2294,851.0 2294,1625" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M44,77 C44,851.0 2406,851.0 2406,1625" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M1044,165 C1044,895.0 2406,895.0 2406,1625" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M2406,1639 C2406,1643.0 2294,1643.0 2294,1647" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M2294,1639 C2294,1643.0 2294,1643.0 2294,1647" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M2544,1485 C2544,1566.0 2406,1566.0 2406,1647" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M2544,693 C2544,730.0 2544,730.0 2544,767" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M2544,781 C2544,840.0 2544,840.0 2544,899" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M2544,781 C2544,862.0 2656,862.0 2656,943" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M2544,913 C2544,928.0 2656,928.0 2656,943" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M2544,693 C2544,818.0 2656,818.0 2656,943" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M2544,781 C2544,873.0 2544,873.0 2544,965" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M2544,957 C2544,1115.0 2544,1115.0 2544,1273" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M2544,979 C2544,1126.0 2544,1126.0 2544,1273" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M2544,1639 C2544,1654.0 2544,1654.0 2544,1669" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M2544,1287 C2544,1478.0 2544,1478.0 2544,1669" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<rect x="-8" y="62" width="104" height="17" rx="4" fill="#e8e8e8" stroke="#333" stroke-dasharray="3,2"/>
+<text x="44" y="74" text-anchor="middle" font-size="9.5" fill="#000">Wardrop 1952</text>
+<rect x="-8" y="326" width="104" height="17" rx="4" fill="#e8e8e8" stroke="#333"/>
+<text x="44" y="338" text-anchor="middle" font-size="9.5" fill="#000">Bureau of Public Roads (BPR) 1964</text>
+<rect x="-8" y="502" width="104" height="17" rx="4" fill="#e8e8e8" stroke="#333" stroke-dasharray="3,2"/>
+<text x="44" y="514" text-anchor="middle" font-size="9.5" fill="#000">Dafermos 1972</text>
+<rect x="-8" y="656" width="104" height="17" rx="4" fill="#e8e8e8" stroke="#333" stroke-dasharray="3,2"/>
+<text x="44" y="668" text-anchor="middle" font-size="9.5" fill="#000">Smith 1979</text>
+<rect x="-8" y="678" width="104" height="17" rx="4" fill="#e8e8e8" stroke="#333" stroke-dasharray="3,2"/>
+<text x="44" y="690" text-anchor="middle" font-size="9.5" fill="#000">Dafermos 1980</text>
+<rect x="242" y="150" width="104" height="17" rx="4" fill="#d6e4ff" stroke="#333"/>
+<text x="294" y="162" text-anchor="middle" font-size="9.5" fill="#000">Frank 1956</text>
+<rect x="242" y="568" width="104" height="17" rx="4" fill="#d6e4ff" stroke="#333"/>
+<text x="294" y="580" text-anchor="middle" font-size="9.5" fill="#000">LeBlanc 1975</text>
+<rect x="242" y="788" width="104" height="17" rx="4" fill="#d6e4ff" stroke="#333"/>
+<text x="294" y="800" text-anchor="middle" font-size="9.5" fill="#000">Sheffi (MSA baseline; convergence proof Powell 1985</text>
+<rect x="242" y="1404" width="104" height="17" rx="4" fill="#d6e4ff" stroke="#333"/>
+<text x="294" y="1416" text-anchor="middle" font-size="9.5" fill="#000">Mitradjieva 2013</text>
+<rect x="492" y="986" width="104" height="17" rx="4" fill="#c9f0d0" stroke="#333"/>
+<text x="544" y="998" text-anchor="middle" font-size="9.5" fill="#000">Jayakrishnan 1994</text>
+<rect x="492" y="1162" width="104" height="17" rx="4" fill="#c9f0d0" stroke="#333" stroke-dasharray="3,2"/>
+<text x="544" y="1174" text-anchor="middle" font-size="9.5" fill="#000">Bar-Gera 2002</text>
+<rect x="492" y="1250" width="104" height="17" rx="4" fill="#c9f0d0" stroke="#333"/>
+<text x="544" y="1262" text-anchor="middle" font-size="9.5" fill="#000">Dial 2006</text>
+<rect x="492" y="1338" width="104" height="17" rx="4" fill="#c9f0d0" stroke="#333"/>
+<text x="544" y="1350" text-anchor="middle" font-size="9.5" fill="#000">Bar-Gera 2010</text>
+<rect x="742" y="480" width="104" height="17" rx="4" fill="#ffe9c7" stroke="#333"/>
+<text x="794" y="492" text-anchor="middle" font-size="9.5" fill="#000">Dial 1971</text>
+<rect x="742" y="612" width="104" height="17" rx="4" fill="#ffe9c7" stroke="#333"/>
+<text x="794" y="624" text-anchor="middle" font-size="9.5" fill="#000">Daganzo 1977</text>
+<rect x="742" y="678" width="104" height="17" rx="4" fill="#ffe9c7" stroke="#333"/>
+<text x="794" y="690" text-anchor="middle" font-size="9.5" fill="#000">Fisk 1980</text>
+<rect x="742" y="722" width="104" height="17" rx="4" fill="#ffe9c7" stroke="#333"/>
+<text x="794" y="734" text-anchor="middle" font-size="9.5" fill="#000">Powell 1982</text>
+<rect x="854" y="722" width="104" height="17" rx="4" fill="#ffe9c7" stroke="#333"/>
+<text x="906" y="734" text-anchor="middle" font-size="9.5" fill="#000">Sheffi 1982</text>
+<rect x="992" y="150" width="104" height="17" rx="4" fill="#ffd6d6" stroke="#333"/>
+<text x="1044" y="162" text-anchor="middle" font-size="9.5" fill="#000">Beckmann 1956</text>
+<rect x="992" y="1074" width="104" height="17" rx="4" fill="#ffd6d6" stroke="#333"/>
+<text x="1044" y="1086" text-anchor="middle" font-size="9.5" fill="#000">Yang 1998</text>
+<rect x="992" y="1162" width="104" height="17" rx="4" fill="#ffd6d6" stroke="#333"/>
+<text x="1044" y="1174" text-anchor="middle" font-size="9.5" fill="#000">Roughgarden 2002</text>
+<rect x="1242" y="546" width="104" height="17" rx="4" fill="#e6d6ff" stroke="#333"/>
+<text x="1294" y="558" text-anchor="middle" font-size="9.5" fill="#000">Florian 1974</text>
+<rect x="1242" y="590" width="104" height="17" rx="4" fill="#e6d6ff" stroke="#333" stroke-dasharray="3,2"/>
+<text x="1294" y="602" text-anchor="middle" font-size="9.5" fill="#000">Evans 1976</text>
+<rect x="1242" y="832" width="104" height="17" rx="4" fill="#e6d6ff" stroke="#333" stroke-dasharray="3,2"/>
+<text x="1294" y="844" text-anchor="middle" font-size="9.5" fill="#000">Mahmassani 1987</text>
+<rect x="1242" y="876" width="104" height="17" rx="4" fill="#e6d6ff" stroke="#333" stroke-dasharray="3,2"/>
+<text x="1294" y="888" text-anchor="middle" font-size="9.5" fill="#000">Spiess 1989</text>
+<rect x="1242" y="1008" width="104" height="17" rx="4" fill="#e6d6ff" stroke="#333" stroke-dasharray="3,2"/>
+<text x="1294" y="1020" text-anchor="middle" font-size="9.5" fill="#000">Larsson 1995</text>
+<rect x="1492" y="766" width="104" height="17" rx="4" fill="#d6f5f0" stroke="#333" stroke-dasharray="3,2"/>
+<text x="1544" y="778" text-anchor="middle" font-size="9.5" fill="#000">Horowitz 1984</text>
+<rect x="1604" y="766" width="104" height="17" rx="4" fill="#d6f5f0" stroke="#333" stroke-dasharray="3,2"/>
+<text x="1656" y="778" text-anchor="middle" font-size="9.5" fill="#000">Smith 1984</text>
+<rect x="1492" y="876" width="104" height="17" rx="4" fill="#d6f5f0" stroke="#333" stroke-dasharray="3,2"/>
+<text x="1544" y="888" text-anchor="middle" font-size="9.5" fill="#000">Cascetta 1989</text>
+<rect x="1492" y="986" width="104" height="17" rx="4" fill="#d6f5f0" stroke="#333" stroke-dasharray="3,2"/>
+<text x="1544" y="998" text-anchor="middle" font-size="9.5" fill="#000">Friesz 1994</text>
+<rect x="1492" y="1008" width="104" height="17" rx="4" fill="#d6f5f0" stroke="#333" stroke-dasharray="3,2"/>
+<text x="1544" y="1020" text-anchor="middle" font-size="9.5" fill="#000">Cantarella 1995</text>
+<rect x="1492" y="1338" width="104" height="17" rx="4" fill="#d6f5f0" stroke="#333" stroke-dasharray="3,2"/>
+<text x="1544" y="1350" text-anchor="middle" font-size="9.5" fill="#000">He 2010</text>
+<rect x="1492" y="1470" width="104" height="17" rx="4" fill="#d6f5f0" stroke="#333" stroke-dasharray="3,2"/>
+<text x="1544" y="1482" text-anchor="middle" font-size="9.5" fill="#000">Smith 2016</text>
+<rect x="1742" y="964" width="104" height="17" rx="4" fill="#f5e6d6" stroke="#333" stroke-dasharray="3,2"/>
+<text x="1794" y="976" text-anchor="middle" font-size="9.5" fill="#000">Newell 1993</text>
+<rect x="1742" y="986" width="104" height="17" rx="4" fill="#f5e6d6" stroke="#333" stroke-dasharray="3,2"/>
+<text x="1794" y="998" text-anchor="middle" font-size="9.5" fill="#000">Daganzo 1994</text>
+<rect x="1742" y="1008" width="104" height="17" rx="4" fill="#f5e6d6" stroke="#333" stroke-dasharray="3,2"/>
+<text x="1794" y="1020" text-anchor="middle" font-size="9.5" fill="#000">Daganzo 1995</text>
+<rect x="1742" y="1030" width="104" height="17" rx="4" fill="#f5e6d6" stroke="#333" stroke-dasharray="3,2"/>
+<text x="1794" y="1042" text-anchor="middle" font-size="9.5" fill="#000">Lebacque 1996</text>
+<rect x="1742" y="1272" width="104" height="17" rx="4" fill="#f5e6d6" stroke="#333" stroke-dasharray="3,2"/>
+<text x="1794" y="1284" text-anchor="middle" font-size="9.5" fill="#000">Yperman 2007</text>
+<rect x="1742" y="1360" width="104" height="17" rx="4" fill="#f5e6d6" stroke="#333" stroke-dasharray="3,2"/>
+<text x="1794" y="1372" text-anchor="middle" font-size="9.5" fill="#000">Tampère 2011</text>
+<rect x="1992" y="436" width="104" height="17" rx="4" fill="#f0d6e6" stroke="#333" stroke-dasharray="3,2"/>
+<text x="2044" y="448" text-anchor="middle" font-size="9.5" fill="#000">Vickrey 1969</text>
+<rect x="1992" y="634" width="104" height="17" rx="4" fill="#f0d6e6" stroke="#333" stroke-dasharray="3,2"/>
+<text x="2044" y="646" text-anchor="middle" font-size="9.5" fill="#000">Merchant 1978</text>
+<rect x="1992" y="964" width="104" height="17" rx="4" fill="#f0d6e6" stroke="#333" stroke-dasharray="3,2"/>
+<text x="2044" y="976" text-anchor="middle" font-size="9.5" fill="#000">Friesz 1993</text>
+<rect x="1992" y="1118" width="104" height="17" rx="4" fill="#f0d6e6" stroke="#333" stroke-dasharray="3,2"/>
+<text x="2044" y="1130" text-anchor="middle" font-size="9.5" fill="#000">Ziliaskopoulos 2000</text>
+<rect x="2242" y="1624" width="104" height="17" rx="4" fill="#d6f0ff" stroke="#333" stroke-dasharray="3,2"/>
+<text x="2294" y="1636" text-anchor="middle" font-size="9.5" fill="#000">Liu 2023</text>
+<rect x="2354" y="1624" width="104" height="17" rx="4" fill="#d6f0ff" stroke="#333"/>
+<text x="2406" y="1636" text-anchor="middle" font-size="9.5" fill="#000">Rahman 2023</text>
+<rect x="2242" y="1646" width="104" height="17" rx="4" fill="#d6f0ff" stroke="#333" stroke-dasharray="3,2"/>
+<text x="2294" y="1658" text-anchor="middle" font-size="9.5" fill="#000">Liu 2024</text>
+<rect x="2354" y="1646" width="104" height="17" rx="4" fill="#d6f0ff" stroke="#333" stroke-dasharray="3,2"/>
+<text x="2406" y="1658" text-anchor="middle" font-size="9.5" fill="#000">Xu 2024</text>
+<rect x="2492" y="678" width="104" height="17" rx="4" fill="#eeeed6" stroke="#333"/>
+<text x="2544" y="690" text-anchor="middle" font-size="9.5" fill="#000">Van Zuylen 1980</text>
+<rect x="2492" y="766" width="104" height="17" rx="4" fill="#eeeed6" stroke="#333"/>
+<text x="2544" y="778" text-anchor="middle" font-size="9.5" fill="#000">Cascetta 1984</text>
+<rect x="2492" y="898" width="104" height="17" rx="4" fill="#eeeed6" stroke="#333"/>
+<text x="2544" y="910" text-anchor="middle" font-size="9.5" fill="#000">Spiess 1990</text>
+<rect x="2492" y="942" width="104" height="17" rx="4" fill="#eeeed6" stroke="#333"/>
+<text x="2544" y="954" text-anchor="middle" font-size="9.5" fill="#000">Spall 1992</text>
+<rect x="2604" y="942" width="104" height="17" rx="4" fill="#eeeed6" stroke="#333" stroke-dasharray="3,2"/>
+<text x="2656" y="954" text-anchor="middle" font-size="9.5" fill="#000">Yang 1992</text>
+<rect x="2492" y="964" width="104" height="17" rx="4" fill="#eeeed6" stroke="#333" stroke-dasharray="3,2"/>
+<text x="2544" y="976" text-anchor="middle" font-size="9.5" fill="#000">Cascetta 1993</text>
+<rect x="2492" y="1206" width="104" height="17" rx="4" fill="#eeeed6" stroke="#333" stroke-dasharray="3,2"/>
+<text x="2544" y="1218" text-anchor="middle" font-size="9.5" fill="#000">Boyce 2004</text>
+<rect x="2492" y="1272" width="104" height="17" rx="4" fill="#eeeed6" stroke="#333" stroke-dasharray="3,2"/>
+<text x="2544" y="1284" text-anchor="middle" font-size="9.5" fill="#000">Balakrishna 2007</text>
+<rect x="2492" y="1470" width="104" height="17" rx="4" fill="#eeeed6" stroke="#333" stroke-dasharray="3,2"/>
+<text x="2544" y="1482" text-anchor="middle" font-size="9.5" fill="#000">Stabler 2016</text>
+<rect x="2492" y="1624" width="104" height="17" rx="4" fill="#eeeed6" stroke="#333" stroke-dasharray="3,2"/>
+<text x="2544" y="1636" text-anchor="middle" font-size="9.5" fill="#000">Eckman 2023</text>
+<rect x="2492" y="1668" width="104" height="17" rx="4" fill="#eeeed6" stroke="#333" stroke-dasharray="3,2"/>
+<text x="2544" y="1680" text-anchor="middle" font-size="9.5" fill="#000">Ryu 2025</text>
+</svg>

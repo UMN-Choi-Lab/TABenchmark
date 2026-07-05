@@ -76,7 +76,9 @@ run it — that's the point.)
 
 Thirteen assignment models and five OD-estimation baselines ship today, spanning white-box
 solvers, a stochastic track, elastic demand, and the first learned model — every one
-certified from its emitted flows by the identical P1 harness.
+certified from its emitted flows by the identical P1 harness. For what each model does
+*differently* from its predecessors and the lineage of the whole family, see the
+**[model compendium](docs/MODELS.md)** and its [evolution graph](docs/model-evolution.svg).
 
 | Paradigm | Models |
 |---|---|

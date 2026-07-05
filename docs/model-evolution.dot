@@ -1,0 +1,174 @@
+digraph TA_evolution {
+  rankdir=TB; node [shape=box,style="rounded,filled",fontname="Helvetica",fontsize=10];
+  edge [color="#666666",arrowsize=0.7];
+  { rank=same; "wardrop1952some" }
+  { rank=same; "frank1956algorithm" "beckmann1956studies" }
+  { rank=same; "bpr1964traffic" }
+  { rank=same; "vickrey1969congestion" }
+  { rank=same; "dial1971probabilistic" }
+  { rank=same; "dafermos1972traffic" }
+  { rank=same; "florian1974method" }
+  { rank=same; "leblanc1975efficient" }
+  { rank=same; "evans1976derivation" }
+  { rank=same; "daganzo1977stochastic" }
+  { rank=same; "merchant1978model" }
+  { rank=same; "smith1979existence" }
+  { rank=same; "dafermos1980traffic" "fisk1980some" "vanzuylen1980most" }
+  { rank=same; "powell1982convergence" "sheffi1982algorithm" }
+  { rank=same; "horowitz1984stability" "smith1984stability" "cascetta1984estimation" }
+  { rank=same; "sheffi1985urban" }
+  { rank=same; "mahmassani1987on" }
+  { rank=same; "spiess1989optimal" "cascetta1989stochastic" }
+  { rank=same; "spiess1990gradient" }
+  { rank=same; "spall1992multivariate" "yang1992estimation" }
+  { rank=same; "newell1993simplified" "friesz1993variational" "cascetta1993dynamic" }
+  { rank=same; "jayakrishnan1994faster" "friesz1994daytoday" "daganzo1994cell" }
+  { rank=same; "larsson1995augmented" "cantarella1995dynamic" "daganzo1995cell" }
+  { rank=same; "lebacque1996godunov" }
+  { rank=same; "yang1998principle" }
+  { rank=same; "ziliaskopoulos2000linear" }
+  { rank=same; "bargera2002origin" "roughgarden2002how" }
+  { rank=same; "boyce2004convergence" }
+  { rank=same; "dial2006path" }
+  { rank=same; "yperman2007link" "balakrishna2007offline" }
+  { rank=same; "bargera2010traffic" "he2010linkbased" }
+  { rank=same; "tampere2011generic" }
+  { rank=same; "mitradjieva2013stiff" }
+  { rank=same; "smith2016routeswapping" "stabler2016transportation" }
+  { rank=same; "liu2023end" "rahman2023data" "eckman2023simopt" }
+  { rank=same; "liu2024end" "xu2024unified" }
+  { rank=same; "ryu2025bo4mob" }
+  "wardrop1952some" [label="Wardrop 1952\n",fillcolor="#e8e8e8",style="rounded,filled,dashed"];
+  "bpr1964traffic" [label="Bureau of Public Roads (BPR) 1964\n",fillcolor="#e8e8e8",style="rounded,filled"];
+  "dafermos1972traffic" [label="Dafermos 1972\n",fillcolor="#e8e8e8",style="rounded,filled,dashed"];
+  "smith1979existence" [label="Smith 1979\n",fillcolor="#e8e8e8",style="rounded,filled,dashed"];
+  "dafermos1980traffic" [label="Dafermos 1980\n",fillcolor="#e8e8e8",style="rounded,filled,dashed"];
+  "frank1956algorithm" [label="Frank 1956\nfw",fillcolor="#d6e4ff",style="rounded,filled"];
+  "leblanc1975efficient" [label="LeBlanc 1975\nfw",fillcolor="#d6e4ff",style="rounded,filled"];
+  "sheffi1985urban" [label="Sheffi (MSA baseline; convergence proof Powell 1985\nmsa",fillcolor="#d6e4ff",style="rounded,filled"];
+  "mitradjieva2013stiff" [label="Mitradjieva 2013\ncfw",fillcolor="#d6e4ff",style="rounded,filled"];
+  "jayakrishnan1994faster" [label="Jayakrishnan 1994\ngp",fillcolor="#c9f0d0",style="rounded,filled"];
+  "bargera2002origin" [label="Bar-Gera 2002\n",fillcolor="#c9f0d0",style="rounded,filled,dashed"];
+  "dial2006path" [label="Dial 2006\nalgb",fillcolor="#c9f0d0",style="rounded,filled"];
+  "bargera2010traffic" [label="Bar-Gera 2010\ntapas",fillcolor="#c9f0d0",style="rounded,filled"];
+  "dial1971probabilistic" [label="Dial 1971\nsue-msa",fillcolor="#ffe9c7",style="rounded,filled"];
+  "daganzo1977stochastic" [label="Daganzo 1977\nsue-probit-msa",fillcolor="#ffe9c7",style="rounded,filled"];
+  "fisk1980some" [label="Fisk 1980\nsue-msa",fillcolor="#ffe9c7",style="rounded,filled"];
+  "powell1982convergence" [label="Powell 1982\nsue-msa",fillcolor="#ffe9c7",style="rounded,filled"];
+  "sheffi1982algorithm" [label="Sheffi 1982\nsue-probit-msa",fillcolor="#ffe9c7",style="rounded,filled"];
+  "beckmann1956studies" [label="Beckmann 1956\nso-bfw",fillcolor="#ffd6d6",style="rounded,filled"];
+  "yang1998principle" [label="Yang 1998\n",fillcolor="#ffd6d6",style="rounded,filled"];
+  "roughgarden2002how" [label="Roughgarden 2002\n",fillcolor="#ffd6d6",style="rounded,filled"];
+  "florian1974method" [label="Florian 1974\nfw-elastic",fillcolor="#e6d6ff",style="rounded,filled"];
+  "evans1976derivation" [label="Evans 1976\n",fillcolor="#e6d6ff",style="rounded,filled,dashed"];
+  "mahmassani1987on" [label="Mahmassani 1987\n",fillcolor="#e6d6ff",style="rounded,filled,dashed"];
+  "spiess1989optimal" [label="Spiess 1989\n",fillcolor="#e6d6ff",style="rounded,filled,dashed"];
+  "larsson1995augmented" [label="Larsson 1995\n",fillcolor="#e6d6ff",style="rounded,filled,dashed"];
+  "horowitz1984stability" [label="Horowitz 1984\n",fillcolor="#d6f5f0",style="rounded,filled,dashed"];
+  "smith1984stability" [label="Smith 1984\n",fillcolor="#d6f5f0",style="rounded,filled,dashed"];
+  "cascetta1989stochastic" [label="Cascetta 1989\n",fillcolor="#d6f5f0",style="rounded,filled,dashed"];
+  "friesz1994daytoday" [label="Friesz 1994\n",fillcolor="#d6f5f0",style="rounded,filled,dashed"];
+  "cantarella1995dynamic" [label="Cantarella 1995\n",fillcolor="#d6f5f0",style="rounded,filled,dashed"];
+  "he2010linkbased" [label="He 2010\n",fillcolor="#d6f5f0",style="rounded,filled,dashed"];
+  "smith2016routeswapping" [label="Smith 2016\n",fillcolor="#d6f5f0",style="rounded,filled,dashed"];
+  "newell1993simplified" [label="Newell 1993\n",fillcolor="#f5e6d6",style="rounded,filled,dashed"];
+  "daganzo1994cell" [label="Daganzo 1994\n",fillcolor="#f5e6d6",style="rounded,filled,dashed"];
+  "daganzo1995cell" [label="Daganzo 1995\n",fillcolor="#f5e6d6",style="rounded,filled,dashed"];
+  "lebacque1996godunov" [label="Lebacque 1996\n",fillcolor="#f5e6d6",style="rounded,filled,dashed"];
+  "yperman2007link" [label="Yperman 2007\n",fillcolor="#f5e6d6",style="rounded,filled,dashed"];
+  "tampere2011generic" [label="Tampère 2011\n",fillcolor="#f5e6d6",style="rounded,filled,dashed"];
+  "vickrey1969congestion" [label="Vickrey 1969\n",fillcolor="#f0d6e6",style="rounded,filled,dashed"];
+  "merchant1978model" [label="Merchant 1978\n",fillcolor="#f0d6e6",style="rounded,filled,dashed"];
+  "friesz1993variational" [label="Friesz 1993\n",fillcolor="#f0d6e6",style="rounded,filled,dashed"];
+  "ziliaskopoulos2000linear" [label="Ziliaskopoulos 2000\n",fillcolor="#f0d6e6",style="rounded,filled,dashed"];
+  "liu2023end" [label="Liu 2023\n",fillcolor="#d6f0ff",style="rounded,filled,dashed"];
+  "rahman2023data" [label="Rahman 2023\nlearned-surrogate",fillcolor="#d6f0ff",style="rounded,filled"];
+  "liu2024end" [label="Liu 2024\n",fillcolor="#d6f0ff",style="rounded,filled,dashed"];
+  "xu2024unified" [label="Xu 2024\n",fillcolor="#d6f0ff",style="rounded,filled,dashed"];
+  "vanzuylen1980most" [label="Van Zuylen 1980\nvzw-entropy",fillcolor="#eeeed6",style="rounded,filled"];
+  "cascetta1984estimation" [label="Cascetta 1984\ngls",fillcolor="#eeeed6",style="rounded,filled"];
+  "spiess1990gradient" [label="Spiess 1990\nspiess",fillcolor="#eeeed6",style="rounded,filled"];
+  "spall1992multivariate" [label="Spall 1992\nspsa",fillcolor="#eeeed6",style="rounded,filled"];
+  "yang1992estimation" [label="Yang 1992\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
+  "cascetta1993dynamic" [label="Cascetta 1993\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
+  "boyce2004convergence" [label="Boyce 2004\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
+  "balakrishna2007offline" [label="Balakrishna 2007\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
+  "stabler2016transportation" [label="Stabler 2016\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
+  "eckman2023simopt" [label="Eckman 2023\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
+  "ryu2025bo4mob" [label="Ryu 2025\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
+  "beckmann1956studies" -> "dafermos1972traffic";
+  "wardrop1952some" -> "smith1979existence";
+  "beckmann1956studies" -> "smith1979existence";
+  "smith1979existence" -> "dafermos1980traffic";
+  "beckmann1956studies" -> "dafermos1980traffic";
+  "dafermos1972traffic" -> "dafermos1980traffic";
+  "frank1956algorithm" -> "leblanc1975efficient";
+  "beckmann1956studies" -> "leblanc1975efficient";
+  "beckmann1956studies" -> "sheffi1985urban";
+  "leblanc1975efficient" -> "mitradjieva2013stiff";
+  "frank1956algorithm" -> "mitradjieva2013stiff";
+  "leblanc1975efficient" -> "jayakrishnan1994faster";
+  "jayakrishnan1994faster" -> "bargera2002origin";
+  "beckmann1956studies" -> "bargera2002origin";
+  "bargera2002origin" -> "dial2006path";
+  "dial2006path" -> "bargera2010traffic";
+  "bargera2002origin" -> "bargera2010traffic";
+  "dial1971probabilistic" -> "daganzo1977stochastic";
+  "wardrop1952some" -> "daganzo1977stochastic";
+  "daganzo1977stochastic" -> "fisk1980some";
+  "dial1971probabilistic" -> "fisk1980some";
+  "beckmann1956studies" -> "fisk1980some";
+  "fisk1980some" -> "powell1982convergence";
+  "daganzo1977stochastic" -> "powell1982convergence";
+  "daganzo1977stochastic" -> "sheffi1982algorithm";
+  "powell1982convergence" -> "sheffi1982algorithm";
+  "fisk1980some" -> "sheffi1982algorithm";
+  "wardrop1952some" -> "beckmann1956studies";
+  "beckmann1956studies" -> "yang1998principle";
+  "beckmann1956studies" -> "roughgarden2002how";
+  "beckmann1956studies" -> "florian1974method";
+  "beckmann1956studies" -> "evans1976derivation";
+  "florian1974method" -> "evans1976derivation";
+  "wardrop1952some" -> "mahmassani1987on";
+  "beckmann1956studies" -> "larsson1995augmented";
+  "daganzo1977stochastic" -> "horowitz1984stability";
+  "smith1979existence" -> "smith1984stability";
+  "wardrop1952some" -> "smith1984stability";
+  "horowitz1984stability" -> "cascetta1989stochastic";
+  "smith1984stability" -> "friesz1994daytoday";
+  "cascetta1989stochastic" -> "cantarella1995dynamic";
+  "smith1984stability" -> "cantarella1995dynamic";
+  "horowitz1984stability" -> "cantarella1995dynamic";
+  "smith1984stability" -> "he2010linkbased";
+  "smith1984stability" -> "smith2016routeswapping";
+  "fisk1980some" -> "smith2016routeswapping";
+  "daganzo1994cell" -> "daganzo1995cell";
+  "daganzo1994cell" -> "lebacque1996godunov";
+  "newell1993simplified" -> "yperman2007link";
+  "daganzo1994cell" -> "yperman2007link";
+  "daganzo1995cell" -> "tampere2011generic";
+  "lebacque1996godunov" -> "tampere2011generic";
+  "wardrop1952some" -> "vickrey1969congestion";
+  "beckmann1956studies" -> "merchant1978model";
+  "merchant1978model" -> "friesz1993variational";
+  "merchant1978model" -> "ziliaskopoulos2000linear";
+  "daganzo1994cell" -> "ziliaskopoulos2000linear";
+  "rahman2023data" -> "liu2023end";
+  "beckmann1956studies" -> "liu2023end";
+  "wardrop1952some" -> "liu2023end";
+  "wardrop1952some" -> "rahman2023data";
+  "beckmann1956studies" -> "rahman2023data";
+  "rahman2023data" -> "liu2024end";
+  "liu2023end" -> "liu2024end";
+  "stabler2016transportation" -> "xu2024unified";
+  "vanzuylen1980most" -> "cascetta1984estimation";
+  "cascetta1984estimation" -> "spiess1990gradient";
+  "cascetta1984estimation" -> "yang1992estimation";
+  "spiess1990gradient" -> "yang1992estimation";
+  "vanzuylen1980most" -> "yang1992estimation";
+  "cascetta1984estimation" -> "cascetta1993dynamic";
+  "spall1992multivariate" -> "balakrishna2007offline";
+  "cascetta1993dynamic" -> "balakrishna2007offline";
+  "eckman2023simopt" -> "ryu2025bo4mob";
+  "balakrishna2007offline" -> "ryu2025bo4mob";
+}
