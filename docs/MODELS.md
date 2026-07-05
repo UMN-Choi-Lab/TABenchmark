@@ -26,7 +26,7 @@ graph TD
   n_dafermostraffic7276["Dafermos 1972"]:::c0
   n_florianmethod9428(["Florian 1974"]):::c5
   n_leblancefficient294(["LeBlanc 1975"]):::c1
-  n_evansderivation1705["Evans 1976"]:::c5
+  n_evansderivation1705(["Evans 1976"]):::c5
   n_daganzostochastic1939(["Daganzo 1977"]):::c3
   n_merchantmodel1560["Merchant 1978"]:::c8
   n_smithexistence5776["Smith 1979"]:::c0
@@ -479,7 +479,7 @@ First practical network-equilibrium algorithm for the case where each OD pair's 
 
 ### Evans (1976) — Derivation and analysis of some models for combining trip distribution and assignment
 
-_roadmap_ · combined distribution+assignment: entropy/gravity trip distribution coupled to Wardrop UE assignment (doubly/singly constrained convex program) · `[evans1976derivation]`
+`evans` · **shipped** · combined distribution+assignment: entropy/gravity trip distribution coupled to Wardrop UE assignment (doubly/singly constrained convex program) · `[evans1976derivation]`
 
 A single convex program (and a provably convergent algorithm) that solves trip distribution and network equilibrium assignment simultaneously, instead of iterating between two separate models.
 
@@ -487,7 +487,7 @@ A single convex program (and a provably convergent algorithm) that solves trip d
 
 **Formulation.** `min_x,d  sum_a integral_0^{x_a} t_a(w)dw + (1/beta) sum_rs d_rs(ln d_rs - 1)  s.t. sum_s d_rs = O_r, sum_r d_rs = D_s, d feasible on network. Evans partial-linearisation: given costs, distribute demand by entropy/gravity, load AON, line-search the convex combination.`
 
-**Validation.** The paper is primarily a derivation-plus-convergence-analysis with only a small illustrative example; no standardized reproducible numerics. Would validate by analytic anchors: as the dispersion beta -> infinity the distribution collapses and it reduces to plain Beckmann UE on a fixed matrix, and with congestion switched off it reduces to a pure entropy/gravity distribution (Furness balancing) -- both are checkable fixed points. Needs a scenario carrying production/attraction margins O_r, D_s rather than a full fixed OD matrix, which the current fixed-OD harness does not supply.
+**Validation.** SHIPPED (adr-007) as `evans`, paradigm static_ue_combined: Evans partial-linearization Frank-Wolfe (gravity/Furness distribution subproblem + AON + exact Brent line search), with a P1-pure certificate that recomputes d* = doubly-constrained-gravity(u(v)) from the emitted flows and scores route-equilibrium relative_gap + demand-consistency node_balance. Validated against an analytic anchor (`evans_symmetric_scenario`): a symmetric bipartite network whose doubly-constrained gravity collapses to a binary logit split -- a scalar fixed point recomputed independently with brentq (no trusted digits), link flows (p,q,q,p) with p~6.92 at beta=0.5. HONEST SOUNDNESS BOUND (adversarial review): because the gravity always preserves the O/D margins, node_balance carries no distributional info and the only teeth is the negative-excess guard, which collapses on cost-degenerate instances -- the same aggregate-vs-per-OD limitation the whole harness documents (the fixed-demand certificate admits the identical false positive; verified, not Evans-specific). The scored gap is a valid NECESSARY condition; the anchor is deliberately non-degenerate (intercepts 1 vs 3) so it does not exhibit the hole; the limitation is pinned transparently by test_aggregate_multicommodity_limitation and complemented by flow_rmse_vs_reference on referenced scenarios (adr-007).
 
 *Builds on:* Beckmann, McGuire & Winsten 1956, Florian & Nguyen 1974.
 

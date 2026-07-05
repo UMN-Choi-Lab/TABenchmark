@@ -74,9 +74,9 @@ run it — that's the point.)
 
 ## The model roster
 
-Thirteen assignment models and five OD-estimation baselines ship today, spanning white-box
-solvers, a stochastic track, elastic demand, and the first learned model — every one
-certified from its emitted flows by the identical P1 harness. For what each model does
+Fourteen assignment models and five OD-estimation baselines ship today, spanning white-box
+solvers, a stochastic track, elastic and combined-distribution demand, and the first learned
+model — every one certified from its emitted flows by the identical P1 harness. For what each model does
 *differently* from its predecessors and the lineage of the whole family, see the
 **[model compendium](docs/MODELS.md)** and its [evolution graph](docs/model-evolution.svg).
 
@@ -88,6 +88,7 @@ certified from its emitted flows by the identical P1 harness. For what each mode
 | Stochastic UE | `sue-msa` logit via Dial-STOCH + MSA (Fisk 1980) · `sue-probit-msa` probit via Monte-Carlo MSA (Sheffi & Powell 1982) |
 | System optimum | `so-bfw` marginal-cost UE — certified SO gap, price of anarchy, first-best tolls |
 | Elastic demand | `fw-elastic` variable-demand UE (Florian & Nguyen 1974 via the Gartner excess-demand transform) |
+| Combined distribution + assignment | `evans` fully endogenous OD from fixed trip-end margins via a doubly-constrained gravity, in one convex program (Evans 1976) |
 | Learned (black box) | `learned-surrogate` a ridge volume/capacity surrogate — the ML-wrapper demonstrator |
 | OD estimation (T2) | `vzw-entropy` · `gls` (Cascetta 1984) · `spiess` gradient (Spiess 1990) · `spsa` (Spall 1992) · `prior` stale-prior baseline |
 
@@ -97,14 +98,14 @@ certified from its emitted flows by the identical P1 harness. For what each mode
 |---|---|
 | Core | `Scenario` (frozen, content-hashed; optional SUE dispersion `θ`; optional `ElasticDemand`), `Capabilities`, `Budget` (incl. Boyce-style convergence target), `Trace`, spawn-key RNG schema |
 | Data | Defensive TNTP parser, commit-pinned checksummed fetcher, per-network units metadata; scenario ladder Braess → Sioux Falls → Anaheim → Barcelona → Winnipeg, plus built-in analytic anchors (two-route logit-SUE, two-route probit, elastic two-route) |
-| Models | 13 assignment models across five paradigms (roster above): baselines, link-based UE, path/bush-based UE, stochastic UE, system optimum, elastic demand, and a learned surrogate — mixing freely in one experiment matrix via the `CallableModel` adapter |
-| Metrics | Certified relative gap / average excess cost / Beckmann objective; certified SO gap + price of anarchy + first-best tolls (Yang & Huang 1998; Roughgarden & Tardos 2002); SUE fixed-point residual — closed-form for logit ([ADR-001](docs/design/adr-001-logit-sue-dial-certificate.md)), pinned-Monte-Carlo with noise floor for probit ([ADR-003](docs/design/adr-003-probit-sue-mc-certificate.md)); route-flow proportionality diagnostic for TAPAS ([ADR-004](docs/design/adr-004-proportionality-certificate.md)); demand-recomputing gap for elastic demand ([ADR-005](docs/design/adr-005-elastic-demand.md)); a demand-aware feasibility audit and flow RMSE vs. best-known throughout |
+| Models | 14 assignment models across the roster above: baselines, link-based UE, path/bush-based UE, stochastic UE, system optimum, elastic demand, combined distribution+assignment, and a learned surrogate — mixing freely in one experiment matrix via the `CallableModel` adapter |
+| Metrics | Certified relative gap / average excess cost / Beckmann objective; certified SO gap + price of anarchy + first-best tolls (Yang & Huang 1998; Roughgarden & Tardos 2002); SUE fixed-point residual — closed-form for logit ([ADR-001](docs/design/adr-001-logit-sue-dial-certificate.md)), pinned-Monte-Carlo with noise floor for probit ([ADR-003](docs/design/adr-003-probit-sue-mc-certificate.md)); route-flow proportionality diagnostic for TAPAS ([ADR-004](docs/design/adr-004-proportionality-certificate.md)); demand-recomputing gap for elastic demand ([ADR-005](docs/design/adr-005-elastic-demand.md)); a gravity-recomputing gap for combined distribution+assignment ([ADR-007](docs/design/adr-007-combined-distribution-assignment.md)); a demand-aware feasibility audit and flow RMSE vs. best-known throughout |
 | Observe | `FullOD`, `LinkCounts` (sensor mask × periods × noise), `StalePriorOD`, Hazelton identifiability check |
 | Estimation (T2) | OD estimation from link counts under a pinned-assignment certificate ([ADR-002](docs/design/adr-002-t2-estimation-certificate.md)): VZW entropy, Cascetta GLS, Spiess gradient, SPSA, and a stale-prior baseline; held-out sensors rank, identifiability reported per task |
 | Learned models | The wrapper, certificate, and lineage gate a learned model plugs into ([ADR-006](docs/design/adr-006-learned-model-certification.md)) — trained on a synthetic family, evaluated on disjoint TNTP networks |
 | Experiments | Grid runner (T1) + estimation runner (T2), CSV results, full provenance manifests |
 | Validation | Per-model provenance report ([docs/VALIDATION.md](docs/VALIDATION.md)) tying every solver to an independent oracle: published best-known flows, cross-solver agreement, and exact analytic anchors |
-| Tests | 201 tests: analytic Braess UE/SO and two-route logit/probit/elastic oracles; best-known-solution regressions on Sioux Falls, Anaheim, Barcelona, Winnipeg; cross-family solver agreement; conjugacy-identity and golden-hash regressions |
+| Tests | 220 tests: analytic Braess UE/SO and two-route logit/probit/elastic oracles, a symmetric-bipartite combined distribution+assignment oracle (with the certificate's aggregate-multicommodity limitation pinned transparently); best-known-solution regressions on Sioux Falls, Anaheim, Barcelona, Winnipeg; cross-family solver agreement; conjugacy-identity and golden-hash regressions |
 
 The certified solver ladder on Winnipeg (147 zones, 2,836 links; iterations to
 self-monitored relative gap 1e-4, then the externally certified gap at a fixed

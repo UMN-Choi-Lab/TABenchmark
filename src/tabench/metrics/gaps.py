@@ -37,7 +37,7 @@ from __future__ import annotations
 import numpy as np
 
 from ..core.rng import SOURCE_EVALUATION, RngBundle
-from ..core.scenario import Scenario
+from ..core.scenario import Demand, Scenario
 from ..models._paths import PathEngine
 from ..models._probit import ProbitEngine
 from ..models._stoch import StochEngine
@@ -137,6 +137,21 @@ class Evaluator:
         # route equilibrium and demand consistency against it (adr-005). Gated
         # on the scenario field, exactly like sue_theta.
         self._elastic = scenario.elastic_demand
+        # Combined trip-distribution + assignment (Evans 1976, adr-007): the
+        # demand is endogenous too, but distributed from fixed trip-end margins
+        # by a doubly-constrained gravity model rather than a pointwise decay
+        # law. The certificate recomputes d* = gravity(u(v)) from the flows and
+        # audits route equilibrium + demand consistency against it — the same
+        # P1-pure recipe as elastic, with the gravity in place of D(u). The
+        # OD-cost skim is driven by the gravity *support* (interzonal pairs with
+        # positive margins), not the reference matrix's nonzeros, so it stays
+        # exact even if a reference entry underflowed to zero.
+        self._combined = scenario.combined_demand
+        self._combined_support_demand = (
+            Demand(self._combined.support().astype(np.float64))
+            if self._combined is not None
+            else None
+        )
         # Logit SUE certifies through the closed-form Dial-STOCH map; probit
         # SUE has no closed form, so the harness pins ONE Monte Carlo
         # perturbation matrix E per task, drawn from the reserved evaluation
@@ -187,7 +202,7 @@ class Evaluator:
         if self._probit is not None:
             metrics["sue_residual_se"] = float("nan")
             metrics["sue_residual_floor"] = float("nan")
-        if self._elastic is not None:
+        if self._elastic is not None or self._combined is not None:
             metrics["realized_demand"] = float("nan")
         if self.so_metrics:
             for key in ("so_relative_gap", "so_average_excess_cost", "tstt_mc", "sptt_mc"):
@@ -242,6 +257,27 @@ class Evaluator:
             sptt = float((kappa * d_star).sum())  # SPTT of demand d* at costs
             balance = node_balance_residual(self.scenario, v, demand_matrix=d_star)
             demand_scale = max(1.0, realized_total)
+        elif self._combined is not None:
+            # Combined distribution + assignment certificate (adr-007): recompute
+            # the gravity-consistent demand d* = gravity(u(v)) from the emitted
+            # flows (u = per-OD shortest-path cost over the reference support) and
+            # audit BOTH conditions against it — route equilibrium (relative_gap)
+            # AND demand consistency (node_balance vs d*, which also gates
+            # feasibility). Like elastic, an off-equilibrium flow routes the
+            # solver's intermediate demand, not d*, so node_balance is a
+            # convergence quantity: a checkpoint certifies only once the combined
+            # equilibrium is (nearly) reached. Everything is a pure function of v
+            # and the content-hashed margins/beta — no self-report is trusted.
+            try:
+                kappa = self._engine.od_cost_matrix(costs, self._combined_support_demand)
+            except RuntimeError:
+                return self._censored("unreachable OD pair at current costs")
+            d_star = self._combined.gravity(kappa)
+            np.fill_diagonal(d_star, 0.0)  # intrazonal demand never enters the network
+            realized_total = float(d_star.sum())
+            sptt = float((kappa * d_star).sum())  # SPTT of gravity demand d* at costs
+            balance = node_balance_residual(self.scenario, v, demand_matrix=d_star)
+            demand_scale = max(1.0, realized_total)
         else:
             _, sptt = self._engine.all_or_nothing(costs, self.scenario.demand)
             balance = node_balance_residual(self.scenario, v)
@@ -275,8 +311,8 @@ class Evaluator:
             return metrics
 
         # AEC divides the excess by the number of trips actually made — the
-        # realized demand on elastic tasks, the fixed total otherwise.
-        aec_denom = realized_total if self._elastic is not None else self._total_demand
+        # realized demand on elastic/combined tasks, the fixed total otherwise.
+        aec_denom = realized_total if realized_total is not None else self._total_demand
         metrics = {
             "tstt": tstt,
             "sptt": sptt,
@@ -286,9 +322,10 @@ class Evaluator:
             "node_balance_residual": balance,
             "feasible": 1.0,
         }
-        if self._elastic is not None:
-            # Certified realized demand Sum_rs D_rs(u_rs) — the elastic-specific
-            # scored quantity (how much travel the equilibrium induces).
+        if realized_total is not None:
+            # Certified realized demand — the endogenous-demand scored quantity
+            # (how much travel the equilibrium induces): Sum_rs D_rs(u_rs) for
+            # elastic, Sum_ij gravity_ij(u) for combined distribution+assignment.
             metrics["realized_demand"] = realized_total
         if self._marginal is not None:
             excess_mc = tstt_mc - sptt_mc

@@ -7,10 +7,23 @@ reproduce a hand-checkable equilibrium, nothing else matters.
 from __future__ import annotations
 
 import numpy as np
+from scipy.optimize import brentq
 
-from ..core.scenario import Demand, ElasticDemand, Network, ReferenceSolution, Scenario
+from ..core.scenario import (
+    CombinedDemand,
+    Demand,
+    ElasticDemand,
+    Network,
+    ReferenceSolution,
+    Scenario,
+)
 
-__all__ = ["braess_scenario", "two_route_scenario", "elastic_two_route_scenario"]
+__all__ = [
+    "braess_scenario",
+    "two_route_scenario",
+    "elastic_two_route_scenario",
+    "evans_symmetric_scenario",
+]
 
 _EPS = 1e-6
 
@@ -244,4 +257,113 @@ def elastic_two_route_scenario(d0: float = 10.0, u0: float = 10.0) -> Scenario:
         reference=reference,
         family="builtin-elastic",
         elastic_demand=ElasticDemand(form="linear", param=u0),
+    )
+
+
+def evans_symmetric_scenario(trips: float = 10.0, beta: float = 0.5) -> Scenario:
+    """Symmetric bipartite **combined distribution + assignment** anchor for the
+    Evans (1976) task (adr-007).
+
+    Two origin zones (1, 2) and two destination zones (3, 4); each origin
+    produces ``trips`` and each destination attracts ``trips`` (total ``2 trips``
+    both ways, so the doubly-constrained gravity is feasible). One congestible
+    link per OD pair, symmetric under swapping ``1<->2`` and ``3<->4``:
+
+    * "near" links ``1->3`` and ``2->4``: ``t(f) = 1 + 0.1 f``
+    * "far"  links ``1->4`` and ``2->3``: ``t(f) = 3 + 0.1 f``
+
+    The demand is endogenous: ``d_ij`` is the doubly-constrained gravity at the
+    equilibrium costs. By symmetry the equilibrium sets ``d_13 = d_24 = p`` and
+    ``d_14 = d_23 = q = trips - p``, and the balancing factors cancel, so the
+    gravity collapses to a binary **logit split**
+
+        p = trips / (1 + exp(beta (c_near(p) - c_far(q)))),
+        c_near(p) = 1 + 0.1 p,   c_far(q) = 3 + 0.1 q,
+
+    a single scalar fixed point (recomputed with brentq in tests, no trusted
+    digits). The equilibrium link flows are ``(p, q, q, p)`` in the link order
+    below (``p ~ 6.92`` at ``beta = 0.5``); ``beta`` genuinely bites
+    (``p != trips/2``). The near/far intercepts are spaced (1 vs 3) so
+    ``c_near(s) - c_far(trips - s) = 0.2 s - 3 < 0`` for every feasible split
+    ``s in [0, trips]`` — the costs never equalize, so the ONLY margin-feasible
+    flow with a zero certified gap is the true equilibrium (any other split is
+    censored by the negative-excess guard or carries a strictly positive gap).
+    That makes this anchor degeneracy-free: it does not itself exhibit the
+    aggregate-multicommodity certificate limitation (adr-007), which is pinned
+    separately on a deliberately cost-degenerate instance in the tests.
+    """
+    # Link order: 1->3 (near), 1->4 (far), 2->3 (far), 2->4 (near)
+    init = np.array([1, 1, 2, 2], dtype=np.int64)
+    term = np.array([3, 4, 3, 4], dtype=np.int64)
+    a_near, s_near = 1.0, 0.1
+    a_far, s_far = 3.0, 0.1
+    params = [
+        _bpr_linear(a_near, s_near),  # 1->3 near
+        _bpr_linear(a_far, s_far),  # 1->4 far
+        _bpr_linear(a_far, s_far),  # 2->3 far
+        _bpr_linear(a_near, s_near),  # 2->4 near
+    ]
+    fft = np.array([p[0] for p in params])
+    b = np.array([p[1] for p in params])
+    cap = np.array([p[2] for p in params])
+
+    network = Network(
+        name="evans-symmetric",
+        n_nodes=4,
+        n_zones=4,
+        first_thru_node=1,
+        init_node=init,
+        term_node=term,
+        capacity=cap,
+        length=np.zeros(4),
+        free_flow_time=fft,
+        b=b,
+        power=np.ones(4),
+        toll=np.zeros(4),
+        link_type=np.ones(4, dtype=np.int64),
+        units=(("time", "abstract"), ("flow", "abstract")),
+    )
+
+    productions = np.array([trips, trips, 0.0, 0.0])  # zones 1, 2 originate
+    attractions = np.array([0.0, 0.0, trips, trips])  # zones 3, 4 attract
+    combined = CombinedDemand(productions=productions, attractions=attractions, beta=beta)
+
+    # Reference demand = free-flow gravity (the uncongested-equilibrium OD
+    # matrix): a deterministic, meaningful reference with the right margins and
+    # full support. Costs at zero flow are the link free-flow times; each OD is
+    # a single link, so the skim is a direct lookup.
+    free_costs = network.link_cost(np.zeros(network.n_links))
+    link_of = {
+        (int(a), int(t)): k
+        for k, (a, t) in enumerate(zip(init.tolist(), term.tolist(), strict=True))
+    }
+    u0 = np.zeros((4, 4))
+    for i, j in ((0, 2), (0, 3), (1, 2), (1, 3)):
+        u0[i, j] = free_costs[link_of[(i + 1, j + 1)]]
+    d_ref = combined.gravity(u0)
+
+    # Analytic equilibrium split (the symmetric logit fixed point).
+    def _split(p: float) -> float:
+        c_near = a_near + s_near * p
+        c_far = a_far + s_far * (trips - p)
+        return p - trips / (1.0 + np.exp(beta * (c_near - c_far)))
+
+    p_star = float(brentq(_split, 0.0, trips))
+    q_star = trips - p_star
+    reference = ReferenceSolution(
+        link_flows=np.array([p_star, q_star, q_star, p_star]),
+        source="analytic",
+        note=(
+            "Symmetric doubly-constrained Evans equilibrium: gravity collapses to "
+            "a binary logit split, a scalar fixed point recomputed via brentq."
+        ),
+    )
+
+    return Scenario(
+        name="evans",
+        network=network,
+        demand=Demand(matrix=d_ref),
+        reference=reference,
+        family="builtin-evans",
+        combined_demand=combined,
     )

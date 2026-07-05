@@ -25,6 +25,7 @@ def _cmd_list(_: argparse.Namespace) -> int:
     print("  braess          (built-in, analytic UE oracle)")
     print("  tworoute        (built-in, analytic logit-SUE oracle)")
     print("  elastic-tworoute(built-in, analytic elastic-demand UE oracle)")
+    print("  evans           (built-in, analytic combined distribution+assignment oracle)")
     for key, spec in sorted(REGISTRY.items()):
         print(f"  {key:<14}({spec.repo_dir}, download-on-demand)")
     print("\nModels:")
@@ -112,7 +113,12 @@ def _cmd_run(args: argparse.Namespace) -> int:
             scenario = dataclasses.replace(scenario, elastic_demand=law, reference=None)
     # Elastic scenarios need the elastic solver by default: fixed-demand models
     # route the reference demand, not D(u(v)), and are censored on them.
-    default_models = "fw-elastic" if scenario.elastic_demand is not None else "aon,msa,fw"
+    if scenario.combined_demand is not None:
+        default_models = "evans"
+    elif scenario.elastic_demand is not None:
+        default_models = "fw-elastic"
+    else:
+        default_models = "aon,msa,fw"
     models = []
     for name in (args.models or default_models).split(","):
         name = name.strip()

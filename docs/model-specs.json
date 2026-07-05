@@ -444,11 +444,11 @@
    "beckmann1956studies",
    "florian1974method"
   ],
-  "shipped": false,
-  "tabench_name": "",
+  "shipped": true,
+  "tabench_name": "evans",
   "difficulty": "tractable",
-  "validation": "The paper is primarily a derivation-plus-convergence-analysis with only a small illustrative example; no standardized reproducible numerics. Would validate by analytic anchors: as the dispersion beta -> infinity the distribution collapses and it reduces to plain Beckmann UE on a fixed matrix, and with congestion switched off it reduces to a pure entropy/gravity distribution (Furness balancing) -- both are checkable fixed points. Needs a scenario carrying production/attraction margins O_r, D_s rather than a full fixed OD matrix, which the current fixed-OD harness does not supply.",
-  "grounding": "references.json evans1976derivation (tier 1, DOI 10.1016/0041-1647(76)90100-3, implement_as white-box solver); Wilson entropy-gravity distribution is the second parent but has no bibkey in references.json (noted, not cited); bookmemory tna_ch08_extensions and tna_ch04 for the Beckmann/UE base; ROADMAP.md line 52 (planned, not shipped).",
+  "validation": "SHIPPED (adr-007) as `evans`, paradigm static_ue_combined: Evans partial-linearization Frank-Wolfe (gravity/Furness distribution subproblem + AON + exact Brent line search), with a P1-pure certificate that recomputes d* = doubly-constrained-gravity(u(v)) from the emitted flows and scores route-equilibrium relative_gap + demand-consistency node_balance. Validated against an analytic anchor (`evans_symmetric_scenario`): a symmetric bipartite network whose doubly-constrained gravity collapses to a binary logit split -- a scalar fixed point recomputed independently with brentq (no trusted digits), link flows (p,q,q,p) with p~6.92 at beta=0.5. HONEST SOUNDNESS BOUND (adversarial review): because the gravity always preserves the O/D margins, node_balance carries no distributional info and the only teeth is the negative-excess guard, which collapses on cost-degenerate instances -- the same aggregate-vs-per-OD limitation the whole harness documents (the fixed-demand certificate admits the identical false positive; verified, not Evans-specific). The scored gap is a valid NECESSARY condition; the anchor is deliberately non-degenerate (intercepts 1 vs 3) so it does not exhibit the hole; the limitation is pinned transparently by test_aggregate_multicommodity_limitation and complemented by flow_rmse_vs_reference on referenced scenarios (adr-007).",
+  "grounding": "references.json evans1976derivation (tier 1, DOI 10.1016/0041-1647(76)90100-3, implement_as white-box solver); Wilson entropy-gravity distribution is the second parent but has no bibkey in references.json (noted, not cited); bookmemory tna_ch08_extensions and tna_ch04 for the Beckmann/UE base; formulas recovered from Sheffi 1985 ch.6 + Boyles TNA sec.6 (adr-007).",
   "_family": "extensions-static"
  },
  {

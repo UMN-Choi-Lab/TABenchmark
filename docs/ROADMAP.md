@@ -49,7 +49,7 @@ T3 interventions.
 ## Static extensions — v1
 
 - [x] Florian & Nguyen (1974) — *A Method for Computing Network Equilibrium with Elastic Demands* (white-box solver) — **shipped in v1** (elastic (variable) demand UE task/problem (ADR-005))
-- [ ] Evans (1976) — *Derivation and analysis of some models for combining trip distribution and assignment* (white-box solver)
+- [x] Evans (1976) — *Derivation and analysis of some models for combining trip distribution and assignment* (white-box solver) — **shipped** as `evans` (ADR-007)
 - [ ] Mahmassani & Chang (1987) — *On Boundedly Rational User Equilibrium in Transportation Systems* (route-choice component)
 - [ ] Spiess & Florian (1989) — *Optimal strategies: A new assignment model for transit networks* (white-box solver)
 - [ ] Larsson & Patriksson (1995) — *An augmented Lagrangean dual algorithm for link capacity side constrained traffic assignment problems* (white-box solver)

@@ -13,7 +13,14 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-__all__ = ["Network", "Demand", "ElasticDemand", "ReferenceSolution", "Scenario"]
+__all__ = [
+    "Network",
+    "Demand",
+    "ElasticDemand",
+    "CombinedDemand",
+    "ReferenceSolution",
+    "Scenario",
+]
 
 
 def _as_f64(x: np.ndarray) -> np.ndarray:
@@ -234,6 +241,128 @@ class ElasticDemand:
 
 
 @dataclass(frozen=True)
+class CombinedDemand:
+    """Combined trip-distribution + assignment task data (Evans 1976).
+
+    Instead of a fixed OD matrix, the demand is *endogenous*: only the
+    trip-end margins are fixed — the productions ``O_i`` (trips originating in
+    zone ``i``) and attractions ``D_j`` (trips destined for zone ``j``) — and
+    the OD matrix ``d_ij`` is distributed across pairs by a **doubly-constrained
+    gravity model** at the equilibrium travel costs. The combined convex
+    program (Evans 1976; Sheffi, *Urban Transportation Networks* 1985 ch. 6;
+    Boyles, Lownes & Unnikrishnan, *Transportation Network Analysis* §6) is
+
+        min_{x,d}  Σ_a ∫_0^{x_a} t_a(w) dw  +  (1/β) Σ_ij d_ij (ln d_ij − 1)
+        s.t.  Σ_j d_ij = O_i,   Σ_i d_ij = D_j,   d ≥ 0,   x = assign(d)
+
+    whose stationarity conditions give the doubly-constrained gravity
+    ``d_ij = A_i B_j exp(−β u_ij)`` (``u_ij`` the equilibrium OD cost, ``A``/``B``
+    the balancing factors) *and* Wardrop route equilibrium of ``d``. The single
+    parameter ``beta`` is the gravity dispersion / impedance sensitivity (large
+    ``beta`` → trips concentrate on cheap destinations; ``beta → 0`` → the
+    cost-free maximum-entropy distribution ``O_i D_j / T``).
+
+    Intrazonal trips never enter the network, so the gravity is distributed over
+    interzonal pairs only (``i ≠ j`` with ``O_i > 0`` and ``D_j > 0``). This is
+    task data, content-hashed with the scenario (docs/design/adr-007); the
+    reference :class:`Demand` matrix carries the free-flow gravity distribution
+    (a deterministic reference — the uncongested equilibrium demand). See
+    docs/design/adr-007-combined-distribution-assignment.md.
+    """
+
+    productions: np.ndarray  # (n_zones,) O_i, trips originating at each zone
+    attractions: np.ndarray  # (n_zones,) D_j, trips attracted to each zone
+    beta: float
+
+    def __post_init__(self) -> None:
+        o = _as_f64(self.productions)
+        d = _as_f64(self.attractions)
+        object.__setattr__(self, "productions", o)
+        object.__setattr__(self, "attractions", d)
+        if o.ndim != 1 or d.ndim != 1 or o.shape != d.shape:
+            raise ValueError("CombinedDemand productions/attractions must be 1-D, equal length")
+        if np.any(o < 0) or np.any(d < 0):
+            raise ValueError("CombinedDemand productions/attractions must be nonnegative")
+        if not (np.isfinite(o).all() and np.isfinite(d).all()):
+            raise ValueError("CombinedDemand productions/attractions must be finite")
+        if not (np.isfinite(self.beta) and self.beta > 0):
+            raise ValueError(f"CombinedDemand beta must be finite and > 0, got {self.beta!r}")
+        # Doubly-constrained feasibility: total productions must equal total
+        # attractions, else no OD matrix reproduces both margins.
+        total_o, total_d = float(o.sum()), float(d.sum())
+        if not np.isclose(total_o, total_d, rtol=1e-9, atol=1e-9):
+            raise ValueError(
+                "CombinedDemand is infeasible: total productions "
+                f"({total_o}) must equal total attractions ({total_d})"
+            )
+
+    @property
+    def n_zones(self) -> int:
+        return self.productions.shape[0]
+
+    @property
+    def total(self) -> float:
+        return float(self.productions.sum())
+
+    def support(self) -> np.ndarray:
+        """Boolean ``(n_zones, n_zones)`` mask of distributable OD pairs:
+        interzonal (``i ≠ j``) pairs with positive production and attraction."""
+        o = self.productions
+        d = self.attractions
+        n = o.shape[0]
+        return (o[:, None] > 0) & (d[None, :] > 0) & ~np.eye(n, dtype=bool)
+
+    def gravity(
+        self, od_cost: np.ndarray, *, tol: float = 1e-13, max_iters: int = 10000
+    ) -> np.ndarray:
+        """Doubly-constrained gravity demand ``d_ij = A_i B_j exp(−β u_ij)`` at
+        OD costs ``u = od_cost`` (a ``(n_zones, n_zones)`` matrix; only support
+        entries are read), balanced to the productions/attractions by the
+        classic Furness / iterative-proportional-fitting recursion
+
+            A_i = O_i / Σ_j B_j f_ij,   B_j = D_j / Σ_i A_i f_ij,
+            f_ij = exp(−β u_ij) on the interzonal support (0 elsewhere).
+
+        Deterministic (fixed tolerance/iteration cap) so the harness certificate
+        and the solver recompute byte-identical demand from the same costs (P1).
+        A final row rescale makes the production margins exact; the attraction
+        margins converge to ``tol``. Returns a dense matrix, zero off support.
+        """
+        o = self.productions
+        d = self.attractions
+        support = self.support()
+        u = np.asarray(od_cost, dtype=np.float64)
+        # f_ij = exp(-beta u_ij) on support. u >= fft > 0 there, so the exponent
+        # is strictly negative and exp never overflows; off support f = 0. When
+        # beta * u is so large (>~708) that exp underflows, every support entry
+        # of a producing row could otherwise collapse to 0, silently dropping
+        # that row's production margin (and the scored realized_demand). Floor
+        # the on-support deterrence at the smallest normal float so no producing
+        # row can lose its margin; the floor is ~1e-308 and never binds in the
+        # normal regime, so it changes nothing there (it only degrades
+        # gracefully to a near-uniform split when all relative weights underflow).
+        tiny = np.finfo(np.float64).tiny
+        f = np.where(support, np.maximum(np.exp(-self.beta * np.where(support, u, 0.0)), tiny), 0.0)
+        active_o = o > 0
+        active_d = d > 0
+        a = np.ones(o.shape[0], dtype=np.float64)
+        b = np.ones(d.shape[0], dtype=np.float64)
+        for _ in range(max_iters):
+            row = f @ b
+            a = np.where(active_o & (row > 0), o / np.where(row > 0, row, 1.0), 0.0)
+            col = f.T @ a
+            b_new = np.where(active_d & (col > 0), d / np.where(col > 0, col, 1.0), 0.0)
+            if np.max(np.abs(b_new - b)) <= tol:
+                b = b_new
+                break
+            b = b_new
+        # Final row solve makes Σ_j d_ij = O_i exact (attractions within tol).
+        row = f @ b
+        a = np.where(active_o & (row > 0), o / np.where(row > 0, row, 1.0), 0.0)
+        return (a[:, None] * b[None, :]) * f
+
+
+@dataclass(frozen=True)
 class ReferenceSolution:
     """Best-known solution used as a regression oracle (with provenance)."""
 
@@ -272,6 +401,15 @@ class Scenario:
     fixed-demand scenario keeps its prior hash. An elastic task is a
     deterministic UE with endogenous demand and so is mutually exclusive with
     the SUE fields.
+
+    ``combined_demand`` (optional) makes this a combined trip-distribution +
+    assignment task (Evans 1976; docs/design/adr-007): the OD matrix is
+    endogenous, distributed by a doubly-constrained gravity model from the fixed
+    trip-end margins in this :class:`CombinedDemand`, and the :class:`Demand`
+    matrix carries the free-flow gravity *reference*. Like the other optional
+    task fields it is content-hashed only when set. It is mutually exclusive
+    with both the SUE fields and ``elastic_demand`` (all three make demand
+    non-fixed in incompatible ways).
     """
 
     name: str
@@ -282,6 +420,7 @@ class Scenario:
     sue_theta: float | None = None
     sue_family: str = "logit"
     elastic_demand: ElasticDemand | None = None
+    combined_demand: CombinedDemand | None = None
 
     def __post_init__(self) -> None:
         if self.demand.n_zones != self.network.n_zones:
@@ -314,6 +453,19 @@ class Scenario:
                 "mutually exclusive (elastic UE is deterministic with endogenous "
                 "demand; SUE is stochastic with fixed demand)"
             )
+        if self.combined_demand is not None:
+            if self.combined_demand.n_zones != self.network.n_zones:
+                raise ValueError(
+                    f"Scenario '{self.name}': combined_demand has "
+                    f"{self.combined_demand.n_zones} zones, network declares "
+                    f"{self.network.n_zones}"
+                )
+            if self.sue_theta is not None or self.elastic_demand is not None:
+                raise ValueError(
+                    f"Scenario '{self.name}': combined_demand is mutually exclusive "
+                    "with sue_theta and elastic_demand (each makes the OD demand "
+                    "non-fixed in an incompatible way)"
+                )
 
     def content_hash(self) -> str:
         """SHA-256 over the canonical serialization of all scored content (P2)."""
@@ -352,4 +504,16 @@ class Scenario:
         if self.elastic_demand is not None:
             ed = self.elastic_demand
             h.update(f"elastic_form={ed.form};elastic_param={float(ed.param)!r};".encode())
+        # Appended last and only when set: every scenario without a combined
+        # task hashes exactly as before this field existed (golden-hash test).
+        # The reference free-flow-gravity matrix is already covered by the
+        # ("od", matrix) bytes above; only the fixed margins and dispersion are
+        # new scored content.
+        if self.combined_demand is not None:
+            cd = self.combined_demand
+            h.update(f"combined_beta={float(cd.beta)!r};".encode())
+            h.update(b"combined_prod")
+            h.update(_as_f64(cd.productions).tobytes())
+            h.update(b"combined_attr")
+            h.update(_as_f64(cd.attractions).tobytes())
         return h.hexdigest()

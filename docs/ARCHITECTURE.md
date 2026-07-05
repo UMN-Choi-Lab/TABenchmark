@@ -75,8 +75,8 @@ class TrafficAssignmentModel(ABC):
               rng: RngBundle, trace: Trace) -> ResultBundle: ...
 ```
 
-`Capabilities` declares paradigm (`static_ue | static_ue_elastic | static_so | sue |
-dta | day_to_day | learned | heuristic`), determinism, required inputs
+`Capabilities` declares paradigm (`static_ue | static_ue_elastic | static_ue_combined |
+static_so | sue | dta | day_to_day | learned | heuristic`), determinism, required inputs
 (`od_matrix`, `link_counts`, …),
 emitted outputs (`link_flows`, `path_flows`, `flow_distribution`, `od_estimate`),
 `provides_gap`, `seedable`, and `trained_on` lineage (learned models). The harness
@@ -307,15 +307,19 @@ Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 172 refe
   elastic (variable) demand UE via the Gartner excess-demand transform with a P1-pure
   demand-recomputing certificate (shipped: `fw-elastic`, paradigm `static_ue_elastic`,
   [ADR-005](design/adr-005-elastic-demand.md); Florian & Nguyen 1974 / Gartner 1980 /
-  Sheffi 1985); the first **learned** (black-box) model certified by the same P1 harness —
+  Sheffi 1985); combined trip-distribution + assignment with a fully endogenous OD matrix —
+  only the trip-end margins are fixed and the OD flows are distributed by a doubly-constrained
+  gravity model at the equilibrium costs, certified by recomputing that gravity demand from
+  the flows (shipped: `evans`, paradigm `static_ue_combined`,
+  [ADR-007](design/adr-007-combined-distribution-assignment.md); Evans 1976, a reuse of the
+  elastic demand-recomputing machinery); the first **learned** (black-box) model certified by the same P1 harness —
   a per-link surrogate trained on a synthetic family and gated off the disjoint TNTP test
   set by `trained_on` (shipped: `learned-surrogate`, paradigm `learned`,
   [ADR-006](design/adr-006-learned-model-certification.md); Rahman & Hasan 2023 line, with
   the Xu et al. 2024 dataset a future cross-domain axis — link-flow accuracy is shown *not*
   to imply certification). Still open: a *scored* route-flow proportionality certificate (ADR-004
-  proposes it; the diagnostic ships now); combined
-  distribution–assignment models (Evans 1976, a natural reuse of the elastic
-  machinery); distribution-emitting T2 estimators (Hazelton-style samplers) and
+  proposes it; the diagnostic ships now);
+  distribution-emitting T2 estimators (Hazelton-style samplers) and
   **computational-graph estimators** — assignment/estimation expressed as a layered
   differentiable graph solved by forward-backward passes (Wu, Guo, Xian & Zhou 2018;
   Ma & Qian 2018; Ma, Pi & Qian 2020) or iterative backpropagation through the solver

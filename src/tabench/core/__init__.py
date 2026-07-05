@@ -10,7 +10,14 @@ from .rng import (
     SOURCE_OBSERVATION,
     RngBundle,
 )
-from .scenario import Demand, ElasticDemand, Network, ReferenceSolution, Scenario
+from .scenario import (
+    CombinedDemand,
+    Demand,
+    ElasticDemand,
+    Network,
+    ReferenceSolution,
+    Scenario,
+)
 
 __all__ = [
     "Budget",
@@ -29,6 +36,7 @@ __all__ = [
     "SOURCE_BOOTSTRAP",
     "Demand",
     "ElasticDemand",
+    "CombinedDemand",
     "Network",
     "ReferenceSolution",
     "Scenario",

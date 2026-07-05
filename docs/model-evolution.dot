@@ -60,7 +60,7 @@ digraph TA_evolution {
   "yang1998principle" [label="Yang 1998\n",fillcolor="#ffd6d6",style="rounded,filled"];
   "roughgarden2002how" [label="Roughgarden 2002\n",fillcolor="#ffd6d6",style="rounded,filled"];
   "florian1974method" [label="Florian 1974\nfw-elastic",fillcolor="#e6d6ff",style="rounded,filled"];
-  "evans1976derivation" [label="Evans 1976\n",fillcolor="#e6d6ff",style="rounded,filled,dashed"];
+  "evans1976derivation" [label="Evans 1976\nevans",fillcolor="#e6d6ff",style="rounded,filled"];
   "mahmassani1987on" [label="Mahmassani 1987\n",fillcolor="#e6d6ff",style="rounded,filled,dashed"];
   "spiess1989optimal" [label="Spiess 1989\n",fillcolor="#e6d6ff",style="rounded,filled,dashed"];
   "larsson1995augmented" [label="Larsson 1995\n",fillcolor="#e6d6ff",style="rounded,filled,dashed"];
