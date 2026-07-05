@@ -288,7 +288,8 @@ Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 172 refe
 - **v1 (in progress):** path-based gradient projection (shipped: `gp`, the first
   solver reaching certified gaps below 1e-8 within ~100 iterations — a regime the
   FW family needs thousands to cross); Dial's Algorithm B bush solver (shipped:
-  `algb`, certified 1e-10 on Sioux Falls in ~18 iterations); system optimum +
+  `algb`, certified below 1e-8 on Sioux Falls in ~20 iterations — 1e-10 by ~18
+  on the reference build, where the FW family needs hundreds); system optimum +
   certified SO gap + price of anarchy + first-best tolls (shipped: `so-bfw`,
   `metrics.so`); probit SUE via MC-MSA with a pinned Monte-Carlo fixed-point
   certificate (shipped: `sue-probit-msa`, [ADR-003](design/adr-003-probit-sue-mc-certificate.md);
