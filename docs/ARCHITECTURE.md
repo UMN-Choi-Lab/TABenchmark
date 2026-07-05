@@ -221,6 +221,7 @@ TABenchmark/
 │   │                      # registry.py (networks + units metadata + defects), builtin.py
 │   ├── models/            # base.py, aon.py, msa.py, frank_wolfe.py (FW/CFW/BFW),
 │   │   │                  # gradient_projection.py, algb.py (Dial 2006 bush),
+│   │   │                  # tapas.py (Bar-Gera 2010 PAS), _bush.py (shared bush machinery),
 │   │   │                  # so.py (marginal-cost SO), sue_logit.py, sue_probit.py,
 │   │   │                  # _paths.py, _stoch.py (Dial map), _probit.py (MC map)
 │   │   └── adapters/      # callable_adapter.py (planned: subprocess.py, docker.py)
@@ -289,13 +290,19 @@ Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 172 refe
   solver reaching certified gaps below 1e-8 within ~100 iterations — a regime the
   FW family needs thousands to cross); Dial's Algorithm B bush solver (shipped:
   `algb`, certified below 1e-8 on Sioux Falls in ~20 iterations — 1e-10 by ~18
-  on the reference build, where the FW family needs hundreds); system optimum +
+  on the reference build, where the FW family needs hundreds); Bar-Gera's TAPAS
+  paired-alternative-segment solver (shipped: `tapas`, sharing algb's bush
+  machinery via `_bush.py`, and the first solver to drive *route* flows to the
+  proportional/entropy-consistent solution — its `proportionality_residual`
+  diagnostic falls ~5 orders of magnitude vs pure UE at identical link flows;
+  [ADR-004](design/adr-004-proportionality-certificate.md)); system optimum +
   certified SO gap + price of anarchy + first-best tolls (shipped: `so-bfw`,
   `metrics.so`); probit SUE via MC-MSA with a pinned Monte-Carlo fixed-point
   certificate (shipped: `sue-probit-msa`, [ADR-003](design/adr-003-probit-sue-mc-certificate.md);
   the first stochastic-track model — macroreplication + bootstrap CIs); the T2
   OD-estimation track (shipped: `estimation/`, [ADR-002](design/adr-002-t2-estimation-certificate.md)).
-  Still open: TAPAS-class paired-alternative-segment solvers; elastic demand &
+  Still open: a *scored* route-flow proportionality certificate (ADR-004 proposes
+  it; the diagnostic ships now); elastic demand &
   combined models; distribution-emitting T2 estimators (Hazelton-style samplers) and
   **computational-graph estimators** — assignment/estimation expressed as a layered
   differentiable graph solved by forward-backward passes (Wu, Guo, Xian & Zhou 2018;

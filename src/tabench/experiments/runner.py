@@ -87,6 +87,8 @@ _CSV_FIELDS = [
     "self_relative_gap",
     "self_sue_residual",
     "self_so_relative_gap",
+    "proportionality_residual",
+    "pas_proportionality_max",
 ]
 
 
@@ -137,6 +139,10 @@ def _score_bundle(
             "self_relative_gap": state.self_report.get("relative_gap", ""),
             "self_sue_residual": state.self_report.get("sue_fixed_point_residual", ""),
             "self_so_relative_gap": state.self_report.get("so_relative_gap", ""),
+            # TAPAS route-flow proportionality diagnostics (ADR-004): provenance
+            # only, never scored -- a route-flow property invisible to link flows.
+            "proportionality_residual": state.self_report.get("proportionality_residual", ""),
+            "pas_proportionality_max": state.self_report.get("pas_proportionality_max", ""),
         }
         rows.append(row)
     return rows

@@ -106,6 +106,7 @@ SHIPPED = {
     "dial2006path": ("v1", "Algorithm B bush-based solver (algb)"),
     "sheffi1982algorithm": ("v1", "probit SUE solver (sue-probit-msa) + MC certificate (ADR-003)"),
     "daganzo1977stochastic": ("v1", "SUE definition underlying the probit task"),
+    "bargera2010traffic": ("v1", "TAPAS paired-alternative-segment solver (tapas) + proportionality diagnostic (ADR-004)"),
 }
 
 

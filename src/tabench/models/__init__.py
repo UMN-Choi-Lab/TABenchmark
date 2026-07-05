@@ -10,6 +10,7 @@ from .msa import MSAModel
 from .so import SystemOptimumModel, marginal_network
 from .sue_logit import DialSUEModel
 from .sue_probit import SueProbitMsaModel
+from .tapas import TapasModel
 
 __all__ = [
     "AlgorithmBModel",
@@ -26,5 +27,6 @@ __all__ = [
     "GradientProjectionModel",
     "MSAModel",
     "SystemOptimumModel",
+    "TapasModel",
     "marginal_network",
 ]

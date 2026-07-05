@@ -65,6 +65,7 @@ from .models import (
     MSAModel,
     SueProbitMsaModel,
     SystemOptimumModel,
+    TapasModel,
     TrafficAssignmentModel,
     register_model,
 )
@@ -126,6 +127,7 @@ __all__ = [
     "MSAModel",
     "SueProbitMsaModel",
     "SystemOptimumModel",
+    "TapasModel",
     "TrafficAssignmentModel",
     "register_model",
     "__version__",
