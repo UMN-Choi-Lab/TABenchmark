@@ -75,8 +75,9 @@ class TrafficAssignmentModel(ABC):
               rng: RngBundle, trace: Trace) -> ResultBundle: ...
 ```
 
-`Capabilities` declares paradigm (`static_ue | static_so | sue | dta | day_to_day |
-learned | heuristic`), determinism, required inputs (`od_matrix`, `link_counts`, …),
+`Capabilities` declares paradigm (`static_ue | static_ue_elastic | static_so | sue |
+dta | day_to_day | learned | heuristic`), determinism, required inputs
+(`od_matrix`, `link_counts`, …),
 emitted outputs (`link_flows`, `path_flows`, `flow_distribution`, `od_estimate`),
 `provides_gap`, `seedable`, and `trained_on` lineage (learned models). The harness
 auto-filters the scenario×model×task matrix by compatibility — a counts-only task
@@ -222,7 +223,8 @@ TABenchmark/
 │   ├── models/            # base.py, aon.py, msa.py, frank_wolfe.py (FW/CFW/BFW),
 │   │   │                  # gradient_projection.py, algb.py (Dial 2006 bush),
 │   │   │                  # tapas.py (Bar-Gera 2010 PAS), _bush.py (shared bush machinery),
-│   │   │                  # so.py (marginal-cost SO), sue_logit.py, sue_probit.py,
+│   │   │                  # so.py (marginal-cost SO), elastic.py (elastic-demand
+│   │   │                  # FW, Gartner excess-demand transform), sue_logit.py, sue_probit.py,
 │   │   │                  # _paths.py, _stoch.py (Dial map), _probit.py (MC map)
 │   │   └── adapters/      # callable_adapter.py (planned: subprocess.py, docker.py)
 │   ├── observe/           # data levels + identifiability checks
@@ -300,10 +302,14 @@ Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 172 refe
   `metrics.so`); probit SUE via MC-MSA with a pinned Monte-Carlo fixed-point
   certificate (shipped: `sue-probit-msa`, [ADR-003](design/adr-003-probit-sue-mc-certificate.md);
   the first stochastic-track model — macroreplication + bootstrap CIs); the T2
-  OD-estimation track (shipped: `estimation/`, [ADR-002](design/adr-002-t2-estimation-certificate.md)).
-  Still open: a *scored* route-flow proportionality certificate (ADR-004 proposes
-  it; the diagnostic ships now); elastic demand &
-  combined models; distribution-emitting T2 estimators (Hazelton-style samplers) and
+  OD-estimation track (shipped: `estimation/`, [ADR-002](design/adr-002-t2-estimation-certificate.md));
+  elastic (variable) demand UE via the Gartner excess-demand transform with a P1-pure
+  demand-recomputing certificate (shipped: `fw-elastic`, paradigm `static_ue_elastic`,
+  [ADR-005](design/adr-005-elastic-demand.md); Florian & Nguyen 1974 / Gartner 1980 /
+  Sheffi 1985). Still open: a *scored* route-flow proportionality certificate (ADR-004
+  proposes it; the diagnostic ships now); combined
+  distribution–assignment models (Evans 1976, a natural reuse of the elastic
+  machinery); distribution-emitting T2 estimators (Hazelton-style samplers) and
   **computational-graph estimators** — assignment/estimation expressed as a layered
   differentiable graph solved by forward-backward passes (Wu, Guo, Xian & Zhou 2018;
   Ma & Qian 2018; Ma, Pi & Qian 2020) or iterative backpropagation through the solver

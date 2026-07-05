@@ -1,0 +1,31 @@
+# Scenario ladder rung 0 (elastic-demand variant): two disjoint routes with a
+# linear variable-demand law. The reference demand d0 and the decay parameter
+# u0 are part of the task definition and are content-hashed (a different law is
+# a different instance). See docs/design/adr-005.
+scenario: elastic-tworoute
+source: builtin
+family: builtin-elastic
+tasks: [t1_ue_elastic]
+elastic:
+  form: linear          # D(u) = d0 * max(0, 1 - u/param)
+  param: 10.0           # u0: the cost at which demand falls to zero
+  reference_demand: 10.0  # d0 = D(0), carried by the OD matrix
+  transformation: gartner-excess-demand  # Gartner 1980 dummy r->s arc, cost D^{-1}(d0-e)
+oracle:
+  kind: analytic
+  link_flows: [3.0, 3.0, 2.0, 2.0]
+  realized_demand: 5.0
+  note: >
+    Linear elastic UE at d0=10, u0=10. Both routes used: c_A = 2 + f_A,
+    c_B = 3 + f_B, common cost u; demand consistency f_A + f_B = 10 - u with
+    u = 2 + f_A gives u=5, f_A=3, f_B=2. Tests recompute u with brentq rather
+    than trusting these digits.
+certificate:
+  scored: [relative_gap, node_balance_residual, realized_demand]
+  note: >
+    Harness recomputes the demand-consistent demand d* = D(u(v)) from the
+    emitted real link flows and scores route equilibrium (relative_gap) and
+    demand consistency (node_balance vs d*); both -> 0 only at the elastic UE.
+    Feasibility is gated on the through-node conservation invariant (adr-005).
+budgets:
+  iterations: 500

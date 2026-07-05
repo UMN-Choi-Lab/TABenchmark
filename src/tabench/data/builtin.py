@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..core.scenario import Demand, Network, ReferenceSolution, Scenario
+from ..core.scenario import Demand, ElasticDemand, Network, ReferenceSolution, Scenario
 
-__all__ = ["braess_scenario", "two_route_scenario"]
+__all__ = ["braess_scenario", "two_route_scenario", "elastic_two_route_scenario"]
 
 _EPS = 1e-6
 
@@ -175,4 +175,73 @@ def two_route_scenario(
         family="builtin-tworoute",
         sue_theta=sue_theta,
         sue_family=sue_family,
+    )
+
+
+def elastic_two_route_scenario(d0: float = 10.0, u0: float = 10.0) -> Scenario:
+    """Two disjoint 2-link routes with **linear elastic demand**: the analytic
+    anchor for the variable-demand UE task (Florian & Nguyen 1974; adr-005).
+
+    Nodes: 1 = origin zone, 2 = destination zone, 3 and 4 = intersections.
+    Route A = 1->3->2 with cost ``c_A = 2 + f_A``; route B = 1->4->2 with cost
+    ``c_B = 3 + f_B`` (linear latencies via BPR ``power=1``; the first legs are
+    constant 1, the second legs ``1 + f_A`` and ``2 + f_B``). The reference
+    demand ``d0`` is the demand at zero cost; the realized demand follows the
+    linear law ``D(u) = d0 * max(0, 1 - u/u0)``.
+
+    At ``d0 = 10, u0 = 10`` both routes are used and the elastic UE is exact
+    and rational: ``c_A = c_B = u`` gives ``f_A = 1 + f_B``; demand consistency
+    ``f_A + f_B = 10 - u`` with ``u = 2 + f_A`` yields **``u = 5``,
+    ``f_A = 3``, ``f_B = 2``**, realized demand ``5``, and link flows
+    ``(3, 3, 2, 2)`` in the order below. The excess-demand arc carries the
+    unmet ``10 - 5 = 5`` at cost ``u0 * e/d0 = 5 = u``. These integers make the
+    scenario a hand-checkable oracle for both the solver and the certificate.
+    """
+    # Link order: 1->3, 3->2, 1->4, 4->2
+    init = np.array([1, 3, 1, 4], dtype=np.int64)
+    term = np.array([3, 2, 4, 2], dtype=np.int64)
+    params = [
+        _bpr_linear(1.0, 0.0),  # 1->3: constant 1
+        _bpr_linear(1.0, 1.0),  # 3->2: 1 + f
+        _bpr_linear(1.0, 0.0),  # 1->4: constant 1
+        _bpr_linear(2.0, 1.0),  # 4->2: 2 + f
+    ]
+    fft = np.array([p[0] for p in params])
+    b = np.array([p[1] for p in params])
+    cap = np.array([p[2] for p in params])
+
+    network = Network(
+        name="elastic-two-route",
+        n_nodes=4,
+        n_zones=2,
+        first_thru_node=1,
+        init_node=init,
+        term_node=term,
+        capacity=cap,
+        length=np.zeros(4),
+        free_flow_time=fft,
+        b=b,
+        power=np.ones(4),
+        toll=np.zeros(4),
+        link_type=np.ones(4, dtype=np.int64),
+        units=(("time", "abstract"), ("flow", "abstract")),
+    )
+
+    od = np.zeros((2, 2))
+    od[0, 1] = d0  # reference demand d0 = D(0)
+    reference = None
+    if d0 == 10.0 and u0 == 10.0:
+        reference = ReferenceSolution(
+            link_flows=np.array([3.0, 3.0, 2.0, 2.0]),
+            source="analytic",
+            note="Linear elastic UE at d0=10, u0=10: f_A=3, f_B=2, realized demand 5.",
+        )
+
+    return Scenario(
+        name="elastic-tworoute",
+        network=network,
+        demand=Demand(matrix=od),
+        reference=reference,
+        family="builtin-elastic",
+        elastic_demand=ElasticDemand(form="linear", param=u0),
     )

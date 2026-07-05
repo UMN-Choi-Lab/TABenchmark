@@ -83,10 +83,12 @@ _CSV_FIELDS = [
     "so_average_excess_cost",
     "tstt_mc",
     "sptt_mc",
+    "realized_demand",
     "flow_rmse_vs_reference",
     "self_relative_gap",
     "self_sue_residual",
     "self_so_relative_gap",
+    "self_realized_demand",
     "proportionality_residual",
     "pas_proportionality_max",
 ]
@@ -139,6 +141,10 @@ def _score_bundle(
             "self_relative_gap": state.self_report.get("relative_gap", ""),
             "self_sue_residual": state.self_report.get("sue_fixed_point_residual", ""),
             "self_so_relative_gap": state.self_report.get("so_relative_gap", ""),
+            # Elastic (variable) demand (ADR-005): `realized_demand` is scored
+            # (recomputed as Sum_rs D_rs(u_rs) from the flows); the self_ column
+            # is the model's own realized-demand report, provenance only.
+            "self_realized_demand": state.self_report.get("realized_demand", ""),
             # TAPAS route-flow proportionality diagnostics (ADR-004): provenance
             # only, never scored -- a route-flow property invisible to link flows.
             "proportionality_residual": state.self_report.get("proportionality_residual", ""),

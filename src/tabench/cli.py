@@ -11,6 +11,7 @@ from pathlib import Path
 import yaml
 
 from .core.budget import Budget
+from .core.scenario import ElasticDemand
 from .data import REGISTRY, ChecksumError, citation, fetch, load_scenario
 from .estimation.base import ESTIMATOR_REGISTRY
 from .experiments.runner import run_estimation_experiment, run_experiment
@@ -21,8 +22,9 @@ _DEFAULT_ESTIMATORS = "prior,gls,vzw-entropy,spiess,spsa"
 
 def _cmd_list(_: argparse.Namespace) -> int:
     print("Scenarios:")
-    print("  braess        (built-in, analytic UE oracle)")
-    print("  tworoute      (built-in, analytic logit-SUE oracle)")
+    print("  braess          (built-in, analytic UE oracle)")
+    print("  tworoute        (built-in, analytic logit-SUE oracle)")
+    print("  elastic-tworoute(built-in, analytic elastic-demand UE oracle)")
     for key, spec in sorted(REGISTRY.items()):
         print(f"  {key:<14}({spec.repo_dir}, download-on-demand)")
     print("\nModels:")
@@ -93,8 +95,26 @@ def _cmd_run(args: argparse.Namespace) -> int:
             scenario = dataclasses.replace(
                 scenario, sue_theta=theta, sue_family=family, reference=None
             )
+    elastic = card.get("elastic")
+    if isinstance(elastic, dict) and (set(elastic) & {"form", "param"}):
+        # The demand law defines the elastic instance (it is content-hashed), so
+        # honor the card's form/param rather than silently running the loader's
+        # default (mirrors the sue handling above).
+        if not {"form", "param"} <= set(elastic):
+            print(
+                f"{args.config}: elastic block needs both 'form' and 'param' "
+                "to define the demand law.",
+                file=sys.stderr,
+            )
+            return 2
+        law = ElasticDemand(form=str(elastic["form"]), param=float(elastic["param"]))
+        if scenario.elastic_demand != law:
+            scenario = dataclasses.replace(scenario, elastic_demand=law, reference=None)
+    # Elastic scenarios need the elastic solver by default: fixed-demand models
+    # route the reference demand, not D(u(v)), and are censored on them.
+    default_models = "fw-elastic" if scenario.elastic_demand is not None else "aon,msa,fw"
     models = []
-    for name in (args.models or "aon,msa,fw").split(","):
+    for name in (args.models or default_models).split(","):
         name = name.strip()
         if name not in MODEL_REGISTRY:
             print(f"Unknown model {name!r}; see `tabench list`", file=sys.stderr)
@@ -111,12 +131,15 @@ def _cmd_run(args: argparse.Namespace) -> int:
     print(f"Scenario {scenario.name} (hash {scenario.content_hash()[:16]}), "
           f"budget {iterations} iterations, seed {args.seed}\n")
     is_sue = scenario.sue_theta is not None
+    is_elastic = scenario.elastic_demand is not None
     has_so = any("so_relative_gap" in row for row in last_by_model.values())
     header = f"{'model':<10}{'iters':>6}{'rel. gap':>14}{'AEC':>14}{'Beckmann obj.':>18}"
     if is_sue:
         header += f"{'SUE residual':>16}"
     if has_so:
         header += f"{'SO rel. gap':>14}"
+    if is_elastic:
+        header += f"{'realized dem.':>16}"
     print(header)
     print("-" * len(header))
     for name, row in sorted(last_by_model.items()):
@@ -128,6 +151,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
             line += f"{row['sue_fixed_point_residual']:>16.3e}"
         if has_so:
             line += f"{row['so_relative_gap']:>14.3e}"
+        if is_elastic:
+            line += f"{float(row['realized_demand']):>16.3e}"
         print(line)
     if is_sue:
         print(
@@ -144,6 +169,12 @@ def _cmd_run(args: argparse.Namespace) -> int:
         print(
             "\nSO goal: static_so models are ranked by the certified SO relative "
             "gap; the UE columns are descriptive."
+        )
+    if is_elastic:
+        print(
+            "\nElastic-demand task (adr-005): ranked by the certified relative_gap; "
+            "realized_demand = Sum D(u) is the induced travel. fw-elastic solves it; "
+            "fixed-demand models are censored (they route the reference demand, not D(u))."
         )
     if args.out:
         print(f"\nWrote CSV + manifest to {args.out}/")

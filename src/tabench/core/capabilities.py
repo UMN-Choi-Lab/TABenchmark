@@ -11,6 +11,7 @@ __all__ = ["Capabilities", "ContaminationError", "assert_fair_evaluation"]
 PARADIGMS = frozenset(
     {
         "static_ue",
+        "static_ue_elastic",
         "static_so",
         "sue",
         "dta",

@@ -4,6 +4,7 @@ from .adapters import CallableModel
 from .algb import AlgorithmBModel
 from .aon import AllOrNothingModel
 from .base import MODEL_REGISTRY, TrafficAssignmentModel, register_model
+from .elastic import ElasticDemandFWModel
 from .frank_wolfe import BiconjugateFrankWolfeModel, ConjugateFrankWolfeModel, FrankWolfeModel
 from .gradient_projection import GradientProjectionModel
 from .msa import MSAModel
@@ -22,6 +23,7 @@ __all__ = [
     "BiconjugateFrankWolfeModel",
     "ConjugateFrankWolfeModel",
     "DialSUEModel",
+    "ElasticDemandFWModel",
     "SueProbitMsaModel",
     "FrankWolfeModel",
     "GradientProjectionModel",

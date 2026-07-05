@@ -107,6 +107,9 @@ SHIPPED = {
     "sheffi1982algorithm": ("v1", "probit SUE solver (sue-probit-msa) + MC certificate (ADR-003)"),
     "daganzo1977stochastic": ("v1", "SUE definition underlying the probit task"),
     "bargera2010traffic": ("v1", "TAPAS paired-alternative-segment solver (tapas) + proportionality diagnostic (ADR-004)"),
+    "florian1974method": ("v1", "elastic (variable) demand UE task/problem (ADR-005)"),
+    "gartner1980optimal": ("v1", "excess-demand augmented-network transformation the fw-elastic solver implements (ADR-005)"),
+    "sheffi1985urban": ("v1", "elastic-demand objective + excess-demand certificate anchor (ADR-005)"),
 }
 
 

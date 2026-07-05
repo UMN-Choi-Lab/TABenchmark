@@ -10,6 +10,7 @@ from .core import (
     Capabilities,
     ContaminationError,
     Demand,
+    ElasticDemand,
     FactorSpec,
     FlowState,
     Network,
@@ -19,7 +20,12 @@ from .core import (
     Scenario,
     Trace,
 )
-from .data import braess_scenario, load_scenario, two_route_scenario
+from .data import (
+    braess_scenario,
+    elastic_two_route_scenario,
+    load_scenario,
+    two_route_scenario,
+)
 from .estimation import (
     ESTIMATOR_REGISTRY,
     CallableEstimator,
@@ -60,6 +66,7 @@ from .models import (
     CallableModel,
     ConjugateFrankWolfeModel,
     DialSUEModel,
+    ElasticDemandFWModel,
     FrankWolfeModel,
     GradientProjectionModel,
     MSAModel,
@@ -78,6 +85,7 @@ __all__ = [
     "Capabilities",
     "ContaminationError",
     "Demand",
+    "ElasticDemand",
     "FactorSpec",
     "FlowState",
     "Network",
@@ -89,6 +97,7 @@ __all__ = [
     "braess_scenario",
     "load_scenario",
     "two_route_scenario",
+    "elastic_two_route_scenario",
     "run_experiment",
     "run_estimation_experiment",
     "identifiability_report",
@@ -122,6 +131,7 @@ __all__ = [
     "CallableModel",
     "ConjugateFrankWolfeModel",
     "DialSUEModel",
+    "ElasticDemandFWModel",
     "FrankWolfeModel",
     "GradientProjectionModel",
     "MSAModel",

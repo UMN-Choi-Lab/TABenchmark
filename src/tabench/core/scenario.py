@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-__all__ = ["Network", "Demand", "ReferenceSolution", "Scenario"]
+__all__ = ["Network", "Demand", "ElasticDemand", "ReferenceSolution", "Scenario"]
 
 
 def _as_f64(x: np.ndarray) -> np.ndarray:
@@ -158,6 +158,82 @@ class Demand:
 
 
 @dataclass(frozen=True)
+class ElasticDemand:
+    """Elastic (variable) demand law: the demand between an OD pair is a
+    strictly decreasing function of that pair's equilibrium travel cost,
+    ``d_rs = D_rs(u_rs)``.
+
+    The *reference* demand ``d0_rs = D_rs(0)`` (demand at zero cost — an upper
+    bound) is carried by the scenario's ordinary :class:`Demand` matrix; this
+    object adds only the decay law and its single shared parameter. Two forms:
+
+    * ``"linear"``      ``D_rs(u) = d0_rs * max(0, 1 - u/param)``   (``param`` = u0)
+      inverse on ``[0, d0]``: ``D_rs^{-1}(d) = param * (1 - d/d0)`` — bounded,
+      singularity-free (the excess-demand arc cost ``param * e/d0`` is linear).
+    * ``"exponential"`` ``D_rs(u) = d0_rs * exp(-param * u)``       (``param`` = beta)
+      inverse on ``(0, d0]``: ``D_rs^{-1}(d) = ln(d0/d) / param`` — the
+      cited/logit-consistent form, unbounded as ``d -> 0`` (guarded below).
+
+    Objective ``min Sum_a integral t_a - Sum_rs integral D_rs^{-1}`` and the
+    excess-demand ("dummy arc") transformation follow Sheffi (1985) ch. 6 and
+    Boyles, Lownes & Unnikrishnan, *Transportation Network Analysis* sec. 9.1;
+    the transformation itself is due to Gartner (1980), and the seminal
+    computational treatment is Florian & Nguyen (1974). See docs/design/adr-005.
+
+    ``param`` is a scalar shared across OD pairs (per-OD curves are a future
+    extension). It is task data, content-hashed with the scenario when set.
+    """
+
+    form: str
+    param: float
+
+    _FORMS = ("linear", "exponential")
+
+    def __post_init__(self) -> None:
+        if self.form not in self._FORMS:
+            raise ValueError(
+                f"ElasticDemand form must be one of {self._FORMS}, got {self.form!r}"
+            )
+        if not (np.isfinite(self.param) and self.param > 0):
+            raise ValueError(
+                f"ElasticDemand param must be finite and > 0, got {self.param!r}"
+            )
+
+    def realized_demand(self, d0: np.ndarray, cost: np.ndarray) -> np.ndarray:
+        """``D_rs(u)`` elementwise: realized demand at OD cost ``cost``, clamped
+        to ``[0, d0]``. Both arguments broadcast (typically ``(n_zones,
+        n_zones)`` reference-demand and OD shortest-path-cost matrices)."""
+        d0 = np.asarray(d0, dtype=np.float64)
+        u = np.asarray(cost, dtype=np.float64)
+        if self.form == "linear":
+            d = d0 * (1.0 - u / self.param)
+        else:  # exponential
+            d = d0 * np.exp(-self.param * u)
+        return np.clip(d, 0.0, d0)
+
+    def inverse_demand(self, d0: np.ndarray, d: np.ndarray) -> np.ndarray:
+        """``D_rs^{-1}(d)``: the OD cost at which realized demand equals ``d``
+        (``d`` in ``[0, d0]``). Prices the excess-demand arc. For the
+        exponential form the ``d -> 0`` log-singularity is floored so the
+        transformed solver never evaluates ``ln(inf)``; ``d0 == 0`` pairs
+        (no demand) return 0."""
+        d0 = np.asarray(d0, dtype=np.float64)
+        d = np.asarray(d, dtype=np.float64)
+        positive = d0 > 0
+        if self.form == "linear":
+            return self.param * np.where(positive, 1.0 - d / np.where(positive, d0, 1.0), 0.0)
+        floor = np.maximum(d0, 1.0) * 1e-12
+        d = np.maximum(d, floor)
+        return np.where(positive, np.log(np.where(positive, d0, 1.0) / d) / self.param, 0.0)
+
+    def excess_arc_cost(self, d0: np.ndarray, excess: np.ndarray) -> np.ndarray:
+        """Cost of the excess-demand (Gartner dummy) arc carrying unmet flow
+        ``excess``: ``W(e) = D_rs^{-1}(d0 - e)`` — increasing in ``e``."""
+        d0 = np.asarray(d0, dtype=np.float64)
+        return self.inverse_demand(d0, d0 - np.asarray(excess, dtype=np.float64))
+
+
+@dataclass(frozen=True)
 class ReferenceSolution:
     """Best-known solution used as a regression oracle (with provenance)."""
 
@@ -188,6 +264,14 @@ class Scenario:
     for the ``trained_on`` fairness gate (P7); ``sue_family`` names the task's
     equilibrium definition. It is hashed only when non-default so every logit
     scenario keeps the byte-identical hash it had before this field existed.
+
+    ``elastic_demand`` (optional) makes this a variable-demand UE task: the
+    :class:`Demand` matrix becomes the *reference* demand ``d0 = D(0)`` and this
+    :class:`ElasticDemand` supplies the decay law (docs/design/adr-005). Like
+    ``sue_theta`` it is task data content-hashed only when set, so every
+    fixed-demand scenario keeps its prior hash. An elastic task is a
+    deterministic UE with endogenous demand and so is mutually exclusive with
+    the SUE fields.
     """
 
     name: str
@@ -197,6 +281,7 @@ class Scenario:
     family: str = field(default="")
     sue_theta: float | None = None
     sue_family: str = "logit"
+    elastic_demand: ElasticDemand | None = None
 
     def __post_init__(self) -> None:
         if self.demand.n_zones != self.network.n_zones:
@@ -222,6 +307,12 @@ class Scenario:
             raise ValueError(
                 f"Scenario '{self.name}': sue_family='probit' requires sue_theta "
                 "(beta, the perception variance per unit free-flow time)"
+            )
+        if self.elastic_demand is not None and self.sue_theta is not None:
+            raise ValueError(
+                f"Scenario '{self.name}': elastic_demand and sue_theta are "
+                "mutually exclusive (elastic UE is deterministic with endogenous "
+                "demand; SUE is stochastic with fixed demand)"
             )
 
     def content_hash(self) -> str:
@@ -254,4 +345,11 @@ class Scenario:
         # a probit task can never collide with the logit task at the same theta.
         if self.sue_family != "logit":
             h.update(f"sue_family={self.sue_family};".encode())
+        # Appended last and only when set: every fixed-demand scenario hashes
+        # exactly as before this field existed (golden-hash test). The
+        # reference demand d0 is already covered by the ("od", matrix) bytes
+        # above; only the decay law and its parameter are new content.
+        if self.elastic_demand is not None:
+            ed = self.elastic_demand
+            h.update(f"elastic_form={ed.form};elastic_param={float(ed.param)!r};".encode())
         return h.hexdigest()

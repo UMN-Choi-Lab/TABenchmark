@@ -75,16 +75,29 @@ def _probit_certificate(
     return residual, se, floor
 
 
-def node_balance_residual(scenario: Scenario, link_flows: np.ndarray) -> float:
+def node_balance_residual(
+    scenario: Scenario,
+    link_flows: np.ndarray,
+    demand_matrix: np.ndarray | None = None,
+) -> float:
     """Maximum absolute demand-aware flow-conservation residual over all nodes.
 
     Non-zone nodes must conserve flow exactly. Zone node ``i`` must satisfy
     ``inflow_i - outflow_i = attractions_i - productions_i`` where productions
     and attractions are the off-diagonal row/column sums of the OD matrix
     (intrazonal demand never enters the network).
+
+    ``demand_matrix`` overrides the scenario's fixed OD matrix — used by the
+    elastic-demand certificate, which audits conservation against the
+    *demand-consistent* demand ``d* = D(u(v))`` recomputed from the flows,
+    not against a fixed matrix (adr-005).
     """
     net = scenario.network
-    od = scenario.demand.matrix
+    od = (
+        scenario.demand.matrix
+        if demand_matrix is None
+        else np.asarray(demand_matrix, dtype=np.float64)
+    )
     v = np.asarray(link_flows, dtype=np.float64)
     inflow = np.bincount(net.term_node - 1, weights=v, minlength=net.n_nodes)
     outflow = np.bincount(net.init_node - 1, weights=v, minlength=net.n_nodes)
@@ -119,6 +132,11 @@ class Evaluator:
         self._engine = PathEngine(scenario.network)
         self._total_demand = scenario.demand.total
         self._theta = scenario.sue_theta
+        # Elastic (variable) demand: the certificate recomputes the
+        # demand-consistent demand d* = D(u(v)) from the flows and audits both
+        # route equilibrium and demand consistency against it (adr-005). Gated
+        # on the scenario field, exactly like sue_theta.
+        self._elastic = scenario.elastic_demand
         # Logit SUE certifies through the closed-form Dial-STOCH map; probit
         # SUE has no closed form, so the harness pins ONE Monte Carlo
         # perturbation matrix E per task, drawn from the reserved evaluation
@@ -169,6 +187,8 @@ class Evaluator:
         if self._probit is not None:
             metrics["sue_residual_se"] = float("nan")
             metrics["sue_residual_floor"] = float("nan")
+        if self._elastic is not None:
+            metrics["realized_demand"] = float("nan")
         if self.so_metrics:
             for key in ("so_relative_gap", "so_average_excess_cost", "tstt_mc", "sptt_mc"):
                 metrics[key] = float("nan")
@@ -197,12 +217,38 @@ class Evaluator:
 
         costs = net.link_cost(v)
         tstt = float(v @ costs)
-        _, sptt = self._engine.all_or_nothing(costs, self.scenario.demand)
+        realized_total: float | None = None
+        if self._elastic is not None:
+            # Elastic certificate (adr-005): recompute the demand-consistent
+            # demand d* = D(u(v)) from the emitted flows (u = per-OD shortest
+            # path cost) and audit BOTH conditions against it — route
+            # equilibrium (relative_gap below) AND demand consistency
+            # (node_balance vs d*, which pins the per-node demand v must route,
+            # so a phantom/circulation flow carrying no OD traffic is censored
+            # even on all-zone networks). Everything is a pure function of v and
+            # the content-hashed demand law — no self-report is trusted (P1).
+            # Unlike fixed demand, node_balance is a *convergence* quantity here
+            # (the real flows route d* only at equilibrium), so it doubles as
+            # the feasibility gate: an off-equilibrium flow is not a valid
+            # elastic solution — there is no fixed demand for it to be
+            # feasible-but-suboptimal against.
+            try:
+                kappa = self._engine.od_cost_matrix(costs, self.scenario.demand)
+            except RuntimeError:
+                return self._censored("unreachable OD pair at current costs")
+            d_star = self._elastic.realized_demand(self.scenario.demand.matrix, kappa)
+            np.fill_diagonal(d_star, 0.0)  # intrazonal demand never enters the network
+            realized_total = float(d_star.sum())
+            sptt = float((kappa * d_star).sum())  # SPTT of demand d* at costs
+            balance = node_balance_residual(self.scenario, v, demand_matrix=d_star)
+            demand_scale = max(1.0, realized_total)
+        else:
+            _, sptt = self._engine.all_or_nothing(costs, self.scenario.demand)
+            balance = node_balance_residual(self.scenario, v)
+            demand_scale = max(1.0, self._total_demand)
         excess = tstt - sptt
-
-        balance = node_balance_residual(self.scenario, v)
-        demand_scale = max(1.0, self._total_demand)
         conserves = balance <= self.feasibility_tol * demand_scale
+
         # SPTT > TSTT is impossible for demand-feasible flows: censor it too.
         nonnegative_excess = excess >= -self.feasibility_tol * max(tstt, 1.0)
         feasible = conserves and nonnegative_excess
@@ -228,17 +274,22 @@ class Evaluator:
             metrics["beckmann_objective"] = float(net.link_cost_integral(v).sum())
             return metrics
 
+        # AEC divides the excess by the number of trips actually made — the
+        # realized demand on elastic tasks, the fixed total otherwise.
+        aec_denom = realized_total if self._elastic is not None else self._total_demand
         metrics = {
             "tstt": tstt,
             "sptt": sptt,
             "relative_gap": excess / tstt if tstt > 0 else 0.0,
-            "average_excess_cost": excess / self._total_demand
-            if self._total_demand > 0
-            else 0.0,
+            "average_excess_cost": excess / aec_denom if aec_denom and aec_denom > 0 else 0.0,
             "beckmann_objective": float(net.link_cost_integral(v).sum()),
             "node_balance_residual": balance,
             "feasible": 1.0,
         }
+        if self._elastic is not None:
+            # Certified realized demand Sum_rs D_rs(u_rs) — the elastic-specific
+            # scored quantity (how much travel the equilibrium induces).
+            metrics["realized_demand"] = realized_total
         if self._marginal is not None:
             excess_mc = tstt_mc - sptt_mc
             metrics["tstt_mc"] = tstt_mc

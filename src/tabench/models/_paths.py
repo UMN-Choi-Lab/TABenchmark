@@ -99,6 +99,34 @@ class PathEngine:
                 paths[(int(o), int(d))] = np.asarray(links[::-1], dtype=np.int64)
         return paths, float(sptt)
 
+    def od_cost_matrix(self, costs: np.ndarray, demand: Demand) -> np.ndarray:
+        """Shortest-path cost for every positive-demand OD pair, as a dense
+        ``(n_zones, n_zones)`` matrix (0 where ``demand`` is 0).
+
+        One batched Dijkstra over all origins. Used by the elastic-demand
+        certificate to evaluate ``D_rs(u_rs)`` from emitted link flows (the
+        harness never trusts a model's self-reported OD costs — P1).
+        """
+        graph = self._graph(np.asarray(costs, dtype=np.float64))
+        od = demand.matrix
+        nz = self.network.n_zones
+        out = np.zeros((nz, nz), dtype=np.float64)
+        origins = np.nonzero(od.sum(axis=1) > 0)[0]
+        if origins.size == 0:
+            return out
+        dist = dijkstra(graph, directed=True, indices=origins, return_predecessors=False)
+        for row, o in enumerate(origins):
+            for d in np.nonzero(od[o] > 0)[0]:
+                if d == o:
+                    continue
+                di = self._dest_index(int(d) + 1)
+                if not np.isfinite(dist[row, di]):
+                    raise RuntimeError(
+                        f"Zone {int(d) + 1} unreachable from zone {int(o) + 1} at current costs"
+                    )
+                out[o, d] = dist[row, di]
+        return out
+
     def all_or_nothing(
         self, costs: np.ndarray, demand: Demand
     ) -> tuple[np.ndarray, float]:
