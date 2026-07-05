@@ -82,7 +82,7 @@ T3 interventions.
 ## Day-to-day dynamics — v2
 
 - [ ] Horowitz (1984) — *The stability of stochastic equilibrium in a two-link transportation network* (white-box solver)
-- [ ] Smith (1984) — *The stability of a dynamic model of traffic assignment — an application of a method of Lyapunov* (white-box solver)
+- [x] Smith (1984) — *The stability of a dynamic model of traffic assignment — an application of a method of Lyapunov* (white-box solver) — **shipped** as `dtd-swap` (first day-to-day model)
 - [ ] Cascetta (1989) — *A stochastic process approach to the analysis of temporal dynamics in transportation networks* (white-box solver)
 - [ ] Friesz et al. (1994) — *Day-to-day dynamic network disequilibria and idealized traveler information systems* (white-box solver)
 - [ ] Cantarella & Cascetta (1995) — *Dynamic processes and equilibrium in transportation networks: towards a unifying theory* (white-box solver)

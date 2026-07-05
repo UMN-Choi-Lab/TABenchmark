@@ -4,6 +4,7 @@ from .adapters import CallableModel
 from .algb import AlgorithmBModel
 from .aon import AllOrNothingModel
 from .base import MODEL_REGISTRY, TrafficAssignmentModel, register_model
+from .dtd_swap import RouteSwapDTDModel
 from .elastic import ElasticDemandFWModel
 from .evans import EvansCombinedModel
 from .frank_wolfe import BiconjugateFrankWolfeModel, ConjugateFrankWolfeModel, FrankWolfeModel
@@ -26,6 +27,7 @@ __all__ = [
     "BiconjugateFrankWolfeModel",
     "ConjugateFrankWolfeModel",
     "DialSUEModel",
+    "RouteSwapDTDModel",
     "ElasticDemandFWModel",
     "EvansCombinedModel",
     "SueProbitMsaModel",

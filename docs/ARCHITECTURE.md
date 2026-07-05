@@ -226,6 +226,7 @@ TABenchmark/
 │   │   │                  # _bush.py (shared bush machinery), so.py (marginal-cost SO),
 │   │   │                  # elastic.py (elastic-demand FW, Gartner excess-demand transform),
 │   │   │                  # evans.py (Evans 1976 combined distribution+assignment),
+│   │   │                  # dtd_swap.py (Smith 1984 route-swap day-to-day dynamics),
 │   │   │                  # learned.py (first learned/black-box surrogate),
 │   │   │                  # sue_logit.py, sue_probit.py,
 │   │   │                  # _paths.py, _stoch.py (Dial map), _probit.py (MC map)
@@ -314,7 +315,11 @@ Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 172 refe
   gravity model at the equilibrium costs, certified by recomputing that gravity demand from
   the flows (shipped: `evans`, paradigm `static_ue_combined`,
   [ADR-007](design/adr-007-combined-distribution-assignment.md); Evans 1976, a reuse of the
-  elastic demand-recomputing machinery); the first **learned** (black-box) model certified by the same P1 harness —
+  elastic demand-recomputing machinery); the first **day-to-day** model — Smith's (1984)
+  proportional route-swap dynamical system, modeling the disequilibrium adjustment toward the
+  UE fixed point with a Beckmann Lyapunov function that decreases monotonically each day
+  (shipped: `dtd-swap`, paradigm `day_to_day`; certified by the standard UE gap, with the
+  Smith & Wisten 1995 step bound preventing the raw swap's limit-cycle); the first **learned** (black-box) model certified by the same P1 harness —
   a per-link surrogate trained on a synthetic family and gated off the disjoint TNTP test
   set by `trained_on` (shipped: `learned-surrogate`, paradigm `learned`,
   [ADR-006](design/adr-006-learned-model-certification.md); Rahman & Hasan 2023 line, with

@@ -36,7 +36,7 @@ graph TD
   n_powellconvergence3924(["Powell 1982"]):::c3
   n_sheffialgorithm5137(["Sheffi 1982"]):::c3
   n_horowitzstability3163["Horowitz 1984"]:::c6
-  n_smithstability798["Smith 1984"]:::c6
+  n_smithstability798(["Smith 1984"]):::c6
   n_cascettaestimation8745(["Cascetta 1984"]):::c10
   n_sheffiurban8618(["Sheffi (MSA baseline; convergence proof Powell 1985"]):::c1
   n_mahmassanion4858["Mahmassani 1987"]:::c5
@@ -549,7 +549,7 @@ The first stability analysis of stochastic user equilibrium treated as the limit
 
 ### Smith (1984) — The stability of a dynamic model of traffic assignment -- an application of a method of Lyapunov
 
-_roadmap_ · day-to-day dynamics converging to deterministic Wardrop UE · `[smith1984stability]`
+`dtd-swap` · **shipped** · day-to-day dynamics converging to deterministic Wardrop UE · `[smith1984stability]`
 
 A continuous-time deterministic route-swap dynamical system whose Lyapunov function proves Wardrop user equilibrium is globally asymptotically stable.
 
@@ -557,7 +557,7 @@ A continuous-time deterministic route-swap dynamical system whose Lyapunov funct
 
 **Formulation.** `dh_p/dt = sum_q h_q [c_q - c_p]_+  -  h_p sum_q [c_p - c_q]_+  over routes p,q of the same OD; rest points = Wardrop UE; a Lyapunov V decreases monotonically along trajectories.`
 
-**Validation.** Original paper is analytic (Lyapunov proof, no benchmark-network numerics table); validate a discretized/Euler swap update against the known Wardrop UE oracle from the shipped FW/GP solvers and confirm the Lyapunov function is monotone-decreasing per day.
+**Validation.** SHIPPED as `dtd-swap` (paradigm day_to_day, the first day-to-day model): discrete Euler of Smith's proportional route-swap over column-generated per-OD route sets (reuses gp's path machinery). Certified by the standard UE relative gap (fixed point = Wardrop UE); records the Beckmann objective (a Lyapunov function, Zdot=-a*V) and Smith's flow-weighted disequilibrium V(h)=sum h_p([c_p-c_k]+)^2 as provenance. Validated: converges to the exact analytic Braess UE (316 days), and toward the published Sioux Falls Beckmann optimum 42.31335287107440 (gap steadily shrinking); the Beckmann Lyapunov function decreases MONOTONICALLY day-to-day and V->0. CRITICAL step-size lesson (two rounds): the raw Euler swap overshoots into a stable 2-day limit cycle (Braess stuck ~9%). A Smith & Wisten (1995) 1/(B*M) step bound fixes the gross case but (adversarial review) bounds cost LEVEL not DERIVATIVE, so at the default step it still lets Beckmann rise on high-curvature BPR-power-4 congested links; the real guarantee is Armijo BACKTRACKING on the Beckmann objective (halve the step until Z decreases) -- the swap direction is a descent direction (Zdot=-a*V), so it always terminates and delivers monotone descent (0 violations over a 189-net power-4 fuzz, was 10/250). Both regression-pinned (a hardcoded high-curvature instance where max_backtracks=0 rises and the default is monotone). Primary Smith 1984 paywalled/attributed unread; swap update + step bound cross-verified from Peeta & Yang 2003 / NPSD (arXiv:1305.5046) / Smith & Wisten 1995.
 
 *Builds on:* Smith 1979, Wardrop 1952.
 
