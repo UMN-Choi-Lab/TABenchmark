@@ -80,7 +80,7 @@ in `references.json`).
 | Babazadeh et al. (2020) | [Reduced gradient algorithm for user equilibrium traffic assignment problem](https://doi.org/10.1080/23249935.2020.1722279) | Transportmetrica A: Transport Science | 2 | white-box solver | ✓ |
 | Bertsekas & Gafni (1982) | [Projection methods for variational inequalities with application to the traffic assignment problem](https://doi.org/10.1007/BFb0120965) | Mathematical Programming Study 17 | 3 | survey/context | ✓ |
 | Xie & Xie (2015) | [Origin-Based Algorithms for Traffic Assignment: Algorithmic Structure, Complexity Analysis, and Convergence Performance](https://doi.org/10.3141/2498-06) | Transportation Research Record 2498 | 3 | metric/protocol | ✓ |
-| Boyles et al. (2023) | Transportation Network Analysis, Volume I: Static and Dynamic Traffic Assignment | Open-access textbook (self-published, sboyles.github.io) | 3 | survey/context | book |
+| Boyles et al. (2025) | [Transportation Network Analysis, Volume I: Static and Dynamic Traffic Assignment](https://doi.org/10.48550/arXiv.2502.05182) | arXiv:2502.05182 [math.OC] (open-access textbook, sboyles.github.io) | 3 | survey/context | ✓ |
 
 ## Stochastic User Equilibrium and Route Choice
 

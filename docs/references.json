@@ -705,24 +705,24 @@
   "confidence": 0.99
  },
  {
-  "bibkey": "boyles2023transportation",
+  "bibkey": "boyles2025transportation",
   "title": "Transportation Network Analysis, Volume I: Static and Dynamic Traffic Assignment",
   "authors": [
    "Boyles",
    "Lownes",
    "Unnikrishnan"
   ],
-  "year": 2023,
-  "venue": "Open-access textbook (self-published, sboyles.github.io)",
-  "doi": null,
+  "year": 2025,
+  "venue": "arXiv:2502.05182 [math.OC] (open-access textbook, sboyles.github.io)",
+  "doi": "10.48550/arXiv.2502.05182",
   "families": [
    "path-and-bush-based"
   ],
   "tier": 3,
-  "contribution": "Self-published open textbook, no DOI; hand-written @book entry.",
+  "contribution": "Open-access TNA textbook (Version 1.0), posted to arXiv Feb 2025; DataCite DOI verified and resolving. Cross-referenced throughout the repo (algb sec. 6.4, tapas sec. 6.5.3, fw-elastic sec. 9.1 / elastic-demand Gartner transform).",
   "implement_as": "survey/context",
-  "verdict": "book-manual",
-  "confidence": 0.9
+  "verdict": "verified",
+  "confidence": 0.97
  },
  {
   "bibkey": "bpr1964traffic",
