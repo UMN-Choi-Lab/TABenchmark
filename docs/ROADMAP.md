@@ -29,7 +29,7 @@ T3 interventions.
 ## Path/bush-based UE algorithms — v1
 
 - [x] Jayakrishnan et al. (1994) — *A faster path-based algorithm for traffic assignment* (white-box solver) — **shipped in v1** (path-based gradient projection solver (gp))
-- [ ] Bar-Gera (2002) — *Origin-based algorithm for the traffic assignment problem* (white-box solver)
+- [x] Bar-Gera (2002) — *Origin-based algorithm for the traffic assignment problem* (white-box solver) — **shipped** as `oba` (origin-based M/D-label proportion solver)
 - [x] Dial (2006) — *A path-based user-equilibrium traffic assignment algorithm that obviates path storage and enumeration* (white-box solver) — **shipped in v1** (Algorithm B bush-based solver (algb))
 - [x] Bar-Gera (2010) — *Traffic assignment by paired alternative segments* (white-box solver) — **shipped in v1** (TAPAS paired-alternative-segment solver (tapas) + proportionality diagnostic (ADR-004))
 

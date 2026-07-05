@@ -57,7 +57,7 @@ graph TD
   n_lebacquegodunov3835["Lebacque 1996"]:::c7
   n_yangprinciple7580(["Yang 1998"]):::c4
   n_ziliaskopouloslinear4836["Ziliaskopoulos 2000"]:::c8
-  n_bargeraorigin7268["Bar-Gera 2002"]:::c2
+  n_bargeraorigin7268(["Bar-Gera 2002"]):::c2
   n_roughgardenhow4698(["Roughgarden 2002"]):::c4
   n_boyceconvergence3048["Boyce 2004"]:::c10
   n_dialpath6641(["Dial 2006"]):::c2
@@ -307,7 +307,7 @@ Path-based gradient-projection solver for deterministic user equilibrium that ke
 
 ### Bar-Gera (2002) — Origin-based algorithm for the traffic assignment problem
 
-_roadmap_ · UE (Beckmann convex program), origin/bush-restricted -- flow from each origin confined to an acyclic subnetwork · `[bargera2002origin]`
+`oba` · **shipped** · UE (Beckmann convex program), origin/bush-restricted -- flow from each origin confined to an acyclic subnetwork · `[bargera2002origin]`
 
 Origin-Based Assignment (OBA) -- the first practical bush-based UE solver: stores each origin's flow as an acyclic 'bush' and equilibrates all approaches into each node simultaneously using forward mean-cost and approximate-derivative labels.
 
@@ -315,7 +315,7 @@ Origin-Based Assignment (OBA) -- the first practical bush-based UE solver: store
 
 **Formulation.** `Per origin, restrict flow to an acyclic bush; compute forward L_i (shortest), U_i (longest), M_i (flow-weighted mean cost) and D_i (approximate derivative) labels in topological order; identify a 'basic' approach at each node and shift all nonbasic-approach flow toward it; bush improvement drops zero-flow links and adds shortcut (i,j) when U_i + t_ij < U_j (guarantees acyclicity).`
 
-**Validation.** Bar-Gera 2002 (Transportation Science 36(4):398-417) reports convergence to very low gaps on Chicago-region networks and is the origin of the widely reused TNTP standard instances/results, so it has usable reproducible numerics (Bar-Gera maintains the benchmark result sets). Would be validated in-repo by a best-known-flow oracle (TNTP reference flows) and cross-solver gap agreement with the shipped algb/tapas.
+**Validation.** SHIPPED as `oba` (paradigm static_ue): reuses the shared _bush machinery (initial free-flow bushes, U-rule drop/add bush improvement, Kahn topo sort) but implements OBA's OWN update -- forward mean-cost M and closed-form derivative D=(sum alpha sqrt(D_h+t'))^2 labels, then a reverse-topo proportion shift of every nonbasic approach toward the least-mean-cost basic approach (Newton step (M_hi-M_basic)/(D_hi+D_basic-2 D_a), a=origin conservative, denominator floored per Nie 2012), then an alpha->flow rebuild. Adversarial review found the RAW Newton step overshoots and limit-cycles on high-curvature (BPR power>1) objectives (a fuzz stalled 25/357 nets, worst 73% gap) -- because D is only an approximate second derivative; a step_scale damping factor (default 0.5) fixes it (0/25 catastrophic stalls, machine-precision convergence), regression-pinned on a hardcoded stalling instance. Validated: exact analytic Braess UE; on Sioux Falls a monotonically shrinking certified gap to <1e-10, flows matching the best-known solution, Beckmann objective reproducing the published optimum 42.31335287107440 to 1e-6, and cross-family link-flow agreement with algb to ~1e-8 (UE flows are unique). A dead-node-activation conservation fix (uniform proportions on zero-flow nodes) is regression-pinned. Primary Bar-Gera 2002 paywalled/attributed unread; equations from Boyles TNA ch.6 + Nie 2012 derivative guard.
 
 *Builds on:* Jayakrishnan et al. 1994, Beckmann, McGuire & Winsten 1956.
 

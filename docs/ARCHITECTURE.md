@@ -221,11 +221,13 @@ TABenchmark/
 │   ├── data/              # tntp.py (defensive parser), fetcher.py (checksums+citations),
 │   │                      # registry.py (networks + units metadata + defects), builtin.py
 │   ├── models/            # base.py, aon.py, msa.py, frank_wolfe.py (FW/CFW/BFW),
-│   │   │                  # gradient_projection.py, algb.py (Dial 2006 bush),
-│   │   │                  # tapas.py (Bar-Gera 2010 PAS), _bush.py (shared bush machinery),
-│   │   │                  # so.py (marginal-cost SO), elastic.py (elastic-demand
-│   │   │                  # FW, Gartner excess-demand transform), learned.py (first
-│   │   │                  # learned/black-box surrogate), sue_logit.py, sue_probit.py,
+│   │   │                  # gradient_projection.py, oba.py (Bar-Gera 2002 origin-based),
+│   │   │                  # algb.py (Dial 2006 bush), tapas.py (Bar-Gera 2010 PAS),
+│   │   │                  # _bush.py (shared bush machinery), so.py (marginal-cost SO),
+│   │   │                  # elastic.py (elastic-demand FW, Gartner excess-demand transform),
+│   │   │                  # evans.py (Evans 1976 combined distribution+assignment),
+│   │   │                  # learned.py (first learned/black-box surrogate),
+│   │   │                  # sue_logit.py, sue_probit.py,
 │   │   │                  # _paths.py, _stoch.py (Dial map), _probit.py (MC map)
 │   │   └── adapters/      # callable_adapter.py (planned: subprocess.py, docker.py)
 │   ├── observe/           # data levels + identifiability checks

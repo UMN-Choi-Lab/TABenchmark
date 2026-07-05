@@ -48,7 +48,7 @@ digraph TA_evolution {
   "sheffi1985urban" [label="Sheffi (MSA baseline; convergence proof Powell 1985\nmsa",fillcolor="#d6e4ff",style="rounded,filled"];
   "mitradjieva2013stiff" [label="Mitradjieva 2013\ncfw",fillcolor="#d6e4ff",style="rounded,filled"];
   "jayakrishnan1994faster" [label="Jayakrishnan 1994\ngp",fillcolor="#c9f0d0",style="rounded,filled"];
-  "bargera2002origin" [label="Bar-Gera 2002\n",fillcolor="#c9f0d0",style="rounded,filled,dashed"];
+  "bargera2002origin" [label="Bar-Gera 2002\noba",fillcolor="#c9f0d0",style="rounded,filled"];
   "dial2006path" [label="Dial 2006\nalgb",fillcolor="#c9f0d0",style="rounded,filled"];
   "bargera2010traffic" [label="Bar-Gera 2010\ntapas",fillcolor="#c9f0d0",style="rounded,filled"];
   "dial1971probabilistic" [label="Dial 1971\nsue-msa",fillcolor="#ffe9c7",style="rounded,filled"];
