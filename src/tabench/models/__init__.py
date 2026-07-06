@@ -5,6 +5,7 @@ from .algb import AlgorithmBModel
 from .aon import AllOrNothingModel
 from .base import MODEL_REGISTRY, TrafficAssignmentModel, register_model
 from .br_ue import BoundedlyRationalUEModel
+from .dtd_friesz import FrieszDTDModel
 from .dtd_horowitz import CostSmoothingSUEModel
 from .dtd_link import LinkBasedDTDModel
 from .dtd_swap import RouteSwapDTDModel
@@ -34,6 +35,7 @@ __all__ = [
     "CostSmoothingSUEModel",
     "DialSUEModel",
     "BoundedlyRationalUEModel",
+    "FrieszDTDModel",
     "LinkBasedDTDModel",
     "RouteSwapDTDModel",
     "RouteSwapSUEModel",

@@ -67,7 +67,7 @@ digraph TA_evolution {
   "horowitz1984stability" [label="Horowitz 1984\ndtd-horowitz",fillcolor="#d6f5f0",style="rounded,filled"];
   "smith1984stability" [label="Smith 1984\ndtd-swap",fillcolor="#d6f5f0",style="rounded,filled"];
   "cascetta1989stochastic" [label="Cascetta 1989\n",fillcolor="#d6f5f0",style="rounded,filled,dashed"];
-  "friesz1994daytoday" [label="Friesz 1994\n",fillcolor="#d6f5f0",style="rounded,filled,dashed"];
+  "friesz1994daytoday" [label="Friesz 1994\ndtd-friesz",fillcolor="#d6f5f0",style="rounded,filled"];
   "cantarella1995dynamic" [label="Cantarella 1995\n",fillcolor="#d6f5f0",style="rounded,filled,dashed"];
   "he2010linkbased" [label="He 2010\ndtd-link",fillcolor="#d6f5f0",style="rounded,filled"];
   "smith2016routeswapping" [label="Smith 2016\ndtd-swap-sue",fillcolor="#d6f5f0",style="rounded,filled"];
