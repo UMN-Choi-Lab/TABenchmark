@@ -23,6 +23,7 @@ __all__ = [
     "two_route_scenario",
     "elastic_two_route_scenario",
     "evans_symmetric_scenario",
+    "br_two_route_scenario",
 ]
 
 _EPS = 1e-6
@@ -366,4 +367,79 @@ def evans_symmetric_scenario(trips: float = 10.0, beta: float = 0.5) -> Scenario
         reference=reference,
         family="builtin-evans",
         combined_demand=combined,
+    )
+
+
+def br_two_route_scenario(demand: float = 10.0, epsilon: float = 1.0) -> Scenario:
+    """Two disjoint 2-link routes: the analytic anchor for boundedly-rational UE
+    (Mahmassani & Chang 1987; adr-008).
+
+    Route A = 1->3->2 with cost ``c_A = 2 + f_A``; route B = 1->4->2 with cost
+    ``c_B = 3 + f_B`` (linear via BPR ``power=1``; first legs constant 1, second
+    legs ``1 + f_A`` and ``2 + f_B``). Both slopes are 1, so the Wardrop split is
+    ``f_A* = (a_B + b_B D - a_A)/(b_A + b_B) = (D + 1)/2`` and the ``epsilon``-BRUE
+    acceptable set is the exact interval ``f_A in [f_A* - epsilon/2, f_A* +
+    epsilon/2]`` clamped to ``[0, D]`` (band half-width ``epsilon/(b_A+b_B) =
+    epsilon/2``).
+
+    Route A is cheaper at free flow (``c_A(0)=2 < c_B(0)=3``), so the free-flow
+    all-or-nothing start loads everyone on A; the band-relaxed swap then bleeds
+    flow to B and stops at the **band edge** ``f_A = f_A* + epsilon/2`` (used-route
+    excess exactly ``epsilon``) -- NOT the Wardrop point (excess 0). At ``D=10,
+    epsilon=1`` that edge is ``f_A = 6``, link flows ``(6, 6, 4, 4)``; these
+    hand-checkable numbers make it an oracle for both the model (band edge) and the
+    certificate (``AEC = (6/10)*1 = 0.6 <= 1``). ``epsilon -> 0`` recovers the
+    Wardrop split ``f_A = 5.5``; a huge ``epsilon`` leaves the AON start unchanged.
+    """
+    # Link order: 1->3, 3->2, 1->4, 4->2
+    init = np.array([1, 3, 1, 4], dtype=np.int64)
+    term = np.array([3, 2, 4, 2], dtype=np.int64)
+    params = [
+        _bpr_linear(1.0, 0.0),  # 1->3: constant 1
+        _bpr_linear(1.0, 1.0),  # 3->2: 1 + f
+        _bpr_linear(1.0, 0.0),  # 1->4: constant 1
+        _bpr_linear(2.0, 1.0),  # 4->2: 2 + f
+    ]
+    fft = np.array([p[0] for p in params])
+    b = np.array([p[1] for p in params])
+    cap = np.array([p[2] for p in params])
+
+    network = Network(
+        name="br-two-route",
+        n_nodes=4,
+        n_zones=2,
+        first_thru_node=1,
+        init_node=init,
+        term_node=term,
+        capacity=cap,
+        length=np.zeros(4),
+        free_flow_time=fft,
+        b=b,
+        power=np.ones(4),
+        toll=np.zeros(4),
+        link_type=np.ones(4, dtype=np.int64),
+        units=(("time", "abstract"), ("flow", "abstract")),
+    )
+
+    od = np.zeros((2, 2))
+    od[0, 1] = demand
+    reference = None
+    f_edge = 0.5 * (demand + 1.0) + 0.5 * epsilon  # band edge f_A* + epsilon/2
+    if 0.0 <= f_edge <= demand:
+        reference = ReferenceSolution(
+            link_flows=np.array([f_edge, f_edge, demand - f_edge, demand - f_edge]),
+            source="analytic",
+            note=(
+                "Boundedly-rational UE band edge from the free-flow-AON start: "
+                f"f_A = (D+1)/2 + epsilon/2 (used-route excess = epsilon = {epsilon})."
+            ),
+        )
+
+    return Scenario(
+        name="br-tworoute",
+        network=network,
+        demand=Demand(matrix=od),
+        reference=reference,
+        family="builtin-br",
+        br_epsilon=epsilon,
     )

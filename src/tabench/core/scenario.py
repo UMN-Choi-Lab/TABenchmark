@@ -410,6 +410,17 @@ class Scenario:
     task fields it is content-hashed only when set. It is mutually exclusive
     with both the SUE fields and ``elastic_demand`` (all three make demand
     non-fixed in incompatible ways).
+
+    ``br_epsilon`` (optional) makes this a **boundedly-rational** user-equilibrium
+    task (Mahmassani & Chang 1976/1987; docs/design/adr-008): a flow is acceptable
+    if every *used* route lies within an absolute indifference band ``epsilon``
+    (native cost units) of its OD's minimum route cost, ``c_pi <= kappa_rs +
+    epsilon``. This relaxes Wardrop's equality to a one-sided band, so the
+    equilibrium is a *set*, not a point (``epsilon=0`` recovers UE). It is task
+    data, content-hashed only when set, and mutually exclusive with the SUE /
+    elastic / combined fields (BR-UE is a deterministic fixed-demand route
+    equilibrium; those make the demand non-fixed). The band unit is
+    network-specific (scenario cards state it, P9).
     """
 
     name: str
@@ -421,6 +432,7 @@ class Scenario:
     sue_family: str = "logit"
     elastic_demand: ElasticDemand | None = None
     combined_demand: CombinedDemand | None = None
+    br_epsilon: float | None = None
 
     def __post_init__(self) -> None:
         if self.demand.n_zones != self.network.n_zones:
@@ -465,6 +477,22 @@ class Scenario:
                     f"Scenario '{self.name}': combined_demand is mutually exclusive "
                     "with sue_theta and elastic_demand (each makes the OD demand "
                     "non-fixed in an incompatible way)"
+                )
+        if self.br_epsilon is not None:
+            if not (np.isfinite(self.br_epsilon) and self.br_epsilon > 0):
+                raise ValueError(
+                    f"Scenario '{self.name}': br_epsilon must be finite and > 0, "
+                    f"got {self.br_epsilon!r}"
+                )
+            if (
+                self.sue_theta is not None
+                or self.elastic_demand is not None
+                or self.combined_demand is not None
+            ):
+                raise ValueError(
+                    f"Scenario '{self.name}': br_epsilon is mutually exclusive with "
+                    "sue_theta, elastic_demand and combined_demand (BR-UE is a "
+                    "deterministic fixed-demand route equilibrium)"
                 )
 
     def content_hash(self) -> str:
@@ -516,4 +544,9 @@ class Scenario:
             h.update(_as_f64(cd.productions).tobytes())
             h.update(b"combined_attr")
             h.update(_as_f64(cd.attractions).tobytes())
+        # Appended last and only when set: every non-BR scenario hashes exactly as
+        # before this field existed (golden-hash test). Two scenarios differing
+        # only in the indifference band are different benchmark instances.
+        if self.br_epsilon is not None:
+            h.update(f"br_epsilon={float(self.br_epsilon)!r};".encode())
         return h.hexdigest()

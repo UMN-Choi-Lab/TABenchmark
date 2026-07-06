@@ -61,7 +61,7 @@ digraph TA_evolution {
   "roughgarden2002how" [label="Roughgarden 2002\n",fillcolor="#ffd6d6",style="rounded,filled"];
   "florian1974method" [label="Florian 1974\nfw-elastic",fillcolor="#e6d6ff",style="rounded,filled"];
   "evans1976derivation" [label="Evans 1976\nevans",fillcolor="#e6d6ff",style="rounded,filled"];
-  "mahmassani1987on" [label="Mahmassani 1987\n",fillcolor="#e6d6ff",style="rounded,filled,dashed"];
+  "mahmassani1987on" [label="Mahmassani 1987\nbr-ue",fillcolor="#e6d6ff",style="rounded,filled"];
   "spiess1989optimal" [label="Spiess 1989\n",fillcolor="#e6d6ff",style="rounded,filled,dashed"];
   "larsson1995augmented" [label="Larsson 1995\n",fillcolor="#e6d6ff",style="rounded,filled,dashed"];
   "horowitz1984stability" [label="Horowitz 1984\n",fillcolor="#d6f5f0",style="rounded,filled,dashed"];

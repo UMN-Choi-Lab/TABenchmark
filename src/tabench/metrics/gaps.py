@@ -152,6 +152,17 @@ class Evaluator:
             if self._combined is not None
             else None
         )
+        # Boundedly-rational UE (adr-008): a fixed-demand deterministic route
+        # equilibrium relaxed to an indifference band epsilon. It uses the ordinary
+        # fixed-demand certificate; the band adds one scored flag, br_acceptable =
+        # (AEC <= epsilon). Because TSTT - SPTT = D * AEC is the demand-weighted
+        # MEAN per-traveler excess, AEC <= epsilon is NECESSARY for BR-UE (every
+        # used route within epsilon of its OD min => mean excess <= epsilon) but
+        # NOT sufficient: a flow can concentrate a little traffic on a route far
+        # outside the band and still average under it. This is the same
+        # aggregate-vs-disaggregate limitation the node-balance audit documents;
+        # link flows cannot exclude it (route flows are never emitted).
+        self._br_epsilon = scenario.br_epsilon
         # Logit SUE certifies through the closed-form Dial-STOCH map; probit
         # SUE has no closed form, so the harness pins ONE Monte Carlo
         # perturbation matrix E per task, drawn from the reserved evaluation
@@ -204,6 +215,8 @@ class Evaluator:
             metrics["sue_residual_floor"] = float("nan")
         if self._elastic is not None or self._combined is not None:
             metrics["realized_demand"] = float("nan")
+        if self._br_epsilon is not None:
+            metrics["br_acceptable"] = 0.0  # a censored flow is not BR-acceptable
         if self.so_metrics:
             for key in ("so_relative_gap", "so_average_excess_cost", "tstt_mc", "sptt_mc"):
                 metrics[key] = float("nan")
@@ -322,6 +335,13 @@ class Evaluator:
             "node_balance_residual": balance,
             "feasible": 1.0,
         }
+        if self._br_epsilon is not None:
+            # Boundedly-rational acceptability (adr-008): AEC <= epsilon. Necessary
+            # (a true BR-UE always passes) but not sufficient (concentration can
+            # hide an out-of-band route) — the documented aggregate limitation.
+            metrics["br_acceptable"] = (
+                1.0 if metrics["average_excess_cost"] <= self._br_epsilon else 0.0
+            )
         if realized_total is not None:
             # Certified realized demand — the endogenous-demand scored quantity
             # (how much travel the equilibrium induces): Sum_rs D_rs(u_rs) for

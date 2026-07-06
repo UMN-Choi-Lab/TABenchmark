@@ -39,7 +39,7 @@ graph TD
   n_smithstability798(["Smith 1984"]):::c6
   n_cascettaestimation8745(["Cascetta 1984"]):::c10
   n_sheffiurban8618(["Sheffi (MSA baseline; convergence proof Powell 1985"]):::c1
-  n_mahmassanion4858["Mahmassani 1987"]:::c5
+  n_mahmassanion4858(["Mahmassani 1987"]):::c5
   n_spiessoptimal3658["Spiess 1989"]:::c5
   n_cascettastochastic3881["Cascetta 1989"]:::c6
   n_spiessgradient8815(["Spiess 1990"]):::c10
@@ -493,7 +493,7 @@ A single convex program (and a provably convergent algorithm) that solves trip d
 
 ### Mahmassani & Chang (1987) — On Boundedly Rational User Equilibrium in Transportation Systems
 
-_roadmap_ · boundedly-rational user equilibrium (BRUE): set-valued equilibrium where no traveler can improve by more than an indifference threshold epsilon · `[mahmassani1987on]`
+`br-ue` · **shipped** · boundedly-rational user equilibrium (BRUE): set-valued equilibrium where no traveler can improve by more than an indifference threshold epsilon · `[mahmassani1987on]`
 
 Replaces Wardrop's exact cost-equalisation with a behavioral 'indifference band': travelers switch only when the gain exceeds a tolerance, so equilibrium becomes a SET of acceptable flow states rather than a single point.
 
@@ -501,7 +501,7 @@ Replaces Wardrop's exact cost-equalisation with a behavioral 'indifference band'
 
 **Formulation.** `A traveler swaps route only if c_current - c_min > epsilon (or > epsilon * c_min). BRUE set = { x feasible : for every used path p on OD rs, c_p - u_rs^min <= epsilon }. Day-to-day swapping dynamics converge into (and stay inside) this invariant set; epsilon -> 0 recovers Wardrop UE, epsilon large admits any feasible flow.`
 
-**Validation.** The paper gives the concept plus small numerical illustrations; no standardized reproducible numerics, and by construction there is no unique flow to reproduce. A static epsilon-relaxed version is anchorable via an epsilon-relaxed gap certificate (every used path within epsilon of shortest) with the limiting checks epsilon->0 == Wardrop UE and epsilon->infinity == any feasible flow. However the paper's distinctive content -- the invariant SET, path-dependence, and irreversibility -- is only realised through a day-to-day route-swapping dynamic, so a faithful implementation needs a dynamic (day-to-day) core, not a single-shot static solve.
+**Validation.** SHIPPED as `br-ue` (paradigm static_br_ue, adr-008): a band-THRESHOLDED Smith route swap (incentive [c_p-c_k-epsilon]+, i.e. only swap for savings beyond the band) reusing the dtd-swap machinery, run from a pinned free-flow-AON start to a rest point where no used route exceeds its OD min by more than epsilon. Genuinely NOT an early-stopped UE: the emitted flow sits at the BAND EDGE (used-route excess ~ epsilon), not at the Wardrop point (excess ~0) -- the distinctness gate, regression-tested. epsilon is content-hashed scenario data (br_epsilon), mutually exclusive with SUE/elastic/combined. Certificate br_acceptable = (AEC <= epsilon), NECESSARY-not-sufficient (AEC=demand-weighted mean excess; a concentration counterexample -- 1% of flow at 50*epsilon excess averages to 0.5*epsilon and passes -- is pinned transparently; the same aggregate limitation the node-balance audit documents). Two-route anchor validated tightly (per-route band is link-visible there): f_A*=5.5, band edge f_A*+epsilon/2, at D=10/epsilon=1 flows (6,6,4,4); epsilon->0 recovers Wardrop UE, epsilon->inf leaves the AON start.
 
 *Builds on:* Wardrop 1952.
 

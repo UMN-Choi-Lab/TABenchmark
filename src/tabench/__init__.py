@@ -22,6 +22,7 @@ from .core import (
     Trace,
 )
 from .data import (
+    br_two_route_scenario,
     braess_scenario,
     elastic_two_route_scenario,
     evans_symmetric_scenario,
@@ -65,6 +66,7 @@ from .models import (
     AlgorithmBModel,
     AllOrNothingModel,
     BiconjugateFrankWolfeModel,
+    BoundedlyRationalUEModel,
     CallableModel,
     ConjugateFrankWolfeModel,
     DialSUEModel,
@@ -106,6 +108,7 @@ __all__ = [
     "two_route_scenario",
     "elastic_two_route_scenario",
     "evans_symmetric_scenario",
+    "br_two_route_scenario",
     "run_experiment",
     "run_estimation_experiment",
     "identifiability_report",
@@ -136,6 +139,7 @@ __all__ = [
     "AlgorithmBModel",
     "AllOrNothingModel",
     "BiconjugateFrankWolfeModel",
+    "BoundedlyRationalUEModel",
     "CallableModel",
     "ConjugateFrankWolfeModel",
     "DialSUEModel",

@@ -463,11 +463,11 @@
   "evolved_from": [
    "wardrop1952some"
   ],
-  "shipped": false,
-  "tabench_name": "",
+  "shipped": true,
+  "tabench_name": "br-ue",
   "difficulty": "needs-dynamic-core",
-  "validation": "The paper gives the concept plus small numerical illustrations; no standardized reproducible numerics, and by construction there is no unique flow to reproduce. A static epsilon-relaxed version is anchorable via an epsilon-relaxed gap certificate (every used path within epsilon of shortest) with the limiting checks epsilon->0 == Wardrop UE and epsilon->infinity == any feasible flow. However the paper's distinctive content -- the invariant SET, path-dependence, and irreversibility -- is only realised through a day-to-day route-swapping dynamic, so a faithful implementation needs a dynamic (day-to-day) core, not a single-shot static solve.",
-  "grounding": "references.json mahmassani1987on (tier 1, DOI 10.1287/trsc.21.2.89, implement_as 'route-choice component'); its documented descendant guo2011bounded (family day-to-day, indifference-band invariant sets / irreversible change) confirms the dynamic reading; bookmemory tna_ch05 (Wardrop UE it relaxes); ROADMAP.md line 53 (planned, not shipped).",
+  "validation": "SHIPPED as `br-ue` (paradigm static_br_ue, adr-008): a band-THRESHOLDED gradient-projection Newton shift (reusing the gp skeleton) -- shift flow off routes whose excess exceeds epsilon onto the basic route, sized to reduce the excess to EXACTLY epsilon (not zero); routes within the band untouched -- from a pinned free-flow-AON start to a rest point where no used route exceeds its OD min by more than epsilon. Genuinely NOT an early-stopped UE: the emitted flow sits at the BAND EDGE (used-route excess ~ epsilon), not at the Wardrop point (excess ~0) -- the distinctness gate, regression-tested. An earlier proportional-route-swap engine converged correctly but glacially (drains low-flow out-of-band routes at a rate ~ their vanishing flow; a fuzz found band violations on 43/107 congested nets within budget) -- the Newton shift fixed it (0/107 violations, converges in ~2 iters on the anchor). epsilon is content-hashed scenario data (br_epsilon), mutually exclusive with SUE/elastic/combined. Certificate br_acceptable = (AEC <= epsilon), NECESSARY-not-sufficient (AEC=demand-weighted mean excess; a concentration counterexample -- 1% of flow at 50*epsilon excess averages to 0.5*epsilon and passes -- is pinned transparently; the same aggregate limitation the node-balance audit documents). Two-route anchor validated tightly (per-route band is link-visible there): f_A*=5.5, band edge f_A*+epsilon/2, at D=10/epsilon=1 flows (6,6,4,4); epsilon->0 recovers Wardrop UE, epsilon->inf leaves the AON start.",
+  "grounding": "references.json mahmassani1987on (tier 1, DOI 10.1287/trsc.21.2.89); static epsilon-BRUE condition + non-uniqueness + epsilon-monotone acceptable set from Di-Liu-Pang-Ban 2013 (TR-B 57:300-313), cross-verified Boyles TNA ch5 ('no convex program; link-flow uniqueness not guaranteed'); reuses shipped gradient_projection.py Newton-shift skeleton.",
   "_family": "extensions-static"
  },
  {

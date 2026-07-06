@@ -76,7 +76,7 @@ class TrafficAssignmentModel(ABC):
 ```
 
 `Capabilities` declares paradigm (`static_ue | static_ue_elastic | static_ue_combined |
-static_so | sue | dta | day_to_day | learned | heuristic`), determinism, required inputs
+static_br_ue | static_so | sue | dta | day_to_day | learned | heuristic`), determinism, required inputs
 (`od_matrix`, `link_counts`, …),
 emitted outputs (`link_flows`, `path_flows`, `flow_distribution`, `od_estimate`),
 `provides_gap`, `seedable`, and `trained_on` lineage (learned models). The harness
@@ -227,6 +227,7 @@ TABenchmark/
 │   │   │                  # elastic.py (elastic-demand FW, Gartner excess-demand transform),
 │   │   │                  # evans.py (Evans 1976 combined distribution+assignment),
 │   │   │                  # dtd_swap.py (Smith 1984 route-swap day-to-day dynamics),
+│   │   │                  # br_ue.py (Mahmassani-Chang 1987 boundedly-rational UE),
 │   │   │                  # learned.py (first learned/black-box surrogate),
 │   │   │                  # sue_logit.py, sue_probit.py,
 │   │   │                  # _paths.py, _stoch.py (Dial map), _probit.py (MC map)
@@ -319,7 +320,12 @@ Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 172 refe
   proportional route-swap dynamical system, modeling the disequilibrium adjustment toward the
   UE fixed point with a Beckmann Lyapunov function that decreases monotonically each day
   (shipped: `dtd-swap`, paradigm `day_to_day`; certified by the standard UE gap, with the
-  Smith & Wisten 1995 step bound preventing the raw swap's limit-cycle); the first **learned** (black-box) model certified by the same P1 harness —
+  Smith & Wisten 1995 step bound preventing the raw swap's limit-cycle); a **boundedly-rational**
+  equilibrium — an indifference-band relaxation of Wardrop where used routes need only lie
+  within a band `ε` of the shortest, so the equilibrium is a *set* and the emitted flow sits at
+  the band edge (shipped: `br-ue`, paradigm `static_br_ue`,
+  [ADR-008](design/adr-008-boundedly-rational-ue.md); Mahmassani & Chang 1987, with a
+  necessary-not-sufficient `AEC ≤ ε` link-flow certificate honestly bounded); the first **learned** (black-box) model certified by the same P1 harness —
   a per-link surrogate trained on a synthetic family and gated off the disjoint TNTP test
   set by `trained_on` (shipped: `learned-surrogate`, paradigm `learned`,
   [ADR-006](design/adr-006-learned-model-certification.md); Rahman & Hasan 2023 line, with

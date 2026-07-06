@@ -74,10 +74,10 @@ run it — that's the point.)
 
 ## The model roster
 
-Sixteen assignment models and five OD-estimation baselines ship today, spanning white-box
+Seventeen assignment models and five OD-estimation baselines ship today, spanning white-box
 solvers, a stochastic track, elastic and combined-distribution demand, a day-to-day dynamical
-system, and the first learned model — every one certified from its emitted flows by the
-identical P1 harness. For what each model does
+system, a boundedly-rational equilibrium, and the first learned model — every one certified
+from its emitted flows by the identical P1 harness. For what each model does
 *differently* from its predecessors and the lineage of the whole family, see the
 **[model compendium](docs/MODELS.md)** and its [evolution graph](docs/model-evolution.svg).
 
@@ -91,6 +91,7 @@ identical P1 harness. For what each model does
 | Elastic demand | `fw-elastic` variable-demand UE (Florian & Nguyen 1974 via the Gartner excess-demand transform) |
 | Combined distribution + assignment | `evans` fully endogenous OD from fixed trip-end margins via a doubly-constrained gravity, in one convex program (Evans 1976) |
 | Day-to-day dynamics | `dtd-swap` Smith's (1984) proportional route-swap dynamical system — models the disequilibrium adjustment toward the UE, with a Beckmann Lyapunov function that decreases monotonically day-to-day |
+| Boundedly-rational UE | `br-ue` an indifference-band relaxation of Wardrop (Mahmassani & Chang 1987) — used routes need only lie within a band `ε` of the shortest, so equilibrium is a *set* and the emitted flow sits at the band edge, not the UE point |
 | Learned (black box) | `learned-surrogate` a ridge volume/capacity surrogate — the ML-wrapper demonstrator |
 | OD estimation (T2) | `vzw-entropy` · `gls` (Cascetta 1984) · `spiess` gradient (Spiess 1990) · `spsa` (Spall 1992) · `prior` stale-prior baseline |
 
@@ -100,14 +101,14 @@ identical P1 harness. For what each model does
 |---|---|
 | Core | `Scenario` (frozen, content-hashed; optional SUE dispersion `θ`; optional `ElasticDemand`), `Capabilities`, `Budget` (incl. Boyce-style convergence target), `Trace`, spawn-key RNG schema |
 | Data | Defensive TNTP parser, commit-pinned checksummed fetcher, per-network units metadata; scenario ladder Braess → Sioux Falls → Anaheim → Barcelona → Winnipeg, plus built-in analytic anchors (two-route logit-SUE, two-route probit, elastic two-route) |
-| Models | 16 assignment models across the roster above: baselines, link-based UE, path/bush-based UE (gradient projection, origin-based, Algorithm B, TAPAS), stochastic UE, system optimum, elastic demand, combined distribution+assignment, a day-to-day route-swap dynamical system, and a learned surrogate — mixing freely in one experiment matrix via the `CallableModel` adapter |
-| Metrics | Certified relative gap / average excess cost / Beckmann objective; certified SO gap + price of anarchy + first-best tolls (Yang & Huang 1998; Roughgarden & Tardos 2002); SUE fixed-point residual — closed-form for logit ([ADR-001](docs/design/adr-001-logit-sue-dial-certificate.md)), pinned-Monte-Carlo with noise floor for probit ([ADR-003](docs/design/adr-003-probit-sue-mc-certificate.md)); route-flow proportionality diagnostic for TAPAS ([ADR-004](docs/design/adr-004-proportionality-certificate.md)); demand-recomputing gap for elastic demand ([ADR-005](docs/design/adr-005-elastic-demand.md)); a gravity-recomputing gap for combined distribution+assignment ([ADR-007](docs/design/adr-007-combined-distribution-assignment.md)); a demand-aware feasibility audit and flow RMSE vs. best-known throughout |
+| Models | 17 assignment models across the roster above: baselines, link-based UE, path/bush-based UE (gradient projection, origin-based, Algorithm B, TAPAS), stochastic UE, system optimum, elastic demand, combined distribution+assignment, a day-to-day route-swap dynamical system, a boundedly-rational band equilibrium, and a learned surrogate — mixing freely in one experiment matrix via the `CallableModel` adapter |
+| Metrics | Certified relative gap / average excess cost / Beckmann objective; certified SO gap + price of anarchy + first-best tolls (Yang & Huang 1998; Roughgarden & Tardos 2002); SUE fixed-point residual — closed-form for logit ([ADR-001](docs/design/adr-001-logit-sue-dial-certificate.md)), pinned-Monte-Carlo with noise floor for probit ([ADR-003](docs/design/adr-003-probit-sue-mc-certificate.md)); route-flow proportionality diagnostic for TAPAS ([ADR-004](docs/design/adr-004-proportionality-certificate.md)); demand-recomputing gap for elastic demand ([ADR-005](docs/design/adr-005-elastic-demand.md)); a gravity-recomputing gap for combined distribution+assignment ([ADR-007](docs/design/adr-007-combined-distribution-assignment.md)); a necessary indifference-band acceptability check for boundedly-rational UE ([ADR-008](docs/design/adr-008-boundedly-rational-ue.md)); a demand-aware feasibility audit and flow RMSE vs. best-known throughout |
 | Observe | `FullOD`, `LinkCounts` (sensor mask × periods × noise), `StalePriorOD`, Hazelton identifiability check |
 | Estimation (T2) | OD estimation from link counts under a pinned-assignment certificate ([ADR-002](docs/design/adr-002-t2-estimation-certificate.md)): VZW entropy, Cascetta GLS, Spiess gradient, SPSA, and a stale-prior baseline; held-out sensors rank, identifiability reported per task |
 | Learned models | The wrapper, certificate, and lineage gate a learned model plugs into ([ADR-006](docs/design/adr-006-learned-model-certification.md)) — trained on a synthetic family, evaluated on disjoint TNTP networks |
 | Experiments | Grid runner (T1) + estimation runner (T2), CSV results, full provenance manifests |
 | Validation | Per-model provenance report ([docs/VALIDATION.md](docs/VALIDATION.md)) tying every solver to an independent oracle: published best-known flows, cross-solver agreement, and exact analytic anchors |
-| Tests | 238 tests: analytic Braess UE/SO and two-route logit/probit/elastic oracles, a symmetric-bipartite combined distribution+assignment oracle (with the certificate's aggregate-multicommodity limitation pinned transparently), the day-to-day route-swap convergence + Beckmann-Lyapunov monotonicity; best-known-solution regressions on Sioux Falls, Anaheim, Barcelona, Winnipeg; cross-family solver agreement; conjugacy-identity and golden-hash regressions |
+| Tests | 247 tests: analytic Braess UE/SO and two-route logit/probit/elastic oracles, a symmetric-bipartite combined distribution+assignment oracle (with the certificate's aggregate-multicommodity limitation pinned transparently), the day-to-day route-swap convergence + Beckmann-Lyapunov monotonicity, the boundedly-rational two-route band edge (and its necessary-not-sufficient certificate); best-known-solution regressions on Sioux Falls, Anaheim, Barcelona, Winnipeg; cross-family solver agreement; conjugacy-identity and golden-hash regressions |
 
 The certified solver ladder on Winnipeg (147 zones, 2,836 links; iterations to
 self-monitored relative gap 1e-4, then the externally certified gap at a fixed

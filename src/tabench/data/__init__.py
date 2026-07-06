@@ -4,6 +4,7 @@ from pathlib import Path
 
 from ..core.scenario import Demand, ReferenceSolution, Scenario
 from .builtin import (
+    br_two_route_scenario,
     braess_scenario,
     elastic_two_route_scenario,
     evans_symmetric_scenario,
@@ -18,6 +19,7 @@ __all__ = [
     "two_route_scenario",
     "elastic_two_route_scenario",
     "evans_symmetric_scenario",
+    "br_two_route_scenario",
     "ChecksumError",
     "cache_dir",
     "citation",
@@ -48,10 +50,12 @@ def load_scenario(key: str) -> Scenario:
         return elastic_two_route_scenario()
     if key == "evans":
         return evans_symmetric_scenario()
+    if key == "br-tworoute":
+        return br_two_route_scenario()
     if key not in REGISTRY:
         raise KeyError(
             f"Unknown scenario {key!r}; available: braess, tworoute, "
-            f"elastic-tworoute, evans, {sorted(REGISTRY)}"
+            f"elastic-tworoute, evans, br-tworoute, {sorted(REGISTRY)}"
         )
     spec = REGISTRY[key]
     paths: dict[str, Path] = fetch(spec)
