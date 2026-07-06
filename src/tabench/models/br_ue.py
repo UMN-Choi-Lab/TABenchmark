@@ -34,6 +34,18 @@ not-sufficient band check (adr-008) -- link flows cannot see the per-OD
 concentration a fully sufficient check needs. Budget: one batched Dijkstra per
 iteration = one sp_call (the FW/GP convention).
 
+Known limitation (adversarial review). The Newton shift is exact on a linear
+network and converges cleanly on real benchmark networks (Sioux Falls, Anaheim),
+but on *extreme* synthetic high-curvature instances (BPR power > 1 with severe
+oversaturation and a band tight relative to the cost scale) it can oscillate and
+fail to reach the band within a finite budget; the ``scale`` adaptive damping above
+mitigates but does not eliminate this. Because the scored certificate is
+necessary-not-sufficient, such a non-converged flow can then be *falsely* accepted
+(its concentrated residual violation averages under ``epsilon``). The model's
+self-reported ``band_excess`` is the true disaggregate measure and remains honest.
+A sufficient link-flow certificate -- the longest positive-flow-subnetwork path per
+OD, when that subnetwork is acyclic -- would close this and is future work.
+
 Sourcing. Mahmassani & Chang (1987, Transportation Science 21(2):89-99) is
 paywalled and attributed unread (a behavioural paper). The static ``epsilon``-BRUE
 condition, its non-uniqueness, and the ``epsilon``-monotone acceptable set are from
@@ -122,6 +134,14 @@ class BoundedlyRationalUEModel(TrafficAssignmentModel):
             return v
 
         v = aggregate()
+        # Adaptive step scale: the raw Newton shift (alpha=1) is exact on a linear
+        # network but can overshoot and oscillate on high-curvature (BPR power > 1)
+        # instances (adversarial-review M1). Halve the scale whenever the true
+        # per-OD excess band_excess *rises* (oscillation), recover it toward 1 when
+        # it falls -- so the fast full step is kept on the monotone case and only
+        # the oscillating case is damped, without a blanket slowdown.
+        scale = 1.0
+        prev_band_excess = np.inf
         k = 0
         while True:
             k += 1
@@ -157,8 +177,21 @@ class BoundedlyRationalUEModel(TrafficAssignmentModel):
                 beckmann=float(network.link_cost_integral(v).sum()),
                 band_excess=band_excess,
             )
-            if band_excess <= eps or budget.exhausted(coords) or budget.target_met(gap):
+            # Stop ONLY at the band rest point (or on resource exhaustion). A
+            # Wardrop relative-gap target is the wrong criterion for a band
+            # equilibrium -- honoring budget.target_met(gap) here would let a loose
+            # caller target stop the shift before the band is met, emitting a
+            # non-BR-UE flow (adversarial-review M2). band_excess is the true
+            # disaggregate rest condition.
+            if band_excess <= eps or budget.exhausted(coords):
                 break
+
+            # Damp only when the excess rose (oscillation); otherwise recover speed.
+            if band_excess > prev_band_excess * (1.0 + 1e-12):
+                scale = max(scale * 0.5, 1e-4)
+            else:
+                scale = min(scale * 1.5, 1.0)
+            prev_band_excess = band_excess
 
             # Column generation: add the current shortest path where new.
             for key, new_path in shortest.items():
@@ -201,7 +234,7 @@ class BoundedlyRationalUEModel(TrafficAssignmentModel):
                                 network.link_cost_derivative(probe)[distinct].sum()
                             )
                         shift = (
-                            min(hlist[i], alpha * over_band / denom)
+                            min(hlist[i], alpha * scale * over_band / denom)
                             if denom > 0.0
                             else hlist[i]
                         )

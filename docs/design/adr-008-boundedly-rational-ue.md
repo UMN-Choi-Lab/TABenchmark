@@ -102,6 +102,17 @@ acyclic-positive-flow instances is possible and left as future work.
 - **Honest limitation:** the scored `br_acceptable` is necessary, not sufficient (documented,
   pinned) — the one-sidedness is inherent to a link-flow-only certificate for a per-route
   condition.
+- **Post-commit hardening (adversarial review).** Two defects were found after the first
+  commit and fixed: (M2) `br-ue` no longer honors a caller's Wardrop `target_relative_gap` —
+  the wrong stop for a band equilibrium (it could stop before the band and certify a non-BR-UE);
+  it stops only on the band rest condition. (M1) the undamped Newton shift can oscillate on
+  *extreme* synthetic high-curvature instances; an adaptive `scale` (halve when the true
+  `band_excess` rises, recover when it falls) mitigates it while keeping the full step on the
+  monotone case. A residual limit remains and is documented in the model: on such pathological
+  instances the model may not reach the band within budget, and the necessary-only certificate
+  can then false-accept the concentrated residual. Real benchmark networks (Sioux Falls,
+  Anaheim) converge cleanly; the sufficient longest-positive-flow-path certificate would close
+  the gap and is deferred.
 - **Deferred:** the sufficient longest-positive-flow-path certificate (when the positive-flow
   subnetwork is acyclic); per-OD / relative bands; the full path-dependent acceptable-set
   characterisation (Di–Liu–Ban).
