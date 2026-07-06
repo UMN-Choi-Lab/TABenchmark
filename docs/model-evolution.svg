@@ -176,7 +176,7 @@
 <text x="1544" y="1020" text-anchor="middle" font-size="9.5" fill="#000">Cantarella 1995</text>
 <rect x="1492" y="1338" width="104" height="17" rx="4" fill="#d6f5f0" stroke="#333"/>
 <text x="1544" y="1350" text-anchor="middle" font-size="9.5" fill="#000">He 2010</text>
-<rect x="1492" y="1470" width="104" height="17" rx="4" fill="#d6f5f0" stroke="#333" stroke-dasharray="3,2"/>
+<rect x="1492" y="1470" width="104" height="17" rx="4" fill="#d6f5f0" stroke="#333"/>
 <text x="1544" y="1482" text-anchor="middle" font-size="9.5" fill="#000">Smith 2016</text>
 <rect x="1742" y="964" width="104" height="17" rx="4" fill="#f5e6d6" stroke="#333" stroke-dasharray="3,2"/>
 <text x="1794" y="976" text-anchor="middle" font-size="9.5" fill="#000">Newell 1993</text>

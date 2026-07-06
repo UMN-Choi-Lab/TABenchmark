@@ -99,6 +99,83 @@ class PathEngine:
                 paths[(int(o), int(d))] = np.asarray(links[::-1], dtype=np.int64)
         return paths, float(sptt)
 
+    def efficient_paths(
+        self, costs: np.ndarray, demand: Demand, max_routes: int = 4096
+    ) -> dict[tuple[int, int], list[np.ndarray]]:
+        """Every Dial-efficient route per positive-demand OD pair at fixed costs.
+
+        A route is *Dial-efficient* if every one of its links moves strictly
+        away from the origin in the shortest-path labels ``r`` (``r[tail] <
+        r[head]``) — Dial's (1971) origin-based efficiency criterion, the exact
+        support of :class:`~tabench.models._stoch.StochEngine`'s logit loading
+        (Sheffi 1985 §11.2). Returns ``{(origin, destination): [links, ...]}``
+        with each route the link indices in traversal order (0-based zone ids),
+        enumerated over the efficient DAG so paths never traverse restricted
+        centroids. One batched Dijkstra over all origins.
+
+        This is the SUE column-generation oracle: a path-flow logit distributes
+        demand over its route set by ``h_k ∝ exp(-theta c_k)``, which equals the
+        Dial link-logit *iff* the route set is the full efficient set (the Dial
+        path weight telescopes to ``exp(-theta c_path)`` over efficient paths).
+        One shortest path per day cannot supply that set — an efficient route
+        that is never the strict minimum is never generated — so ``dtd-swap-sue``
+        enumerates the whole set here. Enumeration is capped at ``max_routes``
+        per OD (a safety bound on the efficient-DAG path count; it does not bind
+        on the benchmark's SUE scenarios).
+        """
+        graph = self._graph(np.asarray(costs, dtype=np.float64))
+        od = demand.matrix
+        origins = np.nonzero(od.sum(axis=1) > 0)[0]
+        routes: dict[tuple[int, int], list[np.ndarray]] = {}
+        if origins.size == 0:
+            return routes
+
+        dist = dijkstra(graph, directed=True, indices=origins)
+        tails, heads = self._tails, self._heads
+        for row, o in enumerate(origins):
+            r = dist[row]
+            origin_index = int(o)  # origin's tail role keeps its original index
+            finite = np.isfinite(r[tails]) & np.isfinite(r[heads])
+            eff = np.nonzero(finite & (r[tails] < r[heads]))[0]
+            # Forward adjacency in the efficient DAG, children ordered by head
+            # label then link index so the enumeration is fully deterministic (P1).
+            adjacency: dict[int, list[tuple[int, int]]] = {}
+            for k in eff[np.lexsort((eff, r[heads[eff]]))]:
+                adjacency.setdefault(int(tails[k]), []).append((int(heads[k]), int(k)))
+            # Nodes processed farthest-first: in the efficient DAG every link
+            # increases r, so a node's successors are always seen before it.
+            descending = np.argsort(-r, kind="stable")
+            for d in np.nonzero(od[o] > 0)[0]:
+                if d == o:
+                    continue  # intrazonal demand never enters the network
+                di = int(self._dest_index(d + 1))
+                if not np.isfinite(r[di]):
+                    raise RuntimeError(
+                        f"Zone {d + 1} unreachable from zone {o + 1} at current costs"
+                    )
+                # Backward reachability: nodes that can reach the destination
+                # over efficient links (prunes DFS branches that dead-end).
+                can_reach = {di}
+                for node in descending:
+                    node = int(node)
+                    if node in can_reach:
+                        continue
+                    if any(h in can_reach for h, _ in adjacency.get(node, ())):
+                        can_reach.add(node)
+                # Depth-first enumeration of every efficient origin->dest path.
+                found: list[np.ndarray] = []
+                stack: list[tuple[int, list[int]]] = [(origin_index, [])]
+                while stack and len(found) < max_routes:
+                    node, links = stack.pop()
+                    if node == di:
+                        found.append(np.asarray(links, dtype=np.int64))
+                        continue
+                    for h, k in adjacency.get(node, ()):
+                        if h in can_reach:
+                            stack.append((h, [*links, k]))
+                routes[(int(o), int(d))] = found
+        return routes
+
     def od_cost_matrix(self, costs: np.ndarray, demand: Demand) -> np.ndarray:
         """Shortest-path cost for every positive-demand OD pair, as a dense
         ``(n_zones, n_zones)`` matrix (0 where ``demand`` is 0).

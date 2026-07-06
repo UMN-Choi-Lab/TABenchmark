@@ -7,6 +7,7 @@ from .base import MODEL_REGISTRY, TrafficAssignmentModel, register_model
 from .br_ue import BoundedlyRationalUEModel
 from .dtd_link import LinkBasedDTDModel
 from .dtd_swap import RouteSwapDTDModel
+from .dtd_swap_sue import RouteSwapSUEModel
 from .elastic import ElasticDemandFWModel
 from .evans import EvansCombinedModel
 from .frank_wolfe import BiconjugateFrankWolfeModel, ConjugateFrankWolfeModel, FrankWolfeModel
@@ -33,6 +34,7 @@ __all__ = [
     "BoundedlyRationalUEModel",
     "LinkBasedDTDModel",
     "RouteSwapDTDModel",
+    "RouteSwapSUEModel",
     "ElasticDemandFWModel",
     "EvansCombinedModel",
     "SueProbitMsaModel",

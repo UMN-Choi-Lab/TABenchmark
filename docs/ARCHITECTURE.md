@@ -227,6 +227,7 @@ TABenchmark/
 │   │   │                  # elastic.py (elastic-demand FW, Gartner excess-demand transform),
 │   │   │                  # evans.py (Evans 1976 combined distribution+assignment),
 │   │   │                  # dtd_swap.py (Smith 1984 route-swap day-to-day dynamics),
+│   │   │                  # dtd_swap_sue.py (Smith-Watling 2016 logit-SUE route-swap day-to-day dynamics),
 │   │   │                  # dtd_link.py (He-Guo-Liu 2010 link-based day-to-day dynamics),
 │   │   │                  # br_ue.py (Mahmassani-Chang 1987 boundedly-rational UE),
 │   │   │                  # sc_tap.py (Larsson-Patriksson 1995 side-constrained UE),

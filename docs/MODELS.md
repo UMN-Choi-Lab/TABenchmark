@@ -67,7 +67,7 @@ graph TD
   n_helinkbased819(["He 2010"]):::c6
   n_tamperegeneric261["Tampère 2011"]:::c7
   n_mitradjievastiff2393(["Mitradjieva 2013"]):::c1
-  n_smithrouteswapping5343["Smith 2016"]:::c6
+  n_smithrouteswapping5343(["Smith 2016"]):::c6
   n_stablertransportation4212["Stabler 2016"]:::c10
   n_liuend1327["Liu 2023"]:::c9
   n_rahmandata5640(["Rahman 2023"]):::c9
@@ -619,7 +619,7 @@ A day-to-day dynamic model formulated directly in aggregate link-flow variables,
 
 ### Smith & Watling (2016) — A route-swapping dynamical system and Lyapunov function for stochastic user equilibrium
 
-_roadmap_ · day-to-day route-swap dynamics converging to logit SUE · `[smith2016routeswapping]`
+`dtd-swap-sue` · **shipped** · day-to-day route-swap dynamics converging to logit SUE · `[smith2016routeswapping]`
 
 Extends Smith's (1984) deterministic route-swap dynamical system and Lyapunov function so that the unique globally stable rest point is the logit stochastic user equilibrium rather than deterministic UE.
 
@@ -627,7 +627,7 @@ Extends Smith's (1984) deterministic route-swap dynamical system and Lyapunov fu
 
 **Formulation.** `dh_p/dt = swap rate using perceived cost c_p + (1/theta) ln h_p; Lyapunov V = Fisk SUE objective ( sum integral t dx + (1/theta) sum h ln h ) decreases monotonically to the logit-SUE rest point.`
 
-**Validation.** Original is analytic (Lyapunov proof) with illustrative examples (no benchmark numerics table); validate the discretized route-swap rest point against the logit-SUE oracle (shipped Dial SUE / probit-MSA) and confirm the Fisk objective is monotone-decreasing per day.
+**Validation.** SHIPPED as `dtd-swap-sue` (paradigm day_to_day): the SUE sibling of dtd-swap -- the SAME proportional route-swap day-to-day dynamical system, but each per-OD swap is driven by the FISK-GENERALIZED (perceived) cost C_k = c_k + (1/theta) ln h_k (theta = scenario.sue_theta) instead of the raw travel time, so the unique globally stable REST POINT is the logit stochastic user equilibrium (Fisk 1980), not deterministic Wardrop UE. Certified by the EXISTING logit-SUE fixed-point residual ||v - L_Dial(t(v),theta)||_1/D (ADR-001, no new certificate and no new scenario field), self-reported with the SAME pinned Dial-STOCH map the harness recomputes so the P1 honesty check passes to float precision (like sue-msa). Records Fisk's SUE convex objective F = Beckmann(v) + (1/theta) sum h(ln h - 1) as the Lyapunov function and the generalized-cost disequilibrium V as provenance (neither scored). Validated: converges to the analytic binary-logit SUE fixed point of the two-route anchor (f_A = 2.2990959494 at theta=0.5, recomputed via brentq; certified residual < 1e-8) and to the SAME certified link flows as the sue-msa solver (cross-solver); the Fisk objective decreases MONOTONICALLY day-to-day to its analytic minimum (the Smith-Watling Lyapunov result Fdot = -a V) and V -> 0; as theta grows (0.5,2,5,50) the rest point -> the deterministic Wardrop UE (f_A -> 2.5, relative_gap -> 0); guards raise on a non-SUE (braess) and a probit scenario. Column generation enumerates the FULL Dial-efficient route set each day (one batched Dijkstra, PathEngine.efficient_paths) rather than one shortest path: logit SUE loads EVERY efficient route, so an efficient route that is never the strict shortest path must still be generated -- Dial's efficient-link weights telescope to exp(-theta c_path), so the path-flow logit over the whole efficient set equals the Dial fixed point. This fixes an adversarial-review MAJOR where one-shortest-path/day column generation stranded the certified residual at O(0.3-2)/traveler on general networks (a never-generated efficient route was never loaded); regression-tested to drive the residual to ~0 and match the sue-msa/Dial link flows on a K>=3 link-disjoint task (a route never the strict shortest path) and a single-OD 4x4 overlapping grid. A positive seed and per-OD renormalization keep ln h finite and conserve demand exactly (node-balance ~ 0). On strongly-congested MULTI-OD networks a route can leave the efficient set after entering it and, since routes are never pruned, retains a small logit share Dial does not assign, so the residual there is a descriptive convergence column (a small floor, far below the O(1) the incomplete column generation left) rather than tight. STEP: the Smith & Wisten (1995) 1/(B M) level bound on the generalized cost, then Armijo backtracking on the Fisk Lyapunov F (the SUE analog of dtd-swap's backtrack-on-Beckmann). Primary Smith & Watling 2016 (TR-B 85:132-141, DOI 10.1016/j.trb.2015.12.015) paywalled/attributed unread; the modified swap dynamic and its Fisk-objective Lyapunov function cross-verified from the open Fisk 1980 SUE convex program and the shipped Smith 1984 (dtd-swap) swap + Lyapunov identity -- no numbers fabricated.
 
 *Builds on:* Smith 1984, Fisk 1980.
 

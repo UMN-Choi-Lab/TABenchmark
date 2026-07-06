@@ -87,7 +87,7 @@ T3 interventions.
 - [ ] Friesz et al. (1994) — *Day-to-day dynamic network disequilibria and idealized traveler information systems* (white-box solver)
 - [ ] Cantarella & Cascetta (1995) — *Dynamic processes and equilibrium in transportation networks: towards a unifying theory* (white-box solver)
 - [x] He et al. (2010) — *A link-based day-to-day traffic assignment model* (white-box solver) — **shipped** as `dtd-link` (link-flow-state day-to-day: the state is the aggregate link-flow vector, adjusted toward the frozen-cost proximal target projected onto the feasible link polytope; reaches the identical certified UE as the route-swap `dtd-swap` via the same monotone Beckmann descent)
-- [ ] Smith & Watling (2016) — *A route-swapping dynamical system and Lyapunov function for stochastic user equilibrium* (white-box solver)
+- [x] Smith & Watling (2016) — *A route-swapping dynamical system and Lyapunov function for stochastic user equilibrium* (white-box solver) — **shipped** as `dtd-swap-sue` (logit-SUE sibling of `dtd-swap`: the same proportional route-swap day-to-day dynamics driven by the Fisk-generalized cost `c_k + (1/θ) ln h_k`, so the rest point is the logit stochastic user equilibrium (Fisk 1980), not deterministic UE; certified by the existing logit-SUE fixed-point residual (ADR-001, no new scenario field) with Fisk's SUE convex objective as the monotone day-to-day Lyapunov function)
 
 ## ML-based traffic assignment — v1 (baseline wrappers)
 
