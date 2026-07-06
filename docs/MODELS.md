@@ -35,7 +35,7 @@ graph TD
   n_vanzuylenmost4944(["Van Zuylen 1980"]):::c10
   n_powellconvergence3924(["Powell 1982"]):::c3
   n_sheffialgorithm5137(["Sheffi 1982"]):::c3
-  n_horowitzstability3163["Horowitz 1984"]:::c6
+  n_horowitzstability3163(["Horowitz 1984"]):::c6
   n_smithstability798(["Smith 1984"]):::c6
   n_cascettaestimation8745(["Cascetta 1984"]):::c10
   n_sheffiurban8618(["Sheffi (MSA baseline; convergence proof Powell 1985"]):::c1
@@ -535,7 +535,7 @@ Adds hard link-capacity constraints (x_a <= capacity) to the traffic-assignment 
 
 ### Horowitz (1984) — The stability of stochastic equilibrium in a two-link transportation network
 
-_roadmap_ · day-to-day stability of SUE (logit/probit fixed point) · `[horowitz1984stability]`
+`dtd-horowitz` · **shipped** · day-to-day stability of SUE (logit/probit fixed point) · `[horowitz1984stability]`
 
 The first stability analysis of stochastic user equilibrium treated as the limiting fixed point of a repeated day-to-day route-choice adjustment process, on a two-link network.
 
@@ -543,7 +543,7 @@ The first stability analysis of stochastic user equilibrium treated as the limit
 
 **Formulation.** `chat_n = (1-w)*chat_{n-1} + w*c(v_{n-1}); v_n = d * P_logit(chat_n); SUE fixed point stable iff the day-map Jacobian at the fixed point is a contraction.`
 
-**Validation.** Original is a two-link analytic/illustrative study with NO standard-network reproducible numerics; validate by checking convergence to the analytically known two-link SUE split and by detecting the oscillation-vs-stability threshold in the smoothing weight.
+**Validation.** SHIPPED as `dtd-horowitz` (paradigm day_to_day): the distinctive perceived-cost-STATE day-to-day model. Where dtd-swap/dtd-link carry FLOWS and dtd-swap-sue carries route flows, Horowitz's traveler carries a perceived LINK-cost vector p, exponentially smoothed toward the experienced costs: p<-(1-w)p+w*t(v), v=L(p) the Dial-STOCH logit load at the perceived costs (reuses _stoch.StochEngine.load directly like sue-msa; NO route sets, NO column generation). Certified by the EXISTING logit-SUE fixed-point residual ||v-L(t(v),theta)||_1/D (adr-001, gated on sue_theta+sue_family=='logit'); NO new certificate and NO new scenario field. The model self-reports the SAME residual via a second Dial load at the experienced costs, so the P1 honesty check passes to float precision (like sue-msa/dtd-swap-sue). The single factor is the smoothing weight w (default 0.5); the perceived-cost gap ||p-t(v)||_1 is recorded as provenance. Validated: on the two-route anchor at w=0.3 it converges to the analytic binary-logit SUE f_A*=2.2990959494 (residual->0, cross-checks sue-msa to atol 1e-4). DISTINCTIVE PROPERTY -- unlike the always-convergent sue-msa (step 1/k) and the always-stabilized dtd-swap/dtd-swap-sue (Armijo backtracking), the constant-weight map is a genuine nonlinear dynamical system whose SUE fixed point is a stable attractor ONLY below a task-dependent threshold w*=2/(1-phi')~0.81 (forward-Euler stability limit of the cost-learning ODE): terminal residual is small for w in {0.2,0.5,0.8} and large for w in {0.85,1.0}; at w=1.0 (Horowitz's naive current-cost model) it settles into a PERIOD-2 limit cycle with f_A oscillating in ~[0.49,3.81] and the residual stuck ~3.32. NO damping/backtracking is added -- preserving the possibility of divergence is the whole point. Bookkeeping sp_calls==2k (two Dial loads/day); demand-feasible every day (Dial routes all demand, node-balance~0); the golden Braess content hash is byte-identical. Primary Horowitz 1984 (TS 18(3)) is a two-link analytic study with no reproducible standard-network numerics, attributed unread; the smoothing update + logit day-loading cross-verified from Guo-Yang-Huang 2022 day-to-day review + Sheffi 1985 ch.11-12 Dial-STOCH; the stability threshold re-derived and numerically confirmed on the anchor.
 
 *Builds on:* Daganzo & Sheffi 1977.
 

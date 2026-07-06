@@ -81,7 +81,7 @@ T3 interventions.
 
 ## Day-to-day dynamics — v2
 
-- [ ] Horowitz (1984) — *The stability of stochastic equilibrium in a two-link transportation network* (white-box solver)
+- [x] Horowitz (1984) — *The stability of stochastic equilibrium in a two-link transportation network* (white-box solver) — **shipped** as `dtd-horowitz` (the perceived-cost-*state* day-to-day model: travelers carry a perceived link-cost vector exponentially smoothed toward the experienced costs `p ← (1−w)p + w·t(v)` and logit-load at it via the pinned Dial-STOCH map, reaching the same logit-SUE fixed point as `sue-msa`/`dtd-swap-sue`; certified by the existing logit-SUE fixed-point residual (ADR-001, no new scenario field); uniquely among the day-to-day models NO damping is added, so above the task-dependent stability threshold `w* ≈ 0.81` the process settles into a period-2 limit cycle instead of converging — the very (in)stability Horowitz set out to study)
 - [x] Smith (1984) — *The stability of a dynamic model of traffic assignment — an application of a method of Lyapunov* (white-box solver) — **shipped** as `dtd-swap` (first day-to-day model)
 - [ ] Cascetta (1989) — *A stochastic process approach to the analysis of temporal dynamics in transportation networks* (white-box solver)
 - [ ] Friesz et al. (1994) — *Day-to-day dynamic network disequilibria and idealized traveler information systems* (white-box solver)
