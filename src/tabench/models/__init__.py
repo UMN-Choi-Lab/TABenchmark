@@ -13,6 +13,7 @@ from .gradient_projection import GradientProjectionModel
 from .learned import LearnedSurrogateModel
 from .msa import MSAModel
 from .oba import OriginBasedModel
+from .sc_tap import SideConstrainedModel
 from .so import SystemOptimumModel, marginal_network
 from .sue_logit import DialSUEModel
 from .sue_probit import SueProbitMsaModel
@@ -38,6 +39,7 @@ __all__ = [
     "LearnedSurrogateModel",
     "MSAModel",
     "OriginBasedModel",
+    "SideConstrainedModel",
     "SystemOptimumModel",
     "TapasModel",
     "marginal_network",

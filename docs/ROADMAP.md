@@ -52,7 +52,7 @@ T3 interventions.
 - [x] Evans (1976) — *Derivation and analysis of some models for combining trip distribution and assignment* (white-box solver) — **shipped** as `evans` (ADR-007)
 - [x] Mahmassani & Chang (1987) — *On Boundedly Rational User Equilibrium in Transportation Systems* (route-choice component) — **shipped** as `br-ue` (indifference-band relaxation, ADR-008)
 - [ ] Spiess & Florian (1989) — *Optimal strategies: A new assignment model for transit networks* (white-box solver)
-- [ ] Larsson & Patriksson (1995) — *An augmented Lagrangean dual algorithm for link capacity side constrained traffic assignment problems* (white-box solver)
+- [x] Larsson & Patriksson (1995) — *An augmented Lagrangean dual algorithm for link capacity side constrained traffic assignment problems* (white-box solver) — **shipped** as `sc-tap` (ADR-009)
 
 ## Analytical DTA — v2
 

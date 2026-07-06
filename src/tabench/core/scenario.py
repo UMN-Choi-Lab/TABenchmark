@@ -421,6 +421,16 @@ class Scenario:
     elastic / combined fields (BR-UE is a deterministic fixed-demand route
     equilibrium; those make the demand non-fixed). The band unit is
     network-specific (scenario cards state it, P9).
+
+    ``side_capacities`` (optional) makes this a **side-constrained** UE task
+    (Larsson & Patriksson 1995; docs/design/adr-009): a per-link hard capacity
+    ``u_a`` on the link flow, ``v_a <= u_a``, imposed *in addition to* the BPR
+    latency (these are physical throughput limits, distinct from the BPR
+    ``Network.capacity`` reference volume). The equilibrium is Wardrop UE on the
+    capacity-augmented cost ``t_a(v_a) + beta_a`` with ``beta_a >= 0`` a queueing
+    delay / toll that is zero off the binding set. It is per-link task data,
+    content-hashed only when set, and mutually exclusive with the SUE / elastic /
+    combined / BR fields.
     """
 
     name: str
@@ -433,6 +443,7 @@ class Scenario:
     elastic_demand: ElasticDemand | None = None
     combined_demand: CombinedDemand | None = None
     br_epsilon: float | None = None
+    side_capacities: np.ndarray | None = None
 
     def __post_init__(self) -> None:
         if self.demand.n_zones != self.network.n_zones:
@@ -494,6 +505,28 @@ class Scenario:
                     "sue_theta, elastic_demand and combined_demand (BR-UE is a "
                     "deterministic fixed-demand route equilibrium)"
                 )
+        if self.side_capacities is not None:
+            u = _as_f64(self.side_capacities)
+            object.__setattr__(self, "side_capacities", u)
+            if u.shape != (self.network.n_links,):
+                raise ValueError(
+                    f"Scenario '{self.name}': side_capacities must have shape "
+                    f"({self.network.n_links},), got {u.shape}"
+                )
+            if np.any(u <= 0) or not np.all(np.isfinite(u)):
+                raise ValueError(
+                    f"Scenario '{self.name}': side_capacities must be finite and > 0"
+                )
+            if (
+                self.sue_theta is not None
+                or self.elastic_demand is not None
+                or self.combined_demand is not None
+                or self.br_epsilon is not None
+            ):
+                raise ValueError(
+                    f"Scenario '{self.name}': side_capacities is mutually exclusive "
+                    "with sue_theta, elastic_demand, combined_demand and br_epsilon"
+                )
 
     def content_hash(self) -> str:
         """SHA-256 over the canonical serialization of all scored content (P2)."""
@@ -549,4 +582,9 @@ class Scenario:
         # only in the indifference band are different benchmark instances.
         if self.br_epsilon is not None:
             h.update(f"br_epsilon={float(self.br_epsilon)!r};".encode())
+        # Per-link hard capacities are scored instance content (a change in any
+        # u_a is a different benchmark instance); hashed only when set.
+        if self.side_capacities is not None:
+            h.update(b"side_cap")
+            h.update(_as_f64(self.side_capacities).tobytes())
         return h.hexdigest()

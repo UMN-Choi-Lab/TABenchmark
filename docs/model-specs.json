@@ -500,10 +500,10 @@
    "beckmann1956studies",
    "larsson1992simplicial"
   ],
-  "shipped": false,
-  "tabench_name": "",
+  "shipped": true,
+  "tabench_name": "sc-tap",
   "difficulty": "tractable",
-  "validation": "The paper reports computational results on standard test networks (e.g. Sioux Falls-class), so it has reproducible-in-spirit numerics, and the KKT structure gives strong self-checks: feasibility x_a <= u_a on every link, complementary slackness (mu_a>0 => x_a=u_a), and reduction to plain Beckmann UE when no capacity binds. Cross-solver validation against a Frank-Wolfe-with-penalty or a barrier solve on the same instance. Fully implementable in numpy/scipy on top of the existing FW/simplicial machinery -- augmented-Lagrangian outer loop plus an inner equilibrium solve.",
+  "validation": "SHIPPED as `sc-tap` (paradigm static_sc_ue, adr-009): method-of-multipliers wrapping the FW UE solve on the augmented cost t~=t+max{0,beta+rho(v-u)}, outer beta<-max{0,beta+rho(v-u)}. Scenario.side_capacities per-link caps (content-hashed, mutually exclusive). Certificate = capacity feasibility sc_capacity_feasible (EXACT, link-visible; the SC scored quantity) -- the raw gap stays positive at a binding SC equilibrium so it is reported not scored; recovered beta = model self-report (harness-recomputed augmented gap deferred). Validated: anchor sc_two_route_scenario (no-binding reduces to EXACT plain UE [5.5,5.5,4.5,4.5]; cap=4 binds -> v=[4,4,6,6], recovered beta=3=1+D-2cap; monotone-tightening sweep). ROBUSTNESS (pre-emptive fuzz, the recurring theme): the augmented Lagrangian would diverge (beta explode -> overflow crash) on INFEASIBLE instances (cap below a cut link's forced flow, no SC solution) -- guarded (rho cap 1e10, beta cap 1e8, try/except break). Fuzz + MIN-CUT classification: ZERO crashes on solvable nets (55/55), converges to capacity-feasibility on 100% of FEASIBLE instances (0 feasible-but-unconverged), only reports infeasibility (sc_capacity_feasible=0) on genuinely-infeasible ones. Primary LP95 paywalled/unread; cross-verified LP99 + Nie-Zhang-Lee 2004 + Bertsekas.",
   "grounding": "references.json larsson1995augmented (tier 1, DOI 10.1016/0191-2615(95)00016-7, white-box solver) and its own predecessor larsson1992simplicial (disaggregated simplicial decomposition, the inner solver); tier-2 successor larsson1999side (analysis/computation/applications) is a descendant, not an edge; bookmemory tna_ch08 (link interactions / constrained equilibria context) and tna_ch04 (Beckmann base); ROADMAP.md line 55 (planned, not shipped).",
   "_family": "extensions-static"
  },

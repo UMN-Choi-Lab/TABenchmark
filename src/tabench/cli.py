@@ -27,6 +27,7 @@ def _cmd_list(_: argparse.Namespace) -> int:
     print("  elastic-tworoute(built-in, analytic elastic-demand UE oracle)")
     print("  evans           (built-in, analytic combined distribution+assignment oracle)")
     print("  br-tworoute     (built-in, analytic boundedly-rational band oracle)")
+    print("  sc-tworoute     (built-in, analytic side-constrained capacity oracle)")
     for key, spec in sorted(REGISTRY.items()):
         print(f"  {key:<14}({spec.repo_dir}, download-on-demand)")
     print("\nModels:")
@@ -120,6 +121,8 @@ def _cmd_run(args: argparse.Namespace) -> int:
         default_models = "fw-elastic"
     elif scenario.br_epsilon is not None:
         default_models = "br-ue"
+    elif scenario.side_capacities is not None:
+        default_models = "sc-tap"
     else:
         default_models = "aon,msa,fw"
     models = []

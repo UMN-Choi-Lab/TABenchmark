@@ -27,6 +27,7 @@ from .data import (
     elastic_two_route_scenario,
     evans_symmetric_scenario,
     load_scenario,
+    sc_two_route_scenario,
     two_route_scenario,
 )
 from .estimation import (
@@ -78,6 +79,7 @@ from .models import (
     MSAModel,
     OriginBasedModel,
     RouteSwapDTDModel,
+    SideConstrainedModel,
     SueProbitMsaModel,
     SystemOptimumModel,
     TapasModel,
@@ -109,6 +111,7 @@ __all__ = [
     "elastic_two_route_scenario",
     "evans_symmetric_scenario",
     "br_two_route_scenario",
+    "sc_two_route_scenario",
     "run_experiment",
     "run_estimation_experiment",
     "identifiability_report",
@@ -151,6 +154,7 @@ __all__ = [
     "MSAModel",
     "OriginBasedModel",
     "RouteSwapDTDModel",
+    "SideConstrainedModel",
     "SueProbitMsaModel",
     "SystemOptimumModel",
     "TapasModel",

@@ -24,6 +24,7 @@ __all__ = [
     "elastic_two_route_scenario",
     "evans_symmetric_scenario",
     "br_two_route_scenario",
+    "sc_two_route_scenario",
 ]
 
 _EPS = 1e-6
@@ -442,4 +443,80 @@ def br_two_route_scenario(demand: float = 10.0, epsilon: float = 1.0) -> Scenari
         reference=reference,
         family="builtin-br",
         br_epsilon=epsilon,
+    )
+
+
+def sc_two_route_scenario(demand: float = 10.0, cap: float = 4.0) -> Scenario:
+    """Two disjoint 2-link routes with a **link capacity**: the analytic anchor for
+    side-constrained UE (Larsson & Patriksson 1995; adr-009).
+
+    Route A = 1->3->2 with cost ``c_A = 1 + f_A`` (legs: 1->3 constant 1, 3->2 =
+    ``f_A``); route B = 1->4->2 with ``c_B = 2 + f_B`` (1->4 constant 1, 4->2 =
+    ``1 + f_B``). A hard capacity ``cap`` is placed on link 3->2 (which carries the
+    route-A flow); the other links are effectively uncapacitated.
+
+    Plain UE (no capacity) equalizes ``1 + f_A = 2 + f_B`` with ``f_A + f_B = D``,
+    giving ``f_A* = (D + 1)/2 = 5.5`` at ``D = 10``. When ``cap >= f_A*`` the
+    constraint is slack and SC-TAP reduces EXACTLY to plain UE (link flows
+    ``(5.5, 5.5, 4.5, 4.5)``). When ``cap < f_A*`` link 3->2 saturates: ``f_A =
+    cap``, ``f_B = D - cap``, and the queueing multiplier is ``beta = c_B(D-cap) -
+    c_A(cap) = (2 + D - cap) - (1 + cap) = 1 + D - 2 cap``. At ``D = 10, cap = 4``:
+    ``f_A = 4``, ``f_B = 6``, ``beta = 3``, augmented costs equalized at 8, link
+    flows ``(4, 4, 6, 6)`` -- a hand-checkable oracle for the flows and the
+    multiplier. Tightening ``cap`` pushes ``f_A`` down and ``beta`` up (monotone).
+    """
+    # Link order: 1->3, 3->2, 1->4, 4->2
+    init = np.array([1, 3, 1, 4], dtype=np.int64)
+    term = np.array([3, 2, 4, 2], dtype=np.int64)
+    params = [
+        _bpr_linear(1.0, 0.0),  # 1->3: constant 1
+        _bpr_linear(0.0, 1.0),  # 3->2: f_A            (capacitated link)
+        _bpr_linear(1.0, 0.0),  # 1->4: constant 1
+        _bpr_linear(1.0, 1.0),  # 4->2: 1 + f_B
+    ]
+    fft = np.array([p[0] for p in params])
+    b = np.array([p[1] for p in params])
+    capacity = np.array([p[2] for p in params])
+
+    network = Network(
+        name="sc-two-route",
+        n_nodes=4,
+        n_zones=2,
+        first_thru_node=1,
+        init_node=init,
+        term_node=term,
+        capacity=capacity,
+        length=np.zeros(4),
+        free_flow_time=fft,
+        b=b,
+        power=np.ones(4),
+        toll=np.zeros(4),
+        link_type=np.ones(4, dtype=np.int64),
+        units=(("time", "abstract"), ("flow", "abstract")),
+    )
+
+    od = np.zeros((2, 2))
+    od[0, 1] = demand
+    big = 1e6  # effectively uncapacitated on the other links
+    side = np.array([big, cap, big, big])
+
+    reference = None
+    f_a_ue = 0.5 * (demand + 1.0)
+    if cap < f_a_ue:  # binding: hand-checked oracle
+        reference = ReferenceSolution(
+            link_flows=np.array([cap, cap, demand - cap, demand - cap]),
+            source="analytic",
+            note=(
+                f"Side-constrained UE, link 3->2 capacity {cap} binds: f_A=cap, "
+                f"queue multiplier beta = 1 + D - 2*cap = {1.0 + demand - 2.0 * cap}."
+            ),
+        )
+
+    return Scenario(
+        name="sc-tworoute",
+        network=network,
+        demand=Demand(matrix=od),
+        reference=reference,
+        family="builtin-sc",
+        side_capacities=side,
     )

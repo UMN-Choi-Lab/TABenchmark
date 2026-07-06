@@ -51,7 +51,7 @@ graph TD
   n_jayakrishnanfaster1323(["Jayakrishnan 1994"]):::c2
   n_frieszdaytoday4558["Friesz 1994"]:::c6
   n_daganzocell7244["Daganzo 1994"]:::c7
-  n_larssonaugmented3883["Larsson 1995"]:::c5
+  n_larssonaugmented3883(["Larsson 1995"]):::c5
   n_cantarelladynamic9699["Cantarella 1995"]:::c6
   n_daganzocell6348["Daganzo 1995"]:::c7
   n_lebacquegodunov3835["Lebacque 1996"]:::c7
@@ -501,7 +501,7 @@ Replaces Wardrop's exact cost-equalisation with a behavioral 'indifference band'
 
 **Formulation.** `A traveler swaps route only if c_current - c_min > epsilon (or > epsilon * c_min). BRUE set = { x feasible : for every used path p on OD rs, c_p - u_rs^min <= epsilon }. Day-to-day swapping dynamics converge into (and stay inside) this invariant set; epsilon -> 0 recovers Wardrop UE, epsilon large admits any feasible flow.`
 
-**Validation.** SHIPPED as `br-ue` (paradigm static_br_ue, adr-008): a band-THRESHOLDED Smith route swap (incentive [c_p-c_k-epsilon]+, i.e. only swap for savings beyond the band) reusing the dtd-swap machinery, run from a pinned free-flow-AON start to a rest point where no used route exceeds its OD min by more than epsilon. Genuinely NOT an early-stopped UE: the emitted flow sits at the BAND EDGE (used-route excess ~ epsilon), not at the Wardrop point (excess ~0) -- the distinctness gate, regression-tested. epsilon is content-hashed scenario data (br_epsilon), mutually exclusive with SUE/elastic/combined. Certificate br_acceptable = (AEC <= epsilon), NECESSARY-not-sufficient (AEC=demand-weighted mean excess; a concentration counterexample -- 1% of flow at 50*epsilon excess averages to 0.5*epsilon and passes -- is pinned transparently; the same aggregate limitation the node-balance audit documents). Two-route anchor validated tightly (per-route band is link-visible there): f_A*=5.5, band edge f_A*+epsilon/2, at D=10/epsilon=1 flows (6,6,4,4); epsilon->0 recovers Wardrop UE, epsilon->inf leaves the AON start.
+**Validation.** SHIPPED as `br-ue` (paradigm static_br_ue, adr-008): a band-THRESHOLDED gradient-projection Newton shift (reusing the gp skeleton) -- shift flow off routes whose excess exceeds epsilon onto the basic route, sized to reduce the excess to EXACTLY epsilon (not zero); routes within the band untouched -- from a pinned free-flow-AON start to a rest point where no used route exceeds its OD min by more than epsilon. Genuinely NOT an early-stopped UE: the emitted flow sits at the BAND EDGE (used-route excess ~ epsilon), not at the Wardrop point (excess ~0) -- the distinctness gate, regression-tested. An earlier proportional-route-swap engine converged correctly but glacially (drains low-flow out-of-band routes at a rate ~ their vanishing flow; a fuzz found band violations on 43/107 congested nets within budget) -- the Newton shift fixed it (0/107 violations, converges in ~2 iters on the anchor). epsilon is content-hashed scenario data (br_epsilon), mutually exclusive with SUE/elastic/combined. Certificate br_acceptable = (AEC <= epsilon), NECESSARY-not-sufficient (AEC=demand-weighted mean excess; a concentration counterexample -- 1% of flow at 50*epsilon excess averages to 0.5*epsilon and passes -- is pinned transparently; the same aggregate limitation the node-balance audit documents). Two-route anchor validated tightly (per-route band is link-visible there): f_A*=5.5, band edge f_A*+epsilon/2, at D=10/epsilon=1 flows (6,6,4,4); epsilon->0 recovers Wardrop UE, epsilon->inf leaves the AON start.
 
 *Builds on:* Wardrop 1952.
 
@@ -519,7 +519,7 @@ A transit-assignment model where a passenger chooses not a single path but a 'st
 
 ### Larsson & Patriksson (1995) — An augmented Lagrangean dual algorithm for link capacity side constrained traffic assignment problems
 
-_roadmap_ · side-constrained (capacitated) user equilibrium: Wardrop UE subject to x_a <= u_a, with KKT multipliers acting as bottleneck delays · `[larsson1995augmented]`
+`sc-tap` · **shipped** · side-constrained (capacitated) user equilibrium: Wardrop UE subject to x_a <= u_a, with KKT multipliers acting as bottleneck delays · `[larsson1995augmented]`
 
 Adds hard link-capacity constraints (x_a <= capacity) to the traffic-assignment convex program and solves it by an augmented-Lagrangian dual, whose multipliers are interpretable as queuing delays / congestion tolls.
 
@@ -527,7 +527,7 @@ Adds hard link-capacity constraints (x_a <= capacity) to the traffic-assignment 
 
 **Formulation.** `min f(x)=sum_a integral_0^{x_a} t_a(w)dw  s.t.  h(x)=Ax=demand,  x_a <= u_a. Augmented Lagrangian L_rho(x,mu)= f(x) + sum_a mu_a (x_a - u_a) + (rho/2) sum_a ((x_a - u_a)_+)^2; alternate an inner (side-constraint-penalised) equilibrium solve for x with a dual ascent mu_a <- (mu_a + rho (x_a - u_a))_+. mu_a is the equilibrium queuing delay/toll on link a.`
 
-**Validation.** The paper reports computational results on standard test networks (e.g. Sioux Falls-class), so it has reproducible-in-spirit numerics, and the KKT structure gives strong self-checks: feasibility x_a <= u_a on every link, complementary slackness (mu_a>0 => x_a=u_a), and reduction to plain Beckmann UE when no capacity binds. Cross-solver validation against a Frank-Wolfe-with-penalty or a barrier solve on the same instance. Fully implementable in numpy/scipy on top of the existing FW/simplicial machinery -- augmented-Lagrangian outer loop plus an inner equilibrium solve.
+**Validation.** SHIPPED as `sc-tap` (paradigm static_sc_ue, adr-009): method-of-multipliers wrapping the FW UE solve on the augmented cost t~=t+max{0,beta+rho(v-u)}, outer beta<-max{0,beta+rho(v-u)}. Scenario.side_capacities per-link caps (content-hashed, mutually exclusive). Certificate = capacity feasibility sc_capacity_feasible (EXACT, link-visible; the SC scored quantity) -- the raw gap stays positive at a binding SC equilibrium so it is reported not scored; recovered beta = model self-report (harness-recomputed augmented gap deferred). Validated: anchor sc_two_route_scenario (no-binding reduces to EXACT plain UE [5.5,5.5,4.5,4.5]; cap=4 binds -> v=[4,4,6,6], recovered beta=3=1+D-2cap; monotone-tightening sweep). ROBUSTNESS (pre-emptive fuzz, the recurring theme): the augmented Lagrangian would diverge (beta explode -> overflow crash) on INFEASIBLE instances (cap below a cut link's forced flow, no SC solution) -- guarded (rho cap 1e10, beta cap 1e8, try/except break). Fuzz + MIN-CUT classification: ZERO crashes on solvable nets (55/55), converges to capacity-feasibility on 100% of FEASIBLE instances (0 feasible-but-unconverged), only reports infeasibility (sc_capacity_feasible=0) on genuinely-infeasible ones. Primary LP95 paywalled/unread; cross-verified LP99 + Nie-Zhang-Lee 2004 + Bertsekas.
 
 *Builds on:* Beckmann, McGuire & Winsten 1956.
 

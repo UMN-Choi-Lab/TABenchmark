@@ -163,6 +163,13 @@ class Evaluator:
         # aggregate-vs-disaggregate limitation the node-balance audit documents;
         # link flows cannot exclude it (route flows are never emitted).
         self._br_epsilon = scenario.br_epsilon
+        # Side-constrained UE (adr-009): hard per-link capacities v_a <= u_a. The
+        # SC-specific scored quantity is capacity feasibility -- link-visible and
+        # checked per-link to a tight relative tolerance (unlike the augmented-cost
+        # multipliers, which are duals). The raw relative gap stays positive at a
+        # correct SC equilibrium (binding links carry flow that would prefer to
+        # grow), so it is reported but is not the acceptance criterion.
+        self._side_capacities = scenario.side_capacities
         # Logit SUE certifies through the closed-form Dial-STOCH map; probit
         # SUE has no closed form, so the harness pins ONE Monte Carlo
         # perturbation matrix E per task, drawn from the reserved evaluation
@@ -217,6 +224,9 @@ class Evaluator:
             metrics["realized_demand"] = float("nan")
         if self._br_epsilon is not None:
             metrics["br_acceptable"] = 0.0  # a censored flow is not BR-acceptable
+        if self._side_capacities is not None:
+            metrics["sc_capacity_feasible"] = 0.0
+            metrics["max_capacity_violation"] = float("inf")
         if self.so_metrics:
             for key in ("so_relative_gap", "so_average_excess_cost", "tstt_mc", "sptt_mc"):
                 metrics[key] = float("nan")
@@ -342,6 +352,19 @@ class Evaluator:
             metrics["br_acceptable"] = (
                 1.0 if metrics["average_excess_cost"] <= self._br_epsilon else 0.0
             )
+        if self._side_capacities is not None:
+            # SC-TAP scored quantity: hard capacity feasibility v_a <= u_a,
+            # link-visible. A hard cap is a PER-LINK quantity, so the tolerance is
+            # relative to each link's OWN capacity -- scaling by total demand (as
+            # the demand-feasibility audit does) would let a fixed absolute overload
+            # certify on a high-demand network (adversarial-review MAJOR 1). The
+            # recovered multipliers / augmented-cost gap are a model self-report; a
+            # harness-recomputed augmented-cost equilibrium gap is future work, so
+            # this certifies capacity FEASIBILITY, not the full SC equilibrium.
+            overload = np.maximum(v - self._side_capacities, 0.0)
+            metrics["max_capacity_violation"] = float(overload.max())
+            rel_overload = float((overload / self._side_capacities).max())
+            metrics["sc_capacity_feasible"] = 1.0 if rel_overload <= self.feasibility_tol else 0.0
         if realized_total is not None:
             # Certified realized demand — the endogenous-demand scored quantity
             # (how much travel the equilibrium induces): Sum_rs D_rs(u_rs) for

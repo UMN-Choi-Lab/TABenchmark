@@ -63,7 +63,7 @@ digraph TA_evolution {
   "evans1976derivation" [label="Evans 1976\nevans",fillcolor="#e6d6ff",style="rounded,filled"];
   "mahmassani1987on" [label="Mahmassani 1987\nbr-ue",fillcolor="#e6d6ff",style="rounded,filled"];
   "spiess1989optimal" [label="Spiess 1989\n",fillcolor="#e6d6ff",style="rounded,filled,dashed"];
-  "larsson1995augmented" [label="Larsson 1995\n",fillcolor="#e6d6ff",style="rounded,filled,dashed"];
+  "larsson1995augmented" [label="Larsson 1995\nsc-tap",fillcolor="#e6d6ff",style="rounded,filled"];
   "horowitz1984stability" [label="Horowitz 1984\n",fillcolor="#d6f5f0",style="rounded,filled,dashed"];
   "smith1984stability" [label="Smith 1984\ndtd-swap",fillcolor="#d6f5f0",style="rounded,filled"];
   "cascetta1989stochastic" [label="Cascetta 1989\n",fillcolor="#d6f5f0",style="rounded,filled,dashed"];
