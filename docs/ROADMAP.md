@@ -86,7 +86,7 @@ T3 interventions.
 - [ ] Cascetta (1989) — *A stochastic process approach to the analysis of temporal dynamics in transportation networks* (white-box solver)
 - [ ] Friesz et al. (1994) — *Day-to-day dynamic network disequilibria and idealized traveler information systems* (white-box solver)
 - [ ] Cantarella & Cascetta (1995) — *Dynamic processes and equilibrium in transportation networks: towards a unifying theory* (white-box solver)
-- [ ] He et al. (2010) — *A link-based day-to-day traffic assignment model* (white-box solver)
+- [x] He et al. (2010) — *A link-based day-to-day traffic assignment model* (white-box solver) — **shipped** as `dtd-link` (link-flow-state day-to-day: the state is the aggregate link-flow vector, adjusted toward the frozen-cost proximal target projected onto the feasible link polytope; reaches the identical certified UE as the route-swap `dtd-swap` via the same monotone Beckmann descent)
 - [ ] Smith & Watling (2016) — *A route-swapping dynamical system and Lyapunov function for stochastic user equilibrium* (white-box solver)
 
 ## ML-based traffic assignment — v1 (baseline wrappers)

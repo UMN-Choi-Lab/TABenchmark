@@ -64,7 +64,7 @@ graph TD
   n_ypermanlink2548["Yperman 2007"]:::c7
   n_balakrishnaoffline5342["Balakrishna 2007"]:::c10
   n_bargeratraffic2251(["Bar-Gera 2010"]):::c2
-  n_helinkbased819["He 2010"]:::c6
+  n_helinkbased819(["He 2010"]):::c6
   n_tamperegeneric261["Tampère 2011"]:::c7
   n_mitradjievastiff2393(["Mitradjieva 2013"]):::c1
   n_smithrouteswapping5343["Smith 2016"]:::c6
@@ -605,15 +605,15 @@ A unifying theory of day-to-day dynamics that subsumes both deterministic and st
 
 ### He, Guo & Liu (2010) — A link-based day-to-day traffic assignment model
 
-_roadmap_ · day-to-day link-flow dynamics converging to deterministic UE · `[he2010linkbased]`
+`dtd-link` · **shipped** · day-to-day link-flow dynamics converging to deterministic UE · `[he2010linkbased]`
 
 A day-to-day dynamic model formulated directly in aggregate link-flow variables, avoiding the path non-uniqueness and enumeration of earlier path-based dynamics while converging to UE link flows.
 
 **What it does differently.** Prior day-to-day models (Smith swap, Friesz ODE, Cascetta/Cantarella) evolve PATH flows, inheriting the non-uniqueness of the path-flow representation (many path-flow states map to one link-flow state, so path-based trajectories can drift to different path patterns) and requiring path enumeration. He, Guo & Liu define the adjustment directly on the polytope of feasible LINK flows, so both the trajectory and the stationary state are well-defined in link space; they prove the stationary point is the UE link-flow pattern with a Beckmann-type Lyapunov argument. Behaviourally: today's link flows adjust from yesterday's link costs.
 
-**Formulation.** `v_{n+1} = v_n + alpha * ( g(t(v_n)) - v_n ) with the target/adjustment projected onto the feasible link-flow polytope; stationary v* = UE link flows; the Beckmann objective serves as the Lyapunov function.`
+**Formulation.** `dv/dt = x*(v) - v with the proximal target x*(v) = argmin_{x in Omega} <t(v),x> + (1/2)||x-v||^2 = Proj_Omega(v - t(v)) (the frozen-cost feasible link pattern closest to today's); discrete v_{k+1} = v_k + lambda (x*(v_k) - v_k), lambda in (0,1]. Stationary v* = UE link flows (VI <t(v*),x-v*> >= 0); the Beckmann objective is the Lyapunov function.`
 
-**Validation.** Original includes small-network numerical examples (some reproducible); validate stationary link flows against the UE oracle (shipped FW/GP) and confirm the Beckmann/Lyapunov function decreases each day. Very well-suited to a numpy-only link-flow loop -- arguably the most directly implementable of the family.
+**Validation.** SHIPPED as `dtd-link` (paradigm day_to_day): the STATE is the aggregate link-flow vector v (contrast dtd-swap, whose state is per-OD route flows). Each day it moves v toward the FROZEN-cost proximal target x*(v) = Proj_Omega(v - a t(v)) computed on gp/dtd-swap's column-generated per-OD working sets (Dijkstra only on POSITIVE costs t(v), avoiding the negative-cost LP oracle exact link projection would need); the target is a strictly-convex QP whose per-OD pairwise flow shift has the closed form delta = (C_i - C_basic)/|distinct-links| (proximal Hessian = distinct-link count, the frozen cost being linear). Certified by the standard UE relative gap (fixed point = Wardrop UE); records the Beckmann objective as the Lyapunov function. Validated: converges to the exact analytic Braess UE link flows [4,2,2,2,4] (route cost 92, Beckmann 386.0) and toward the published Sioux Falls Beckmann optimum 42.31335287107440; the Beckmann Lyapunov function decreases MONOTONICALLY day-to-day; INVARIANCE -- the emitted link flows conserve the exact OD demand (node-balance ~ 0) at EVERY recorded day, staying in the OD-feasible polytope Omega; and dtd-link reaches the IDENTICAL certified UE that route-swap dtd-swap reaches from the IDENTICAL all-or-nothing start (isolating the link-target-vs-route-swap paradigm). STEP-SCALE lesson: the paper's literal unit metric x*=Proj(v - t(v)) collapses to all-or-nothing when costs are O(10) (a badly-scaled direction that limit-cycles), so the cost step a is Lipschitz-normalized a = step_size / max_a t'_a(v) -- one step_size ~ 1 then converges on both Braess (O(10) costs) and Sioux Falls (O(1e-2) costs); an aggressive step_size overshoots the Beckmann minimum on high-curvature power-4 links, and Armijo backtracking on the Beckmann objective (mirrored from dtd-swap) restores monotone descent (regression-pinned on a hardcoded high-curvature instance where max_backtracks=0 rises and the default is monotone). Primary He, Guo & Liu 2010 paywalled/attributed unread; the link-projection dynamic dv/dt=x*(v)-v with Beckmann Lyapunov cross-verified from Dupuis-Nagurney 1993 / Nagurney-Zhang 1996 projected dynamical systems and the Beckmann program (Boyles TNA ch.4-5); the proximal closed-form shift re-derived, no numbers fabricated.
 
 *Builds on:* Smith 1984.
 

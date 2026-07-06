@@ -227,6 +227,7 @@ TABenchmark/
 │   │   │                  # elastic.py (elastic-demand FW, Gartner excess-demand transform),
 │   │   │                  # evans.py (Evans 1976 combined distribution+assignment),
 │   │   │                  # dtd_swap.py (Smith 1984 route-swap day-to-day dynamics),
+│   │   │                  # dtd_link.py (He-Guo-Liu 2010 link-based day-to-day dynamics),
 │   │   │                  # br_ue.py (Mahmassani-Chang 1987 boundedly-rational UE),
 │   │   │                  # sc_tap.py (Larsson-Patriksson 1995 side-constrained UE),
 │   │   │                  # learned.py (first learned/black-box surrogate),
@@ -321,7 +322,11 @@ Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 172 refe
   proportional route-swap dynamical system, modeling the disequilibrium adjustment toward the
   UE fixed point with a Beckmann Lyapunov function that decreases monotonically each day
   (shipped: `dtd-swap`, paradigm `day_to_day`; certified by the standard UE gap, with the
-  Smith & Wisten 1995 step bound preventing the raw swap's limit-cycle); a **boundedly-rational**
+  Smith & Wisten 1995 step bound preventing the raw swap's limit-cycle), and its link-based
+  companion — He, Guo & Liu's (2010) day-to-day defined directly on the aggregate *link*-flow
+  vector (adjusted toward the frozen-cost proximal target projected onto the feasible link
+  polytope), which reaches the identical certified UE via the same monotone Beckmann descent
+  (shipped: `dtd-link`, paradigm `day_to_day`); a **boundedly-rational**
   equilibrium — an indifference-band relaxation of Wardrop where used routes need only lie
   within a band `ε` of the shortest, so the equilibrium is a *set* and the emitted flow sits at
   the band edge (shipped: `br-ue`, paradigm `static_br_ue`,
