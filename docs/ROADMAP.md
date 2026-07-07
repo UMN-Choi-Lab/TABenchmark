@@ -102,7 +102,7 @@ T3 interventions.
 - [x] Cascetta (1984) — *Estimation of trip matrices from traffic counts and survey data: A generalized least squares estimator* (white-box solver) — **shipped in v1** (T2 GLS estimator (gls, ADR-002))
 - [x] Spiess (1990) — *A gradient approach for the O-D matrix adjustment problem* (white-box solver) — **shipped in v1** (T2 gradient OD adjustment (spiess, ADR-002))
 - [x] Spall (1992) — *Multivariate stochastic approximation using a simultaneous perturbation gradient approximation* (white-box solver) — **shipped in v1** (T2 SPSA calibration baseline (spsa, ADR-002))
-- [ ] Yang et al. (1992) — *Estimation of origin-destination matrices from link traffic counts on congested networks* (white-box solver)
+- [x] Yang et al. (1992) — *Estimation of origin-destination matrices from link traffic counts on congested networks* (white-box solver) — **shipped** as `od-congested`
 - [ ] Cascetta et al. (1993) — *Dynamic Estimators of Origin-Destination Matrices Using Traffic Counts* (white-box solver)
 - [ ] Balakrishna et al. (2007) — *Offline calibration of dynamic traffic assignment: Simultaneous demand-and-supply estimation* (black-box wrapper)
 - [x] Stabler et al. (2016) — *Transportation Networks for Research* (data/scenario) — **shipped in v0.x** (checksummed TNTP fetcher + 4 registered networks)

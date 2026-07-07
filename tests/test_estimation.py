@@ -35,8 +35,10 @@ from tabench.estimation import (
     SpiessEstimator,
     SPSAEstimator,
     VZWEntropyEstimator,
+    Yang1992Estimator,
     gls_solve,
     vzw_balance,
+    yang_solve,
 )
 from tabench.experiments.runner import identifiability_report, run_estimation_experiment
 from tabench.metrics.estimation import ODCertifier
@@ -574,3 +576,177 @@ def test_callable_estimator_wraps_constant():
     assert trace.final.od_matrix[0, 1] == 2.0
     assert est.capabilities.paradigm == "learned"
     assert est.capabilities.outputs == frozenset({"od_estimate"})
+
+
+# ------------------------------------------------- od-congested (Yang et al. 1992)
+
+
+def test_yang_scalar_closed_form_and_gls_relationship():
+    """Single pair, single sensor: Yang's theta-weighted QP has the closed form
+    g* = (theta*g_pr + (1-theta)*p*c) / (theta + (1-theta)*p^2). At theta=0.5 it
+    coincides with gls's identity-covariance anchor (g_pr+p*c)/(1+p^2), and in
+    general yang_solve IS gls_solve with the scalar variances 1/theta, 1/(1-theta)
+    -- the exact sense in which od-congested is the deterministic-trade-off case
+    of generalized least squares (all recomputed, no trusted digits)."""
+    p, c, g_pr = 0.625, 2.5, 3.0
+    for theta in (0.2, 0.5, 0.8):
+        expected = (theta * g_pr + (1 - theta) * p * c) / (theta + (1 - theta) * p * p)
+        got = yang_solve(np.array([[p]]), np.array([c]), np.array([g_pr]), theta)
+        assert got[0] == pytest.approx(expected, abs=1e-10)
+        via_gls = gls_solve(
+            np.array([[p]]), np.array([c]), np.array([g_pr]),
+            np.array([1.0 / theta]), np.array([1.0 / (1.0 - theta)]),
+        )
+        assert got[0] == pytest.approx(via_gls[0], abs=1e-9)
+    half = yang_solve(np.array([[p]]), np.array([c]), np.array([g_pr]), 0.5)[0]
+    assert half == pytest.approx((g_pr + p * c) / (1.0 + p * p), abs=1e-10)
+
+
+def test_yang_theta_limits_are_prior_and_count_consistent():
+    """The single trade-off theta spans the whole prior<->count spectrum (the
+    distinctive knob vs gls's covariances / spiess's misfit-only): theta->1
+    recovers the prior; theta->0 fits the count exactly (c/p)."""
+    p, c, g_pr = 0.5, 3.0, 1.0
+    near_prior = yang_solve(np.array([[p]]), np.array([c]), np.array([g_pr]), 1 - 1e-8)[0]
+    near_count = yang_solve(np.array([[p]]), np.array([c]), np.array([g_pr]), 1e-8)[0]
+    assert near_prior == pytest.approx(g_pr, abs=1e-4)
+    assert near_count == pytest.approx(c / p, abs=1e-4)  # 6.0
+
+
+def test_yang_differs_from_gls_covariance_weighting():
+    """od-congested weights every prior cell / count residual uniformly by theta;
+    gls weights per cell (prior CV -> W). Given a count the prior does NOT already
+    satisfy, gls loads most of the adjustment onto the uncertain (large-prior)
+    cell, while od-congested splits it uniformly -- so the two allocate the fit
+    differently and od-congested is not a gls rename."""
+    p_obs = np.array([[1.0, 1.0]])          # one sensor sees both pairs
+    c = np.array([14.0])                     # prior sum (2+8=10) does NOT match it
+    g_pr = np.array([2.0, 8.0])             # priors of very different magnitude
+    yang = yang_solve(p_obs, c, g_pr, 0.5)  # uniform weighting: near-even split
+    w_var = (0.5 * g_pr) ** 2 + 1e-6        # gls: large-prior cell far more uncertain
+    gls = gls_solve(p_obs, c, g_pr, w_var, np.array([1.0]))
+    assert np.abs(yang - gls).max() > 0.5
+    # gls moves the uncertain cell 1 much more than od-congested's uniform split.
+    assert (gls[1] - g_pr[1]) > (yang[1] - g_pr[1]) + 0.5
+
+
+def test_yang_congested_recovery_and_prior_limit():
+    """The bilevel outer fixed point recovers the equilibrium-consistent truth as
+    theta->0 (count-trusting) on the convex two-route (D=4) and Braess (D=6, from
+    a global-basin prior) networks; at theta->1 it instead holds at the prior."""
+    budget = Budget(sp_calls=10**9, iterations=200)
+    for scenario_fn, truth, prior_d, target in (
+        (lambda: two_route_scenario(sue_theta=None), TWOROUTE_TRUTH, 3.0, 4.0),
+        (lambda: braess_scenario(6.0), BRAESS_TRUTH, 5.5, 6.0),
+    ):
+        sc = scenario_fn()
+        task = _task(sc, truth, np.arange(len(truth)), _single_pair_prior(prior_d))
+        trace = ODTrace()
+        Yang1992Estimator(k_inner=120, outer_iters=80, theta=1e-3).estimate(
+            task, budget, RngBundle(0), trace
+        )
+        assert abs(trace.final.od_matrix[0, 1] - target) < 1e-2
+        trace_prior = ODTrace()
+        Yang1992Estimator(k_inner=120, outer_iters=30, theta=1 - 1e-6).estimate(
+            task, budget, RngBundle(0), trace_prior
+        )
+        assert abs(trace_prior.final.od_matrix[0, 1] - prior_d) < 1e-2
+
+
+def test_yang_registered_as_od_congested():
+    assert "od-congested" in ESTIMATOR_REGISTRY
+    assert ESTIMATOR_REGISTRY["od-congested"] is Yang1992Estimator
+    caps = Yang1992Estimator().capabilities
+    assert caps.paradigm == "estimation"
+    assert caps.inputs_required == frozenset({"link_counts", "prior_od"})
+    assert caps.outputs == frozenset({"od_estimate"})
+
+
+def test_yang_certifies_honestly_end_to_end():
+    """od-congested runs through the pinned P1 certificate with no model-specific
+    trust: the SCORE (od_feasible, od_rmse) is recomputed by the harness's
+    ODCertifier from the emitted OD matrix, never from a self-report. With a cv=0
+    prior (=truth) it certifies od_feasible=1 and recovers under full sensors."""
+    sc = braess_scenario(6.0)
+    cfg = {
+        "sensors": {"kind": "explicit", "links": [0, 1, 2, 3, 4]},
+        "heldout": {"kind": "explicit", "links": []},
+        "n_periods": 1,
+        "noise": "none",
+        "prior": {"kind": "stale", "cv": 0.0},
+        "identifiability_k_inner": 30,
+    }
+    result = run_estimation_experiment(
+        sc, [Yang1992Estimator(k_inner=40, outer_iters=10, theta=1e-3)],
+        Budget(sp_calls=2000), seed=0, macroreps=1, estimation=cfg,
+    )
+    row = [r for r in result.rows if r["estimator"] == "od-congested"][-1]
+    assert row["od_feasible"] == 1.0
+    # Near-exact under a cv=0 prior; the ~0.3%-of-D residual is the MSA-vs-bfw
+    # inner-assignment slack (tight recovery is pinned by the recovery test). The
+    # self-report is provenance only -- the certified obs_count_rmse column is the
+    # harness recomputation, and it is what the leaderboard scores.
+    assert row["od_rmse"] < 5e-2
+    assert np.isfinite(float(row["self_obs_count_rmse"]))
+
+
+def test_yang_safeguard_returns_best_not_dominated_last_iterate():
+    """Confirmed adversarial-review Major: the best-self-obs-RMSE safeguard
+    (docstring + ADR-002 Decision 3, 'never returns a strictly dominated last
+    iterate') must be PINNED. On Braess (prior D=3, theta=0.2, single sensor {0})
+    the it=1 iterate (g=3.8, obs-RMSE 0.20) dominates every later outer iterate,
+    so the emitted OD is that early iterate, not the dominated last one. Deleting
+    the re-record block ships a worse OD and fails this test."""
+    sc = braess_scenario(6.0)
+    task = _task(sc, BRAESS_TRUTH, np.array([0]), _single_pair_prior(3.0))
+    trace = ODTrace()
+    Yang1992Estimator(k_inner=120, outer_iters=40, theta=0.2).estimate(
+        task, Budget(sp_calls=10**9, iterations=200), RngBundle(0), trace
+    )
+    resids = [s.self_report["obs_count_rmse"] for s in trace]
+    final_resid = trace.final.self_report["obs_count_rmse"]
+    # The emitted final is the best iterate seen ...
+    assert final_resid == pytest.approx(min(resids), abs=1e-12)
+    # ... the safeguard was load-bearing (a later iterate was strictly worse) ...
+    assert max(resids) > final_resid + 0.02
+    # ... and the recovered value is the dominating early iterate, not a late one.
+    assert trace.final.od_matrix[0, 1] == pytest.approx(3.8, abs=1e-3)
+
+
+def test_yang_shipped_estimator_distinct_from_gls():
+    """The SHIPPED Yang1992Estimator (uniform theta) and GLSEstimator (per-cell
+    covariance W) allocate an under-identified fit differently -- od-congested is
+    not a gls rename even at the estimator level, not only in the solve primitive.
+    On the 2-pair hub with a single shared sensor and an off, magnitude-swapped
+    prior, the two disagree materially on the pair split."""
+    sc, truth = _hub_two_pair_scenario()
+    prior = np.zeros((3, 3))
+    prior[0, 1], prior[0, 2] = 2.0, 4.0  # off truth (3, 2) + heterogeneous
+    task = _task(sc, truth, np.array([0]), prior)  # one shared sensor: under-identified
+    budget = Budget(sp_calls=10**9, iterations=80)
+    y, g = ODTrace(), ODTrace()
+    Yang1992Estimator(k_inner=120, outer_iters=40, theta=0.5).estimate(
+        task, budget, RngBundle(0), y
+    )
+    GLSEstimator(k_inner=120, outer_iters=40, cv_prior=0.3).estimate(
+        task, budget, RngBundle(0), g
+    )
+    assert np.abs(y.final.od_matrix - g.final.od_matrix).max() > 0.1
+
+
+def test_yang_respects_budget_and_handles_empty_prior():
+    """Coverage for two reachable branches: (1) the sp_calls budget breaks the
+    outer loop early (iterations far below outer_iters), and (2) an all-zero prior
+    (no active pairs) emits the prior unchanged instead of crashing the QP solve."""
+    sc = braess_scenario(6.0)
+    task = _task(sc, BRAESS_TRUTH, np.array([1, 2, 3]), _single_pair_prior(4.0))
+    trace = ODTrace()
+    Yang1992Estimator(k_inner=50, outer_iters=100).estimate(
+        task, Budget(sp_calls=120), RngBundle(0), trace
+    )
+    assert trace.final.coords.iterations < 100  # broke early on the budget
+    assert trace.final.coords.sp_calls < 100 * 50  # nowhere near the full run
+    empty = _task(sc, BRAESS_TRUTH, np.array([1, 2, 3]), np.zeros((2, 2)))
+    trace2 = ODTrace()
+    Yang1992Estimator().estimate(empty, Budget(sp_calls=500), RngBundle(0), trace2)
+    assert np.array_equal(trace2.final.od_matrix, np.zeros((2, 2)))

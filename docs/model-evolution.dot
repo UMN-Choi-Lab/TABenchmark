@@ -89,7 +89,7 @@ digraph TA_evolution {
   "cascetta1984estimation" [label="Cascetta 1984\ngls",fillcolor="#eeeed6",style="rounded,filled"];
   "spiess1990gradient" [label="Spiess 1990\nspiess",fillcolor="#eeeed6",style="rounded,filled"];
   "spall1992multivariate" [label="Spall 1992\nspsa",fillcolor="#eeeed6",style="rounded,filled"];
-  "yang1992estimation" [label="Yang 1992\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
+  "yang1992estimation" [label="Yang 1992\nod-congested",fillcolor="#eeeed6",style="rounded,filled"];
   "cascetta1993dynamic" [label="Cascetta 1993\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
   "boyce2004convergence" [label="Boyce 2004\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
   "balakrishna2007offline" [label="Balakrishna 2007\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];

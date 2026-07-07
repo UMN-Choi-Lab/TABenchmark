@@ -44,7 +44,7 @@ graph TD
   n_cascettastochastic3881(["Cascetta 1989"]):::c6
   n_spiessgradient8815(["Spiess 1990"]):::c10
   n_spallmultivariate5410(["Spall 1992"]):::c10
-  n_yangestimation3439["Yang 1992"]:::c10
+  n_yangestimation3439(["Yang 1992"]):::c10
   n_newellsimplified1633["Newell 1993"]:::c7
   n_frieszvariational9239["Friesz 1993"]:::c8
   n_cascettadynamic7177["Cascetta 1993"]:::c10
@@ -883,7 +883,7 @@ SPSA: a stochastic-approximation optimizer that estimates the gradient of a nois
 
 ### Yang, Sasaki, Iida & Asakura (1992) — Estimation of origin-destination matrices from link traffic counts on congested networks
 
-_roadmap_ · OD-estimation (bilevel program, UE lower level; mutually-consistent demand-flow) · `[yang1992estimation]`
+`od-congested` · **shipped** · OD-estimation (bilevel program, UE lower level; mutually-consistent demand-flow) · `[yang1992estimation]`
 
 OD estimation on CONGESTED networks: a bilevel program whose lower level is user-equilibrium assignment, solved so that the estimated demand and the equilibrium link flows are mutually consistent.
 
@@ -891,7 +891,7 @@ OD estimation on CONGESTED networks: a bilevel program whose lower level is user
 
 **Formulation.** `min_{d>=0} Theta*||d-d*||^2 + (1-Theta)*sum_{a in obs}(x_a(d)-x_a*)^2 s.t. x(d)=UE(d); solve by outer fixed point: assign d -> extract P(d) at equilibrium -> GLS/entropy update d -> re-assign, until demand and flows are consistent.`
 
-**Validation.** The TR-B paper reports small worked network examples but no widely reproduced public oracle. It would be validated by a known fixed point (the mutually-consistent demand-flow pair), by an analytic anchor in the uncongested limit where the outer loop collapses to a single-pass GLS/entropy fit, and by the pinned best-known-flow oracle. Tractable for a numpy/scipy package: it is exactly the congested outer fixed point (Cascetta & Postorino 2001) that the shipped gls/vzw/spiess already run (assign -> re-extract P -> re-estimate), with Yang's explicit bilevel objective as the inner solve.
+**Validation.** SHIPPED as `od-congested` (paradigm estimation, T2 track): Yang's bilevel ODME program min_{g>=0} theta*||g-g_pr||^2 + (1-theta)*sum_{a in obs}(x_a(g)-cbar_a)^2 s.t. x=UE(g), a single scalar trade-off theta in (0,1) (Yang's gamma1/(gamma1+gamma2)) between prior deviation and count misfit. Solved by the congested outer fixed point (assign g -> extract equilibrium proportions P(g) via MSA-over-AON -> solve the frozen-proportion convex QP yang_solve -> re-assign; Cascetta & Postorino 2001). yang_solve is the scalar-theta case of the gls whitened NNLS but with the DETERMINISTIC theta-weighting in place of gls's STATISTICAL covariances W, V, so the two allocate an under-identified fit differently (regression-tested distinct at both the solve-primitive and shipped-estimator level). Certified by the EXISTING estimator-agnostic ODCertifier (recomputes count-fit + OD-fit from the emitted OD matrix via a pinned bfw assignment); NO new certificate and NO new scenario field; self_report is provenance only. Validated (recomputed, no trusted digits): the one-pair/one-sensor closed form (theta*g_pr+(1-theta)*p*cbar)/(theta+(1-theta)*p^2) = gls's identity-covariance anchor at theta=1/2; the theta->1 (recovers prior) and theta->0 (fits counts, c/p) limits; congested-fixed-point recovery of the equilibrium-consistent truth on two-route (D=4) and Braess (D=6, global basin); the best-self-obs-RMSE outer-loop safeguard pinned by a mutation-tested regression; empty-prior and budget-break coverage. Adversarial review (5 lenses, 3-refuter verify): 1 Major (untested safeguard) + minors, all addressed. FLAGGED: ships Yang's OBJECTIVE via the iterative assign-then-estimate scheme; Yang's sensitivity-analysis-based (SAB, dv/dq-linearized) variant is NOT implemented (disclosed in the docstring). Primary Yang, Sasaki, Iida & Asakura 1992 (TR-B 26(6):417-434) attributed; bilevel objective + UE lower level cross-verified from the open Boyles TNA sensitivity chapter; congested outer loop from Cascetta & Postorino 2001; no numbers fabricated.
 
 *Builds on:* Cascetta 1984, Spiess 1990, Van Zuylen & Willumsen 1980.
 

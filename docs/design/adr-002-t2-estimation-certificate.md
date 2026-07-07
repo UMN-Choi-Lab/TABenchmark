@@ -167,7 +167,7 @@ only, never the penalty, so the label stays an honest count RMSE.
 
 ## Decision 3 — Shipped estimators
 
-All four classical estimators consume an **assignment-proportion matrix**
+The proportion-based classical estimators consume an **assignment-proportion matrix**
 `P ∈ R^(n_links × n_od)` with `p^a_ij` = fraction of demand (i,j) using link a. Pinned
 extraction (`estimation/_proportions.py`): run the inner assignment as **MSA over AON
 trees**, accumulating `P = (1/K) Σ_k P_k` where `P_k` is the sparse 0/1 per-OD tree
@@ -234,6 +234,18 @@ Postorino 2001). `K_inner` and the outer count are estimator factors, paid in sp
    Cost: 2 × K_inner sp_calls per iteration.
 5. **`prior` — identity baseline.** Emits the prior unchanged (iterations=1, sp_calls=0).
    Every leaderboard needs the do-nothing anchor (BO4Mob Improvement% convention).
+6. **`od-congested` — Yang, Sasaki, Iida & Asakura (1992).** The bilevel ODME-on-congested-
+   networks program `min_{g≥0} θ‖g−ĝ_pr‖² + (1−θ) Σ_{a∈Â}(v_a(g)−c̄_a)²` with a UE lower
+   level and a single scalar trade-off `θ∈(0,1)` (Yang's `γ₁/(γ₁+γ₂)`) — the same whitened
+   stacked NNLS as `gls` (item 2) but with the *deterministic* θ-weighting in place of the
+   *statistical* covariances `W`, `V`, so the two allocate the count-fit differently on
+   heterogeneous priors (od-congested is not a `gls` rename). Solved by the same congested
+   outer fixed point (assign ĝ → extract P → solve the frozen-proportion convex QP →
+   re-assign, Cascetta & Postorino 2001). `θ→1` recovers the prior, `θ→0` fits the counts;
+   the uncongested limit is a single outer pass whose one-pair/one-sensor closed form is
+   `(θĝ_pr + (1−θ)p c̄)/(θ + (1−θ)p²)` (`= gls`'s identity-covariance anchor at `θ=½`). Keeps
+   the best-self-obs-RMSE outer-loop safeguard. Deterministic; cost outer_iters × K_inner
+   sp_calls.
 
 ## Decision 4 — Identifiability: what gets reported per (sensor set, task)
 

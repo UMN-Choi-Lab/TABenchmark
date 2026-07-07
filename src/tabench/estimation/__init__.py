@@ -23,6 +23,7 @@ from .entropy import VZWEntropyEstimator, vzw_balance
 from .gls import GLSEstimator, gls_solve
 from .spiess import SpiessEstimator, spiess_step
 from .spsa import SPSAEstimator
+from .yang1992 import Yang1992Estimator, yang_solve
 
 __all__ = [
     "ESTIMATOR_REGISTRY",
@@ -44,4 +45,6 @@ __all__ = [
     "SpiessEstimator",
     "spiess_step",
     "SPSAEstimator",
+    "Yang1992Estimator",
+    "yang_solve",
 ]
