@@ -192,6 +192,81 @@ def test_armijo_backtracking_restores_monotone_descent():
     assert Evaluator(sc).evaluate(trace.final.link_flows)["relative_gap"] < 1e-3
 
 
+def _overlapping_paths_stall_scenario():
+    """A congested power-4 *trellis*: L=4 transitions between layers of W=3 nodes,
+    every node in a layer feeding every node in the next; layer-0 -> layer-4 ODs
+    each have many heavily-OVERLAPPING multi-hop paths. This is the instance that
+    exposes the inner-solve staleness bug: within one proximal sweep several paths
+    shift onto the same basic path, so a per-OD-cached basic cost goes stale and
+    later shifts overshoot the 1-D minimizer, flipping the aggregate target into a
+    Beckmann ascent -- the outer Armijo then collapses the day step and the
+    certified gap stalls ~1e-2, far above UE. Hardcoded for determinism (topology
+    from the layered pattern; caps/ffts/demands pinned)."""
+    W, L = 3, 4
+    init, term = [], []
+    for layer in range(L):
+        for a in range(W):
+            for b in range(W):
+                init.append(layer * W + a + 1)
+                term.append((layer + 1) * W + b + 1)
+    init = np.array(init, dtype=np.int64)
+    term = np.array(term, dtype=np.int64)
+    m = len(init)
+    cap = np.array([
+        1.0118, 1.4505, 0.6442, 1.4486, 0.8118, 0.9233, 1.3277, 0.9092, 1.0496,
+        0.5276, 1.2535, 1.0381, 0.8297, 1.2884, 0.8032, 0.9535, 0.634, 0.9031,
+        0.7035, 0.7623, 1.2504, 0.7804, 0.9852, 1.4807, 1.4617, 1.2248, 1.0412,
+        0.7769, 0.6607, 1.4699, 1.0161, 0.6159, 1.1235, 1.2767, 1.113, 1.4173,
+    ])
+    fft = np.array([
+        1.0792, 2.0572, 1.9187, 1.1247, 2.2827, 2.7053, 2.1859, 1.5202, 2.6798,
+        2.019, 2.0218, 2.5061, 1.2958, 2.6393, 2.3666, 2.5742, 1.3832, 2.6047,
+        1.3826, 1.1631, 2.7105, 2.7226, 2.7531, 1.9438, 1.5481, 1.0142, 2.2914,
+        2.4398, 2.6711, 1.5638, 1.4304, 2.2787, 2.6101, 2.9273, 1.301, 1.9644,
+    ])
+    net = Network(
+        name="trellis-dtd", n_nodes=(L + 1) * W, n_zones=(L + 1) * W,
+        first_thru_node=1, init_node=init, term_node=term, capacity=cap,
+        length=np.zeros(m), free_flow_time=fft, b=np.full(m, 0.15),
+        power=np.full(m, 4.0), toll=np.zeros(m),
+        link_type=np.ones(m, dtype=np.int64),
+    )
+    od = np.zeros(((L + 1) * W, (L + 1) * W))
+    for (i, j), val in {
+        (0, 12): 9.8946, (0, 13): 7.629, (0, 14): 8.4296, (1, 12): 5.7176,
+        (1, 13): 8.8326, (1, 14): 10.0116, (2, 12): 9.5688, (2, 13): 9.8505,
+        (2, 14): 8.7697,
+    }.items():
+        od[i, j] = val
+    return Scenario("trellis-dtd", net, Demand(od))
+
+
+def test_default_config_reaches_ue_on_overlapping_high_curvature():
+    """REGRESSION for the stale inner-solve fix (adversarial-review MAJOR). The
+    per-day proximal target x*(v) is solved by per-OD pairwise flow shifts toward
+    the cheapest working path; the proximal path costs MUST be recomputed from the
+    live target before EACH shift (true Gauss-Seidel). Caching them once per sweep
+    let later shifts onto the same basic path overshoot the 1-D minimizer, so on
+    congested high-curvature (power-4) instances with many overlapping paths the
+    aggregate target became a Beckmann ascent, the Armijo collapsed the day step,
+    and the DEFAULT-config certified gap stalled ~1e-2 -- never reaching UE even
+    with far more iterations. With the fix the default config converges deep below
+    UE. Certified purely from the emitted link flows (P1)."""
+    sc = _overlapping_paths_stall_scenario()
+    evaluator = Evaluator(sc)
+    trace = _solve(sc, iterations=800, target_relative_gap=1e-8)
+    gaps = [s.self_report["relative_gap"] for s in trace]
+    metrics = evaluator.evaluate(trace.final.link_flows)
+    assert metrics["feasible"] == 1.0
+    # Old (stale-cost) inner solve plateaued ~9e-3 here; the fix reaches deep UE.
+    assert min(gaps) < 1e-6
+    assert metrics["relative_gap"] < 1e-6
+    # Conservation stays at the noise floor throughout (link flows never leave Omega).
+    tol = 1e-6 * sc.demand.total
+    for state in trace:
+        assert evaluator.evaluate(state.link_flows)["node_balance_residual"] <= tol
+
+
 # -------------------------------------------------------------- mechanics
 def test_paradigm_and_registry():
     from tabench.models import MODEL_REGISTRY

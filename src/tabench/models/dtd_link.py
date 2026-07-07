@@ -261,19 +261,34 @@ class LinkBasedDTDModel(TrafficAssignmentModel):
                     if len(plist) < 2:
                         continue
                     glist = gflows[key]
-                    # Proximal path cost C_p = sum_{a' in p} (a t_a' + x_a' - v_a'),
-                    # recomputed per OD from the live target x (Gauss-Seidel).
+                    # Basic = cheapest working path at the current target x.
                     pc = [float((scaled[p] + x[p] - v[p]).sum()) for p in plist]
                     basic = int(np.argmin(pc))
-                    basic_cost = pc[basic]
+                    pbasic = plist[basic]
                     for i in range(len(plist)):
                         if i == basic or glist[i] <= 0.0:
                             continue
-                        reduced = pc[i] - basic_cost
+                        # Proximal path costs C_p = sum_{a' in p}(a t_a' + x_a' - v_a')
+                        # recomputed from the LIVE target x before EVERY pairwise
+                        # shift (true per-path Gauss-Seidel). A shift onto the basic
+                        # path RAISES basic's own C (it gains flow on its distinct
+                        # links); reusing a sweep-start basic_cost would let each
+                        # later shift onto the same basic overshoot the exact 1-D
+                        # minimizer delta* = (C_i - C_basic)/|D|, and the accumulated
+                        # overshoot can flip the aggregate target x* - v into a
+                        # Beckmann ASCENT direction -- the outer Armijo then survives
+                        # only by collapsing the day step, stalling short of UE on
+                        # high-curvature congested instances. Recomputing the two
+                        # live path costs pins each shift on its minimizer, so x
+                        # descends the (strictly convex) proximal objective
+                        # monotonically and x* - v stays a descent direction.
+                        ci = float((scaled[plist[i]] + x[plist[i]] - v[plist[i]]).sum())
+                        cbasic = float((scaled[pbasic] + x[pbasic] - v[pbasic]).sum())
+                        reduced = ci - cbasic
                         if reduced <= 0.0:
                             continue
                         distinct = np.setxor1d(
-                            plist[i], plist[basic], assume_unique=True
+                            plist[i], pbasic, assume_unique=True
                         )
                         denom = float(distinct.size)  # proximal curvature = |D|
                         shift = (
@@ -284,7 +299,7 @@ class LinkBasedDTDModel(TrafficAssignmentModel):
                         glist[i] -= shift
                         glist[basic] += shift
                         x[plist[i]] -= shift
-                        x[plist[basic]] += shift
+                        x[pbasic] += shift
 
             # Day step v <- v + lambda (x* - v). x* - v is a Beckmann descent
             # direction, so Armijo backtracking on the Beckmann objective (the
