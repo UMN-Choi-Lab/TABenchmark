@@ -38,6 +38,31 @@ GATING certificates (any failure censors):
   limitation the static node-balance audit documents); per-commodity FIFO
   certification requires per-commodity emissions, a reserved additive
   extension.
+
+  SCOPE (CFL = 1, matching C4). C6 is exact and gating on the sanctioned
+  cell-aligned operating point ``L/(vf*dt)`` integer. Off it, the inverse
+  interpolation carries an O(dt) time-quantization error the current gate does
+  NOT correct, so on unaligned grids C6 (a) may false-CENSOR a correct emission
+  by up to one step, and (b) because it samples entry-curve levels only
+  (``np.unique(n_in)``), can miss a sub-step violation confined to an exit-curve
+  level between two entry edges that C4's one-step slack admits — the same
+  "unaligned schemes are answerable to the raw residual, not the flag"
+  declaration C4 carries. The ``fifo_residual`` is always reported and is the
+  science off CFL = 1. A sound joint hardening (sample the union of both curves'
+  edge levels AND relax by the principled per-level interpolation bound, not a
+  flat ``dt`` — the two directions are coupled) is reserved; it is a certificate
+  numeric change and must land through the adversarial DNL review, not ad hoc.
+
+RESERVED (hashed content not yet gated):
+
+* **Turning-fraction fidelity** — ``scenario.turns`` is content-hashed but no
+  certificate reads it, so a diverge that violates a mandated split is not yet
+  censored. From aggregate per-link counts the split is exactly recoverable at a
+  1-in diverge (``d_in[o] == frac[o] * d_out[in]``) and underdetermined at a
+  multi-in node; a gating check must also settle the congested-diverge
+  convention (turn-fraction conservation under supply limits), so it is a
+  reserved additive gating extension, deferred to the DNL review. No shipped
+  scenario has a diverge, so the gap is latent, not active.
 * **C7 demand coupling** — no origin releases more than its cumulative
   demand (no phantom vehicles).
 

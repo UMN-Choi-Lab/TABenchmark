@@ -8,6 +8,7 @@ import pytest
 from tabench.core.scenario import Network
 from tabench.dnl import DNLOutput, DynamicDemand, DynamicScenario, LinkDynamics, TimeGrid
 from tabench.metrics import DNLEvaluator
+from tabench.metrics.dnl_gaps import _earliest_times
 
 
 def _network(name: str) -> Network:
@@ -245,3 +246,127 @@ def test_evaluator_does_not_mutate_output_arrays() -> None:
     np.testing.assert_array_equal(output.n_in, before[0])
     np.testing.assert_array_equal(output.n_out, before[1])
     np.testing.assert_array_equal(output.origin_release, before[2])
+
+
+# ---------------------------------------------------------------------------
+# Mutation-killing tests (adversarial review, 2026-07-07): the certificate
+# battery was green under four surviving mutations because every existing
+# fixture violates far above tolerance / is single-origin / is strictly
+# increasing. These pin the exact behaviours those mutations flip, so a future
+# refactor cannot silently weaken a P1 certificate and stay green.
+# ---------------------------------------------------------------------------
+
+
+def _two_origin_scenario() -> DynamicScenario:
+    """Two origin zones (1, 2) feeding one destination zone (3) on direct
+    links 1->3, 2->3. Exercises the per-origin coupling loop of C1, which a
+    single-origin fixture cannot (global conservation subsumes it there)."""
+    net = Network(
+        name="cert-two-origin",
+        n_nodes=3,
+        n_zones=3,
+        first_thru_node=1,
+        init_node=np.array([1, 2], dtype=np.int64),
+        term_node=np.array([3, 3], dtype=np.int64),
+        capacity=np.ones(2),
+        length=np.zeros(2),
+        free_flow_time=np.ones(2),
+        b=np.zeros(2),
+        power=np.ones(2),
+        toll=np.zeros(2),
+        link_type=np.ones(2, dtype=np.int64),
+    )
+    rates = np.zeros((1, 3, 3))
+    rates[0, 0, 2] = 0.5  # zone 1 -> zone 3
+    rates[0, 1, 2] = 0.5  # zone 2 -> zone 3
+    return DynamicScenario(
+        name="cert-two-origin",
+        network=net,
+        dynamics=LinkDynamics(
+            length=np.array([1.0, 1.0]),
+            free_speed=np.array([1.0, 1.0]),
+            wave_speed=np.array([math.inf, math.inf]),
+            jam_density=np.array([math.inf, math.inf]),
+            capacity=np.array([1.0, 1.0]),
+        ),
+        demand=DynamicDemand(breakpoints=np.array([0.0, 8.0]), rates=rates),
+        grid=TimeGrid(dt=0.5, n_steps=20),
+    )
+
+
+def test_tolerance_magnitude_is_pinned() -> None:
+    """C7 violation of ~1e-8 veh (well above the default eps_count = 1e-9 * V
+    but far below a 1e-7 default): censored by the default evaluator. Kills the
+    tol 1e-9 -> 1e-7 default mutation, which no coarse fixture constrains."""
+    scenario = _point_queue_scenario()
+    output = _valid_point_queue_output(scenario)
+    bump = 1e-8
+    # Bump inflow AND release together so the ONLY violated certificate is C7
+    # (demand coupling): C1 origin coupling stays exact, capacity/causality/
+    # storage/global conservation are all preserved by the matched shift.
+    n_in = output.n_in.copy()
+    release = output.origin_release.copy()
+    n_in[0, 10:] += bump
+    release[0, 10:] += bump
+    perturbed = _with_arrays(output, n_in=n_in, origin_release=release)
+
+    strict = DNLEvaluator(scenario).evaluate(perturbed)  # default tol = 1e-9
+    assert strict["dnl_feasible"] == 0.0
+    assert strict["demand_coupling_residual"] == pytest.approx(bump, rel=1e-3)
+
+    loose = DNLEvaluator(scenario, tol=1e-7).evaluate(perturbed)
+    assert loose["dnl_feasible"] == 1.0  # the boundary the default must hold
+
+
+def test_capacity_certificate_checks_the_inflow_side() -> None:
+    """An inflow burst above capacity with a compliant outflow: the reported
+    capacity_residual must reflect the INFLOW flux. Kills the mutation that
+    replaces flux = max(d_in, d_out) with flux = d_out (the shipped fixture is
+    an outflow burst, so d_out alone passed it)."""
+    scenario = _point_queue_scenario()
+    output = _valid_point_queue_output(scenario)
+    n_in = output.n_in.copy()
+    # One inflow step of 0.6 veh (> F = q_max * dt = 0.5); outflow stays smooth
+    # at 0.25/step, so a d_out-only capacity check would see no violation.
+    n_in[0, 1:] += 0.35  # d_in at step 1 becomes 0.25 + 0.35 = 0.60 > 0.50
+    metrics = DNLEvaluator(scenario).evaluate(_with_arrays(output, n_in=n_in))
+
+    assert metrics["capacity_residual"] == pytest.approx(0.1, abs=1e-6)
+
+
+def test_conservation_checks_per_origin_coupling() -> None:
+    """A globally balanced but per-origin mismatched output (link inflows 0.5x
+    and 1.5x the two origins' equal releases): the origin-coupling loop of C1
+    must flag it. Kills deletion of that loop, which the global vehicle
+    identity leaves green on any single-origin fixture."""
+    scenario = _two_origin_scenario()
+    edges = np.arange(scenario.grid.n_steps + 1, dtype=np.float64)
+    cum = np.minimum(0.25 * edges, 4.0)  # each origin releases 4 veh
+    # Global totals are balanced (0.5 + 1.5 = 2 x cum) but each origin's link
+    # inflow no longer matches its own release.
+    n_in = np.vstack([0.5 * cum, 1.5 * cum])
+    n_out = np.zeros_like(n_in)
+    n_out[:, 2:] = n_in[:, :-2]  # free-flow shift by tau_ff = 2 steps
+    release = np.vstack([cum, cum, np.zeros_like(cum)])
+    out = DNLOutput(
+        scenario_hash=scenario.content_hash(),
+        grid=scenario.grid,
+        n_in=n_in,
+        n_out=n_out,
+        origin_release=release,
+    )
+    metrics = DNLEvaluator(scenario).evaluate(out)
+
+    assert metrics["dnl_feasible"] == 0.0
+    # Per-step coupling gap |0.125 - 0.25| = 0.125 on each origin; the global
+    # identity (mutant's only remaining check) is exactly balanced -> 0.0.
+    assert metrics["conservation_residual"] == pytest.approx(0.125)
+
+
+def test_earliest_times_uses_earliest_edge_on_a_plateau() -> None:
+    """The C6 curve inversion must take the EARLIEST time a level is reached on
+    a plateau (searchsorted side='left'). Kills the side='left' -> 'right'
+    mutation, invisible on strictly increasing fixtures."""
+    curve = np.array([0.0, 1.0, 1.0, 1.0, 2.0])  # level 1 held over t in [1, 3]
+    times = _earliest_times(curve, np.array([1.0]), dt=1.0)
+    assert times[0] == pytest.approx(1.0)  # earliest, not the plateau's end (3.0)
