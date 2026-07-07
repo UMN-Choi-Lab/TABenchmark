@@ -21,12 +21,17 @@ efficient-link weights telescope so that each efficient path carries weight
 ``exp(-theta c_path)`` (Sheffi 1985 sec. 11.2), so this path-flow logit
 coincides EXACTLY with Dial's efficient-link logit -- the ``sue-msa`` /
 Dial-STOCH fixed point -- *provided the working route set is the full set of
-Dial-efficient paths*. That proviso holds on ANY network, overlapping routes
-included, not only when routes are link-disjoint; what breaks it is an
-incomplete route set. The model therefore column-generates the WHOLE efficient
-route set each day (see below), so the coincidence holds on general networks
-and not merely on the two-route anchor. The deterministic-UE limit
-``theta -> infinity`` recovers dtd-swap's Wardrop rest point.
+Dial-efficient paths at the equilibrium costs*. That proviso holds on ANY
+network, overlapping routes included, not only when routes are link-disjoint;
+what breaks it is an incomplete route set. The model therefore column-generates
+the Dial-efficient route set each day (see below), so on networks whose
+efficient DAG is enumerable and stable the coincidence holds generally and not
+merely on the two-route anchor. Two things bound that reach on hard networks --
+both scoped honestly under "Certificate" below, and NEITHER a certificate
+defect: a per-OD enumeration cap that dense efficient DAGs exceed, and
+never-pruned stale routes on strongly congested multi-OD instances. The
+deterministic-UE limit ``theta -> infinity`` recovers dtd-swap's Wardrop rest
+point.
 
 Lyapunov / stability (Smith & Watling 2016; the distinctive validation). The
 C-swap is a descent direction for Fisk's (1980) SUE convex objective
@@ -52,33 +57,51 @@ pinned Dial-STOCH loading map, gated on ``scenario.sue_theta`` with
 ``sue_family == "logit"`` -- no new certificate and no new scenario field. This
 model self-reports the SAME residual computed with the SAME ``StochEngine.load``
 map, so the P1 honesty check (self-report == recomputed) passes to float
-precision, exactly the mechanism ``sue-msa`` relies on. Once the working set is
+precision, exactly the mechanism ``sue-msa`` relies on. When the working set is
 the full Dial-efficient route set the path-flow logit equals Dial's
 efficient-link logit, so the certified residual -> 0 to the same solver
-tolerance ``sue-msa`` reaches. This is the point of enumerating the WHOLE
-efficient set each day rather than one shortest path: it is the SUE analog of
-dtd-swap's UE gap reaching the Wardrop value -- both need the pricing (column
-generation) to supply the equilibrium's support, and for logit SUE that support
-is the ENTIRE efficient set (every efficient route carries flow), not just the
-min-cost routes UE needs. On tasks where the enumerated columns stay efficient
-as the flows settle -- the two-route anchor, link-disjoint route sets (including
-the K>=3 disjoint case where a route is never the strict shortest path), and
-single-OD grids with overlapping routes -- the residual drives to machine
-precision, regression-tested here against ``sue-msa``.
+tolerance ``sue-msa`` reaches. This is the point of enumerating the efficient
+set each day rather than one shortest path: it is the SUE analog of dtd-swap's
+UE gap reaching the Wardrop value -- both need the pricing (column generation)
+to supply the equilibrium's support, and for logit SUE that support is the
+ENTIRE efficient set (every efficient route carries flow), not just the min-cost
+routes UE needs. On tasks where the FULL efficient set is enumerable (fits under
+the cap) AND stays efficient as flows settle -- the two-route anchor,
+link-disjoint route sets (including the K>=3 disjoint case where a route is
+never the strict shortest path), and single-OD grids small enough that the
+efficient DAG fits -- the residual drives to machine precision, regression-tested
+here against ``sue-msa``.
 
-The residual is still reported as a descriptive convergence column, because two
-things can leave it short of that tolerance, neither a route-set/logit-mismatch
-(the old, wrong story) nor a certificate defect. (1) On STRONGLY CONGESTED
-MULTI-OD networks a route can enter the efficient set at one flow and leave it
-at another; because routes are never pruned (the entropy floor keeps every
-working-set route at a positive share), such a route keeps a small logit share
-that Dial does not assign, leaving a small residual floor -- far below the O(1)
-residual one-shortest-path-per-day column generation left, but not tight. (2)
-The proportional swap is a first-order day-to-day adjustment, so like ``sue-msa``
-(and like dtd-swap's UE gap) it merely trends downward on stiff, high-demand
-instances within a fixed horizon. Both are convergence properties of the
-dynamics on hard networks, honestly scoped -- and distinct from the anchor and
-disjoint/grid tasks, where the fixed point is reached outright.
+The residual is still reported as a descriptive convergence column, because on
+hard networks it plateaus ABOVE that tolerance -- always a convergence property
+of the dynamics, NEVER a certificate defect (the harness recomputes it from the
+emitted flows; self-report == recomputed to float precision and feasible = 1, so
+nothing false is accepted). Two mechanisms drive the plateau, both
+regression-pinned below:
+
+(1) Enumeration cap. ``PathEngine.efficient_paths`` caps each OD's efficient-DAG
+enumeration at ``max_routes`` (a dense DAG is exponential in the network size).
+On a network whose efficient set exceeds the cap -- e.g. a single-OD 10x10 grid,
+~24k efficient paths against a 4096 default -- the working set can never contain
+the Dial support, the truncation emits a ``RuntimeWarning`` (never silent), and
+the certified residual plateaus at an O(10) value that IS a route-set/logit
+mismatch the truncation creates.
+
+(2) Never-pruned stale routes. On STRONGLY CONGESTED MULTI-OD networks a route
+enters the efficient set at one flow and leaves it as flows congest; because
+routes are never pruned (the entropy floor keeps every working-set route at a
+positive share), it keeps an ``exp(-theta c)`` share Dial does not assign. The
+swap converges to an EXACT rest point -- the path-flow logit over the
+accumulated, stale-inclusive working set -- with disequilibrium ``V ~ 0`` and a
+certified residual that can be O(1), orders of magnitude above what ``sue-msa``
+reaches on the SAME instance, and (being a true rest point, not slow
+convergence) can even sit above an earlier iterate's residual. This is intrinsic
+to keeping the pure Smith & Watling route-swap: matching Dial here would require
+dropping stale columns, which forfeits the monotone-Fisk Lyapunov descent that
+IS this model's defining validation. It is therefore scoped, not silently
+certified -- ``dtd-swap-sue`` targets logit SUE where the efficient set is
+enumerable and stable; on strongly congested multi-OD instances ``sue-msa``
+reaches a tight residual and this model does not.
 
 Discretization. Like dtd-swap, the raw Euler step overshoots, so it is sized in
 two stages. First, the Smith & Wisten (1995) ``a <= 1/(B M)`` level bound on the
@@ -110,16 +133,18 @@ Smith (1984) swap + Lyapunov identity already shipped as ``dtd-swap``. The
 1984/2016 normalization of ``V`` is attributed, not verbatim-quoted, and used
 only as a monotone-decrease diagnostic, so its scale is immaterial.
 
-Path/column-generation machinery mirrors ``dtd-swap`` but enumerates the FULL
-Dial-efficient route set each day (``PathEngine.efficient_paths``) instead of the
-single shortest path -- the SUE equilibrium loads every efficient route, so the
-pricing must supply every efficient route (Sheffi 1985 sec. 11.2). Routes are
-never pruned (logit SUE keeps each at a positive share), so the per-OD working
-set grows monotonically to the equilibrium efficient set; link flows are rebuilt
-exactly from route flows before every checkpoint. Budget: one batched Dijkstra
-(the efficient-set enumeration) + one Dial-STOCH load (the certified residual)
-per day, each counted as one sp_call (dtd-swap counts the Dijkstra; sue-msa
-counts each Dial load -- same unit).
+Path/column-generation machinery mirrors ``dtd-swap`` but enumerates the
+Dial-efficient route set each day (``PathEngine.efficient_paths``, up to its
+``max_routes`` cap) instead of the single shortest path -- the SUE equilibrium
+loads every efficient route, so the pricing must supply every efficient route
+(Sheffi 1985 sec. 11.2). Routes are never pruned (logit SUE keeps each at a
+positive share), so the per-OD working set grows monotonically, accumulating
+every route that was EVER Dial-efficient -- including ones that later leave the
+efficient set as flows congest (the never-pruned-stale-route plateau scoped
+above); link flows are rebuilt exactly from route flows before every checkpoint.
+Budget: one batched Dijkstra (the efficient-set enumeration) + one Dial-STOCH
+load (the certified residual) per day, each counted as one sp_call (dtd-swap
+counts the Dijkstra; sue-msa counts each Dial load -- same unit).
 """
 
 from __future__ import annotations

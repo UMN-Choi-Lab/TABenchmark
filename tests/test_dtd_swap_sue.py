@@ -15,6 +15,7 @@ check); as ``theta -> infinity`` it collapses to the deterministic Wardrop UE.
 """
 
 import math
+import warnings
 
 import numpy as np
 import pytest
@@ -217,6 +218,65 @@ def _congested_multiod_sue(seed: int = 1) -> Scenario:
         od[i, j] = rng.uniform(0.5, 1.5) * ratio * float(capacity.mean())
     return Scenario(
         name=f"congested-sue-{seed}",
+        network=net,
+        demand=Demand(od),
+        sue_family="logit",
+        sue_theta=float(10 ** rng.uniform(-1.7, 0.3)),
+    )
+
+
+def _review_congested_sue_25() -> Scenario:
+    """The adversarial-review MAJOR repro for the never-pruned-stale-route
+    plateau (finding b), reproduced byte-for-byte from the reviewer's seed-25
+    fuzz instance. The RNG draw order here is fft, cap, alpha -- DISTINCT from
+    ``_congested_multiod_sue`` above, which draws cap first, so the two generate
+    different networks from the same seed. On THIS instance dtd-swap-sue locks at
+    an O(1) certified rest point while sue-msa reaches machine tolerance on the
+    same net -- the evidence the module docstring now scopes honestly."""
+    rng = np.random.default_rng(25)
+    nn = int(rng.integers(6, 13))
+    nz = int(rng.integers(2, min(6, nn)))
+    arcs: set[tuple[int, int]] = set()
+    for i in range(1, nn + 1):
+        arcs |= {(i, i % nn + 1), (i % nn + 1, i)}
+    n_extra = int(rng.integers(nn, 3 * nn))
+    tries = 0
+    while len(arcs) < 2 * nn + n_extra and tries < 500:
+        tries += 1
+        u = int(rng.integers(1, nn + 1))
+        v = int(rng.integers(1, nn + 1))
+        if u != v:
+            arcs.add((u, v))
+    ordered = sorted(arcs)
+    nl = len(ordered)
+    fft = rng.uniform(1.0, 10.0, nl)
+    cap = rng.uniform(3.0, 15.0, nl)
+    alpha = rng.uniform(0.1, 0.3, nl)
+    net = Network(
+        name="review-congested-sue-25",
+        n_nodes=nn,
+        n_zones=nz,
+        first_thru_node=1,
+        init_node=np.array([u for u, _ in ordered], dtype=np.int64),
+        term_node=np.array([v for _, v in ordered], dtype=np.int64),
+        capacity=cap,
+        length=np.zeros(nl),
+        free_flow_time=fft,
+        b=alpha,
+        power=np.full(nl, 4.0),
+        toll=np.zeros(nl),
+        link_type=np.ones(nl, dtype=np.int64),
+    )
+    od = np.zeros((nz, nz))
+    pairs = [(i, j) for i in range(nz) for j in range(nz) if i != j]
+    k = int(rng.integers(2, len(pairs) + 1)) if len(pairs) > 1 else 1
+    chosen = rng.choice(len(pairs), size=k, replace=False)
+    ratio = rng.uniform(1.0, 4.0)
+    for idx in chosen:
+        i, j = pairs[int(idx)]
+        od[i, j] = rng.uniform(0.5, 1.5) * ratio * float(cap.mean())
+    return Scenario(
+        name="review-congested-sue-25",
         network=net,
         demand=Demand(od),
         sue_family="logit",
@@ -467,3 +527,60 @@ def test_braess_content_hash_preserved():
     """This model adds no scenario field: the golden Braess content hash must be
     byte-identical."""
     assert braess_scenario().content_hash() == BRAESS_GOLDEN_HASH
+
+
+# ------------------------------------------- scoped-limitation regressions (P1)
+def test_efficient_paths_truncation_is_exposed_not_silent():
+    """Adversarial-review MAJOR (finding a): on a dense network whose single-OD
+    efficient DAG exceeds ``max_routes``, ``PathEngine.efficient_paths`` returns
+    a STRICT SUBSET capped at ``max_routes`` -- but the truncation must be
+    EXPOSED (a ``RuntimeWarning``), not silent, because a silent cap falsifies
+    dtd-swap-sue's 'column-generate the whole efficient set' premise. A larger
+    cap enumerates the full DAG and warns nothing. Pins the fix: deleting the
+    warn (silent truncation) or the cap detection fails this test."""
+    sc = _grid_sue(n=10)  # single-OD 10x10 grid: ~24k efficient paths vs 4096 cap
+    engine = PathEngine(sc.network)
+    key = (0, sc.network.n_nodes - 1)
+    costs = sc.network.link_cost(np.zeros(sc.network.n_links))  # free-flow costs
+
+    with pytest.warns(RuntimeWarning, match="truncated"):
+        capped = engine.efficient_paths(costs, sc.demand)  # default cap = 4096
+    assert len(capped[key]) == 4096  # exactly the cap -> a strict subset
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # any warning becomes an error here
+        full = engine.efficient_paths(costs, sc.demand, max_routes=10**9)
+    assert len(full[key]) > 4096  # the full efficient set (~24k), no truncation
+
+
+def test_congested_multiod_locks_at_honest_rest_point_above_msa():
+    """Adversarial-review MAJOR (finding b): on a strongly congested multi-OD
+    network the never-pruned stale routes make the swap converge to an EXACT rest
+    point (disequilibrium ~ 0) whose certified residual is O(1) -- orders of
+    magnitude above what sue-msa reaches on the SAME instance. This refutes the
+    docstring's former 'small floor far below O(1), merely trends downward like
+    sue-msa' story. P1 is intact throughout: the harness-recomputed residual
+    equals the model self-report, so the plateau is honestly scored, never a
+    false accept. Reproduced from the reviewer's exact seed-25 fuzz instance."""
+    sc = _review_congested_sue_25()
+    ev = Evaluator(sc)
+    swap = _solve(sc, iterations=400, target_relative_gap=1e-12)
+    msa = _solve(sc, DialSUEModel(), iterations=600, target_relative_gap=1e-9)
+
+    m = ev.evaluate(swap.final.link_flows)
+    swap_res = m["sue_fixed_point_residual"]
+    msa_res = ev.evaluate(msa.final.link_flows)["sue_fixed_point_residual"]
+
+    # (1) Honest scoring (P1): harness recomputation == model self-report, so the
+    # plateau is a truthfully reported residual, not a false accept.
+    assert m["feasible"] == 1.0
+    assert swap_res == pytest.approx(
+        swap.final.self_report["sue_fixed_point_residual"]
+    )
+    # (2) The plateau is O(1) -- NOT the 'small, far below O(1)' the docs claimed.
+    assert swap_res > 0.5
+    # (3) It is an EXACT rest point (V -> 0), NOT slow convergence.
+    assert swap.final.self_report["sue_disequilibrium"] < 1e-6
+    # (4) sue-msa reaches a tight residual on the SAME net: 'like sue-msa' is false.
+    assert msa_res < 1e-3
+    assert swap_res > 1000.0 * msa_res

@@ -13,6 +13,8 @@ scales to large networks.
 
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import dijkstra
@@ -120,13 +122,21 @@ class PathEngine:
         One shortest path per day cannot supply that set — an efficient route
         that is never the strict minimum is never generated — so ``dtd-swap-sue``
         enumerates the whole set here. Enumeration is capped at ``max_routes``
-        per OD (a safety bound on the efficient-DAG path count; it does not bind
-        on the benchmark's SUE scenarios).
+        per OD (a safety bound on the efficient-DAG path count, which can be
+        exponential in the network size). The cap does not bind on the shipped
+        SUE scenarios, but on dense networks it does: a single-OD 10x10 grid, for
+        instance, has ~24k efficient paths against the 4096 default. When the cap
+        binds, the returned set is a STRICT SUBSET of the efficient routes and a
+        ``RuntimeWarning`` is emitted (the truncation is never silent) — so a
+        downstream logit column set built from it cannot reach the full Dial
+        support, and the SUE residual will plateau above solver tolerance. Raise
+        ``max_routes`` to enumerate a larger DAG (at exponential cost).
         """
         graph = self._graph(np.asarray(costs, dtype=np.float64))
         od = demand.matrix
         origins = np.nonzero(od.sum(axis=1) > 0)[0]
         routes: dict[tuple[int, int], list[np.ndarray]] = {}
+        truncated_ods: list[tuple[int, int]] = []
         if origins.size == 0:
             return routes
 
@@ -173,7 +183,23 @@ class PathEngine:
                     for h, k in adjacency.get(node, ()):
                         if h in can_reach:
                             stack.append((h, [*links, k]))
+                # A non-empty stack at exit means the cap bound before the DAG was
+                # fully enumerated: the returned set is a strict subset.
+                if stack:
+                    truncated_ods.append((int(o), int(d)))
                 routes[(int(o), int(d))] = found
+        if truncated_ods:
+            warnings.warn(
+                f"PathEngine.efficient_paths truncated the Dial-efficient route "
+                f"enumeration at max_routes={max_routes} for "
+                f"{len(truncated_ods)} OD pair(s) (e.g. {truncated_ods[0]}): the "
+                f"returned column set is a STRICT SUBSET of the efficient support, "
+                f"so a logit column set built from it cannot reach the full Dial "
+                f"fixed point (the SUE residual will plateau above solver "
+                f"tolerance). Raise max_routes to enumerate the whole DAG.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
         return routes
 
     def od_cost_matrix(self, costs: np.ndarray, demand: Demand) -> np.ndarray:
