@@ -17,8 +17,9 @@ route flows, Horowitz's traveler carries a **perceived LINK-cost vector**
 experienced on previous days. Each day travelers load the network with a logit
 route choice made at the *perceived* costs, experience the *actual* costs the
 resulting flow induces, and update their memory toward those actual costs
-(Guo, Yang & Huang 2022, *Transportation Science* review of day-to-day
-dynamics; the ``horowitz1984stability`` spec math_sketch):
+(the perceived-cost-smoothing + logit-load day-to-day process reviewed in the
+open Watling & Hazelton 2003, *Networks and Spatial Economics* 3(3); the
+``horowitz1984stability`` spec math_sketch):
 
     v_n     = D * P_logit(p_n)          [Dial-STOCH loading at perceived costs]
     p_{n+1} = (1 - w) * p_n + w * t(v_n)  [exponential cost smoothing, weight w]
@@ -71,9 +72,11 @@ memory / slow learning (very stable); ``w = 1`` is Horowitz's naive
 Sourcing. Horowitz (1984, *Transportation Science* 18(3):200-221) is a
 two-link analytic/illustrative study with no standard-network reproducible
 numerics; it is attributed unread. The perceived-cost smoothing update and the
-logit day-loading are cross-verified from the open Guo, Yang & Huang (2022)
-day-to-day review and Sheffi (1985, *Urban Transportation Networks* ch. 11-12)
-Dial-STOCH loading already shipped as ``_stoch.StochEngine``; the linearized
+logit day-loading are cross-verified from the open Watling & Hazelton (2003,
+*Networks and Spatial Economics* 3(3):349-370, ``watling2003dynamics`` in the
+canon) day-to-day assignment survey and the Sheffi (1985, *Urban Transportation
+Networks* ch. 11-12) Dial-STOCH loading already shipped as
+``_stoch.StochEngine``; the linearized
 stability threshold ``w* = 2/(1 - phi')`` is re-derived here (forward-Euler of
 the smoothing ODE) and numerically confirmed against the model's own trajectory
 on the two-route anchor. Descends from Daganzo & Sheffi (1977) stochastic UE.
