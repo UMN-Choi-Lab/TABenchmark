@@ -231,6 +231,7 @@ TABenchmark/
 │   │   │                  # dtd_link.py (He-Guo-Liu 2010 link-based day-to-day dynamics),
 │   │   │                  # dtd_friesz.py (Friesz 1994 route-space projected-gradient day-to-day PDS),
 │   │   │                  # dtd_horowitz.py (Horowitz 1984 cost-smoothing day-to-day logit-SUE),
+│   │   │                  # dtd_stochastic.py (Cascetta 1989 finite-population stochastic-process day-to-day),
 │   │   │                  # br_ue.py (Mahmassani-Chang 1987 boundedly-rational UE),
 │   │   │                  # sc_tap.py (Larsson-Patriksson 1995 side-constrained UE),
 │   │   │                  # learned.py (first learned/black-box surrogate),

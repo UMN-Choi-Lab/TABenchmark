@@ -8,6 +8,7 @@ from .br_ue import BoundedlyRationalUEModel
 from .dtd_friesz import FrieszDTDModel
 from .dtd_horowitz import CostSmoothingSUEModel
 from .dtd_link import LinkBasedDTDModel
+from .dtd_stochastic import CascettaStochasticProcessModel
 from .dtd_swap import RouteSwapDTDModel
 from .dtd_swap_sue import RouteSwapSUEModel
 from .elastic import ElasticDemandFWModel
@@ -35,6 +36,7 @@ __all__ = [
     "CostSmoothingSUEModel",
     "DialSUEModel",
     "BoundedlyRationalUEModel",
+    "CascettaStochasticProcessModel",
     "FrieszDTDModel",
     "LinkBasedDTDModel",
     "RouteSwapDTDModel",
