@@ -241,7 +241,13 @@ TABenchmark/
 │   │   └── adapters/      # callable_adapter.py (planned: subprocess.py, docker.py)
 │   ├── observe/           # data levels + identifiability checks
 │   ├── estimation/        # T2 OD-estimation track (base, entropy/gls/spiess/spsa)
-│   ├── metrics/           # gaps.py, flows.py, so.py, estimation.py (planned: distributional.py)
+│   ├── dnl/               # Phase-2 dynamic-network-loading foundation (ADR-010): grid.py,
+│   │                      # fd.py (fundamental diagram), demand.py, scenario.py (DynamicScenario
+│   │                      # + domain-separated hash), link.py + node.py (S/R interfaces),
+│   │                      # loader.py, output.py (DNLOutput P1 artifact), _reference.py
+│   │                      # (test-only point queue), builtin.py — shared by ctm/ltm/newell/godunov/node
+│   ├── metrics/           # gaps.py, flows.py, so.py, estimation.py, dnl_gaps.py (DNL P1
+│   │                      # certificates C0–C7, ADR-010) (planned: distributional.py)
 │   ├── experiments/       # runner.py incl. manifests, bootstrap.py (planned: profiles.py)
 │   └── cli.py             # tabench fetch | list | run (planned: validate)
 ├── scenarios/             # declarative YAML scenario cards (ladder: 0braess, 1siouxfalls, …)
@@ -356,8 +362,11 @@ Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 172 refe
   parameters unlocks gradient-based T2 baselines and end-to-end learned pipelines,
   while still being certified purely from its emitted flows (P1).
   Frozen v1.0 core grid (3 networks × 4 data levels × T1/T2) with budget tables.
-- **v2:** DTA — CTM/LTM network loading components, analytical DUE, subprocess adapters
-  for DTALite/MATSim/SUMO; day-to-day dynamics track; T3 intervention suite; Docker
+- **v2:** DTA — the **dnl-core dynamic-network-loading foundation has landed**
+  ([ADR-010](design/adr-010-dnl-core.md): generic sending/receiving link/node interfaces,
+  `DynamicScenario` + domain-separated hash, DNL P1 certificates C0–C7); CTM/LTM/Newell/
+  Godunov/node-model build on it as `LinkModel`/`NodeModel` subclasses. Still ahead:
+  analytical DUE, subprocess adapters for DTALite/MATSim/SUMO; T3 intervention suite; Docker
   images per engine; public leaderboard.
 
 ## 6. Top design risks and mitigations
