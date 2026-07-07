@@ -90,12 +90,15 @@ descent the theory promises (Smith & Watling 2016) -- the SUE analog of
 dtd-swap's backtrack-on-Beckmann.
 
 Entropy floor. The ``(1/theta) ln h_k`` term is -inf at ``h_k = 0``, so a newly
-column-generated route enters with a small positive seed ``seed_frac * D_rs``
-(not 0), route flows are clamped to a per-OD relative floor ``h_floor_rel *
-D_rs`` before taking the log, and each OD's flows are renormalized to sum to its
-demand after every swap (exact conservation -> node-balance ~ 0). Routes are
-never pruned to 0: logit SUE uses every working-set route at a positive share,
-so the entropy term keeps flows away from 0 and the clamp rarely binds.
+column-generated route enters with a small positive seed (not 0). The seed is
+backtracked against the Fisk objective and paid for by scaling the existing
+routes of the same OD pair, so route expansion itself is demand-feasible and
+does not sit outside the Lyapunov check. Route flows are clamped to a per-OD
+relative floor ``h_floor_rel * D_rs`` before taking the log, and each OD's flows
+are renormalized to sum to its demand after every swap (exact conservation ->
+node-balance ~ 0). Routes are never pruned to 0: logit SUE uses every working-set
+route at a positive share, so the entropy term keeps flows away from 0 and the
+clamp rarely binds.
 
 Sourcing. Smith & Watling (2016, *Transportation Research Part B* 85:132-141,
 DOI 10.1016/j.trb.2015.12.015) is paywalled and attributed unread; the modified
@@ -236,12 +239,18 @@ class RouteSwapSUEModel(TrafficAssignmentModel):
         demand_rs = {key: float(od[key[0], key[1]]) for key in first}
         flows = {key: [demand_rs[key]] for key in first}
 
-        def aggregate() -> np.ndarray:
+        def aggregate_from(
+            route_paths: dict[tuple[int, int], list[np.ndarray]],
+            route_flows: dict[tuple[int, int], list[float] | np.ndarray],
+        ) -> np.ndarray:
             v = np.zeros(network.n_links)
-            for key, plist in paths.items():
-                for links, h in zip(plist, flows[key], strict=True):
+            for key, plist in route_paths.items():
+                for links, h in zip(plist, route_flows[key], strict=True):
                     v[links] += h
             return v
+
+        def aggregate() -> np.ndarray:
+            return aggregate_from(paths, flows)
 
         def clamp_log(key: tuple[int, int], h: np.ndarray) -> np.ndarray:
             """``ln h`` with h clamped to the OD floor so the log stays finite."""
@@ -252,6 +261,25 @@ class RouteSwapSUEModel(TrafficAssignmentModel):
             """``(1/theta) sum_k h_k (ln h_k - 1)`` -- the Fisk entropy term."""
             hc = np.maximum(h, h_floor_rel * demand_rs[key] or _TINY)
             return float((hc * (np.log(hc) - 1.0)).sum())
+
+        def fisk_objective(
+            route_paths: dict[tuple[int, int], list[np.ndarray]],
+            route_flows: dict[tuple[int, int], list[float] | np.ndarray],
+            link_flows: np.ndarray,
+        ) -> float:
+            """Fisk SUE objective for a consistent path-flow state."""
+            out = float(network.link_cost_integral(link_flows).sum())
+            for key in route_paths:
+                out += inv_theta * entropy(
+                    key, np.asarray(route_flows[key], dtype=np.float64)
+                )
+            return out
+
+        def path_known(known: list[np.ndarray], new_path: np.ndarray) -> bool:
+            return any(
+                p.shape == new_path.shape and np.array_equal(p, new_path)
+                for p in known
+            )
 
         v = aggregate()
         k = 0
@@ -269,11 +297,10 @@ class RouteSwapSUEModel(TrafficAssignmentModel):
             # Provenance: Fisk Lyapunov objective F (Beckmann link term + entropy,
             # monotone non-increasing) and the generalized-cost disequilibrium
             # V (-> 0 at logit SUE). Neither is scored.
-            fisk = float(network.link_cost_integral(v).sum())
+            fisk = fisk_objective(paths, flows, v)
             disequilibrium = 0.0
             for key, plist in paths.items():
                 h = np.asarray(flows[key], dtype=np.float64)
-                fisk += inv_theta * entropy(key, h)
                 if len(plist) < 2:
                     continue
                 c = np.array([float(costs[p].sum()) for p in plist])
@@ -297,25 +324,59 @@ class RouteSwapSUEModel(TrafficAssignmentModel):
                 break
 
             # Column generation: add EVERY currently Dial-efficient route not yet
-            # in the working set, each entering with a positive seed (NOT 0 --
-            # ln 0 = -inf); the end-of-day renormalization restores the exact OD
-            # demand. Enumerating the WHOLE efficient set (not one shortest path
-            # per day) is what makes the path-flow logit rest point coincide with
-            # the certified Dial link-logit on general networks: an efficient
-            # route that is never the strict shortest path would otherwise never
-            # be generated -- and so never loaded -- yet Dial loads it, which is
-            # exactly the residual plateau this replaces.
+            # in the working set. New routes need positive flow because ln(0) is
+            # -inf, but that seed must be part of the Lyapunov step: it is paid
+            # for by scaling the OD's existing routes and halved until the actual
+            # Fisk objective of the expanded, demand-feasible state does not rise.
+            # Enumerating the WHOLE efficient set (not one shortest path per day)
+            # is what makes the path-flow logit rest point coincide with Dial.
             efficient = engine.efficient_paths(costs, scenario.demand)
             sp_calls += 1
+            new_routes: dict[tuple[int, int], list[np.ndarray]] = {}
             for key, eff_routes in efficient.items():
                 known = paths[key]
                 for new_path in eff_routes:
-                    if not any(
-                        p.shape == new_path.shape and np.array_equal(p, new_path)
-                        for p in known
-                    ):
-                        known.append(new_path)
-                        flows[key].append(seed_frac * demand_rs[key])
+                    if not path_known(known, new_path):
+                        new_routes.setdefault(key, []).append(new_path)
+
+            if new_routes:
+                seed_scale = 1.0
+                slack = 1e-12 * max(abs(fisk), 1.0)
+                accepted_seed: tuple[
+                    dict[tuple[int, int], list[np.ndarray]],
+                    dict[tuple[int, int], np.ndarray],
+                    np.ndarray,
+                ] | None = None
+                for _ in range(max_backtracks + 1):
+                    trial_paths = {key: list(plist) for key, plist in paths.items()}
+                    trial_flows = {
+                        key: np.asarray(h, dtype=np.float64).copy()
+                        for key, h in flows.items()
+                    }
+                    for key, additions in new_routes.items():
+                        demand = demand_rs[key]
+                        n_new = len(additions)
+                        seed = min(seed_frac * seed_scale * demand, 0.5 * demand / n_new)
+                        old = trial_flows[key]
+                        old_sum = float(old.sum())
+                        total_seed = seed * n_new
+                        if old_sum > 0.0 and total_seed < demand:
+                            old *= (demand - total_seed) / old_sum
+                        else:
+                            old.fill(0.0)
+                        trial_paths[key].extend(additions)
+                        trial_flows[key] = np.concatenate(
+                            [old, np.full(n_new, seed, dtype=np.float64)]
+                        )
+                    trial_v = aggregate_from(trial_paths, trial_flows)
+                    if fisk_objective(trial_paths, trial_flows, trial_v) <= fisk + slack:
+                        accepted_seed = (trial_paths, trial_flows, trial_v)
+                        break
+                    seed_scale *= 0.5
+                if accepted_seed is not None:
+                    paths, seed_flows, v = accepted_seed
+                    flows = {key: list(h) for key, h in seed_flows.items()}
+                    costs = network.link_cost(v)
 
             # Per-OD swap directions on the GENERALIZED cost C_k = c_k + (1/theta)
             # ln h_k (a = 1 here; a enters only through the step cap below), plus
@@ -341,41 +402,44 @@ class RouteSwapSUEModel(TrafficAssignmentModel):
             bound = b_max * m_max
             step = a if bound <= 0.0 else min(a, safety / bound)
 
-            # Armijo backtracking on the Fisk Lyapunov F: the C-swap is a descent
-            # direction (Fdot = -a V), so a small enough step always decreases F;
-            # halve until it does. Only the swapping ODs' entropy and the link
-            # Beckmann term change, so F0 and the trial share every constant term.
+            # Armijo backtracking on the Fisk Lyapunov F: check the actual emitted
+            # state after clamping and per-OD renormalization, not the unprojected
+            # Euler state. This keeps the discrete trace faithful to the claimed
+            # monotone Lyapunov objective even when new columns were just seeded.
             dv = np.zeros(network.n_links)
             for key, delta in directions.items():
                 for links, d in zip(paths[key], delta, strict=True):
                     dv[links] += d
+            accepted_swap: tuple[dict[tuple[int, int], np.ndarray], np.ndarray] | None = None
             if directions:
-                f0 = float(network.link_cost_integral(v).sum())
-                for key in directions:
-                    f0 += inv_theta * entropy(key, np.asarray(flows[key]))
+                f0 = fisk_objective(paths, flows, v)
                 slack = 1e-12 * max(abs(f0), 1.0)
-                for _ in range(max_backtracks):
-                    f_trial = float(network.link_cost_integral(v + step * dv).sum())
+                for _ in range(max_backtracks + 1):
+                    trial_flows = {
+                        key: np.asarray(h, dtype=np.float64).copy()
+                        for key, h in flows.items()
+                    }
                     for key, delta in directions.items():
-                        f_trial += inv_theta * entropy(
-                            key, np.asarray(flows[key]) + step * delta
-                        )
-                    if f_trial <= f0 + slack:
+                        h = trial_flows[key] + step * delta
+                        np.maximum(h, h_floor_rel * demand_rs[key], out=h)
+                        s = float(h.sum())
+                        if s > 0.0:
+                            h *= demand_rs[key] / s
+                        trial_flows[key] = h
+                    trial_v = aggregate_from(paths, trial_flows)
+                    if fisk_objective(paths, trial_flows, trial_v) <= f0 + slack:
+                        accepted_swap = (trial_flows, trial_v)
                         break
                     step *= 0.5
 
             # Apply the swap, clamp to the entropy floor, and renormalize each OD
             # to its exact demand (node-balance ~ 0). Routes are never pruned:
             # logit SUE keeps every working-set route at a positive share.
-            for key, delta in directions.items():
-                h = np.asarray(flows[key], dtype=np.float64) + step * delta
-                np.maximum(h, h_floor_rel * demand_rs[key], out=h)
-                s = float(h.sum())
-                if s > 0.0:
-                    h *= demand_rs[key] / s
-                flows[key] = list(h)
-
-            v = aggregate()  # exact resync: emitted flows == route aggregation
+            if accepted_swap is not None:
+                swap_flows, v = accepted_swap
+                flows = {key: list(h) for key, h in swap_flows.items()}
+            else:
+                v = aggregate()  # exact resync: emitted flows == route aggregation
 
         return ResultBundle(
             model_name=self.name,

@@ -167,6 +167,63 @@ def _grid_sue(n: int = 4, theta: float = 0.5, demand: float = 5.0) -> Scenario:
     )
 
 
+def _congested_multiod_sue(seed: int = 1) -> Scenario:
+    """Deterministic congested multi-OD network that used to make positive
+    route seeding increase the recorded Fisk objective."""
+    rng = np.random.default_rng(seed)
+    n_nodes = int(rng.integers(6, 13))
+    n_zones = int(rng.integers(2, min(6, n_nodes)))
+
+    arcs = set()
+    for i in range(1, n_nodes + 1):
+        j = i % n_nodes + 1
+        arcs.add((i, j))
+        arcs.add((j, i))
+    n_extra = int(rng.integers(n_nodes, 3 * n_nodes))
+    tries = 0
+    while len(arcs) < 2 * n_nodes + n_extra and tries < 500:
+        tries += 1
+        u = int(rng.integers(1, n_nodes + 1))
+        v = int(rng.integers(1, n_nodes + 1))
+        if u != v:
+            arcs.add((u, v))
+    ordered = sorted(arcs)
+    init = np.array([u for u, _ in ordered], dtype=np.int64)
+    term = np.array([v for _, v in ordered], dtype=np.int64)
+    nl = len(ordered)
+    capacity = rng.uniform(3.0, 15.0, nl)
+    net = Network(
+        name=f"congested-sue-{seed}",
+        n_nodes=n_nodes,
+        n_zones=n_zones,
+        first_thru_node=1,
+        init_node=init,
+        term_node=term,
+        capacity=capacity,
+        length=np.zeros(nl),
+        free_flow_time=rng.uniform(1.0, 10.0, nl),
+        b=rng.uniform(0.10, 0.30, nl),
+        power=np.full(nl, 4.0),
+        toll=np.zeros(nl),
+        link_type=np.ones(nl, dtype=np.int64),
+    )
+
+    od = np.zeros((n_zones, n_zones))
+    pairs = [(i, j) for i in range(n_zones) for j in range(n_zones) if i != j]
+    chosen = rng.choice(len(pairs), size=int(rng.integers(2, len(pairs) + 1)), replace=False)
+    ratio = rng.uniform(1.0, 4.0)
+    for idx in chosen:
+        i, j = pairs[int(idx)]
+        od[i, j] = rng.uniform(0.5, 1.5) * ratio * float(capacity.mean())
+    return Scenario(
+        name=f"congested-sue-{seed}",
+        network=net,
+        demand=Demand(od),
+        sue_family="logit",
+        sue_theta=float(10 ** rng.uniform(-1.7, 0.3)),
+    )
+
+
 # ------------------------------------------------------------- convergence
 def test_converges_to_logit_sue_fixed_point(scenario):
     """The generalized-cost route-swap settles on the analytic binary-logit SUE
@@ -290,6 +347,24 @@ def test_fisk_is_a_monotone_lyapunov_function(scenario):
     beckmann = float(scenario.network.link_cost_integral(v_star).sum())
     entropy = (f_a * (math.log(f_a) - 1.0) + f_b * (math.log(f_b) - 1.0)) / 0.5
     assert fisk[-1] == pytest.approx(beckmann + entropy, abs=1e-6)
+
+
+def test_route_seeding_preserves_fisk_monotonicity_on_congested_multiod():
+    """Regression for the second adversarial-review Major: positive route seeds
+    must be included in the actual Lyapunov step, not injected before an Armijo
+    check on a non-conserved intermediate route-flow state."""
+    sc = _congested_multiod_sue()
+    trace = _solve(sc, iterations=300, target_relative_gap=1e-4)
+    fisk = [s.self_report["fisk_objective"] for s in trace]
+    assert all(
+        fisk[i] >= fisk[i + 1] - 1e-9 * max(abs(fisk[i]), 1.0)
+        for i in range(len(fisk) - 1)
+    )
+    metrics = Evaluator(sc).evaluate(trace.final.link_flows)
+    assert metrics["feasible"] == 1.0
+    assert metrics["sue_fixed_point_residual"] == pytest.approx(
+        trace.final.self_report["sue_fixed_point_residual"], rel=1e-9, abs=1e-15
+    )
 
 
 def test_sue_disequilibrium_vanishes_at_equilibrium(scenario):
