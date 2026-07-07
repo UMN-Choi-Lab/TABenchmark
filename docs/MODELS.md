@@ -52,7 +52,7 @@ graph TD
   n_frieszdaytoday4558(["Friesz 1994"]):::c6
   n_daganzocell7244["Daganzo 1994"]:::c7
   n_larssonaugmented3883(["Larsson 1995"]):::c5
-  n_cantarelladynamic9699["Cantarella 1995"]:::c6
+  n_cantarelladynamic9699(["Cantarella 1995"]):::c6
   n_daganzocell6348["Daganzo 1995"]:::c7
   n_lebacquegodunov3835["Lebacque 1996"]:::c7
   n_yangprinciple7580(["Yang 1998"]):::c4
@@ -591,7 +591,7 @@ A continuous-time network-disequilibrium ODE for day-to-day route-flow adjustmen
 
 ### Cantarella & Cascetta (1995) — Dynamic processes and equilibrium in transportation networks: towards a unifying theory
 
-_roadmap_ · day-to-day fixed point (deterministic process) / stationary distribution (stochastic process) of a unified (S)UE · `[cantarella1995dynamic]`
+`dtd-unifying` · **shipped** · day-to-day fixed point (deterministic process) / stationary distribution (stochastic process) of a unified (S)UE · `[cantarella1995dynamic]`
 
 A unifying theory of day-to-day dynamics that subsumes both deterministic and stochastic processes under one framework of cost-learning filters plus (deterministic or probabilistic) choice maps.
 
@@ -599,7 +599,7 @@ A unifying theory of day-to-day dynamics that subsumes both deterministic and st
 
 **Formulation.** `filtered cost y_n = filter(c(f_{n-1}), c(f_{n-2}), ...); deterministic process: f_n = p(y_n) d, attractor = (S)UE fixed point; stochastic process: f_n ~ p(y_n) d, attractor = stationary distribution.`
 
-**Validation.** Framework paper with illustrative examples (no benchmark numerics table); validate each instantiation's attractor -- fixed point OR stationary-distribution mean -- against the (S)UE oracle from shipped FW/GP (UE) and Dial/probit-MSA (SUE). Implementing both the deterministic and stochastic branches with configurable memory filters is a genuine dynamic engine.
+**Validation.** SHIPPED as `dtd-unifying` (paradigm day_to_day): ONE two-equation process -- the exponential cost-learning filter p <- (1-w) p + w t(v) (factor memory_weight w, C&C's cost updating) plus the choice update v <- v + alpha_n (ChoiceLoad(p) - v) in which only a fraction alpha_n of travelers reconsiders at the forecast costs (factor reconsideration_rate alpha, C&C's choice updating) -- whose choice map is GATED per scenario with no new field: all-or-nothing best response on deterministic scenarios (sue_theta unset; fixed point = Wardrop UE, certified by the standard relative gap exactly like dtd-swap/dtd-link/dtd-friesz) and the pinned Dial-STOCH logit load on SUE scenarios (sue_theta set, sue_family logit; fixed point = the logit SUE of sue-msa/dtd-horowitz, certified by the EXISTING ADR-001 fixed-point residual; probit refused). LINK-SPACE state (forecast link-cost vector + link flows), no route sets or column generation -- the open Cantarella & Watling restatement licenses the arc-variable formulation with the same stability conditions. Validated on BOTH limits of the existing two-route anchor: UE f_A = 2.5 (link flows [2.5, 2.5, 1.5, 1.5], certified gap -> 0) and the brentq-recomputed binary-logit split f_A = 2.2990959494 (certified residual -> ~1e-12), plus the Braess UE regression [4, 2, 2, 2, 4] and Sioux Falls (certified gap decreasing toward the published Beckmann optimum). EXACT-REDUCTION regressions to float precision: stochastic alpha = 1 reproduces dtd-horowitz's emitted trajectory verbatim (one-day index offset), deterministic w = 1 & alpha = 1 IS msa's iterate sequence (recorded-flow offset by one) -- alpha < 1 is the genuinely new flow-inertia axis. Distinctive dynamics: NO damping (like dtd-horowitz), and the re-derived JOINT flip boundary (2-w)(2-alpha) = alpha w |phi'| (day-map Jacobian det (1-w)(1-alpha)) is confirmed on the anchor -- (1,1) settles into a period-2 limit cycle (residual O(1)) while EITHER form of inertia restores convergence ((0.5,0.5) default, alpha=0.3 w=1, alpha=1 w=0.3), C&C's headline result; at alpha = 1 the boundary reduces to dtd-horowitz's documented w* ~ 0.81 (bracketed at w = 0.7 vs 0.9), an independent consistency check. P1 honesty diff == 0 in both modes (same engines as the harness); emitted flows are convex combinations of full-demand loads, so node balance ~ float noise every day. FLAGGED variants: scalar exponential filter = the canonical special case of C&C's general matrix filter (the dtd-stochastic flag); the deterministic branch's annealed alpha/n step is an algorithmic selection (the AON map is discontinuous, so constant alpha generically limit-cycles at O(alpha) around UE; alpha/n satisfies the Powell & Sheffi 1982 step conditions, exact MSA at the w=1 corner, asymptotically MSA for w < 1 -- numerically validated, no formal proof claimed). Primary C&C 1995 (TS 29(4):305-329) paywalled/attributed unread; equations, arc-variable license, fixed-point <-> (S)UE equivalence (eq. 4.2), and the either-inertia stability taxonomy cross-verified from the open-access Cantarella & Watling (2016, EJTL) restatement and Watling & Hazelton (2003); nothing fabricated.
 
 *Builds on:* Cascetta 1989, Smith 1984, Horowitz 1984.
 

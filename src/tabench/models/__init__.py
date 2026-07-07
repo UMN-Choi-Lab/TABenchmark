@@ -11,6 +11,7 @@ from .dtd_link import LinkBasedDTDModel
 from .dtd_stochastic import CascettaStochasticProcessModel
 from .dtd_swap import RouteSwapDTDModel
 from .dtd_swap_sue import RouteSwapSUEModel
+from .dtd_unifying import UnifyingDTDModel
 from .elastic import ElasticDemandFWModel
 from .evans import EvansCombinedModel
 from .frank_wolfe import BiconjugateFrankWolfeModel, ConjugateFrankWolfeModel, FrankWolfeModel
@@ -41,6 +42,7 @@ __all__ = [
     "LinkBasedDTDModel",
     "RouteSwapDTDModel",
     "RouteSwapSUEModel",
+    "UnifyingDTDModel",
     "ElasticDemandFWModel",
     "EvansCombinedModel",
     "SueProbitMsaModel",

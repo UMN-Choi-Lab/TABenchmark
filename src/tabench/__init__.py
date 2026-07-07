@@ -113,6 +113,7 @@ from .models import (
     SystemOptimumModel,
     TapasModel,
     TrafficAssignmentModel,
+    UnifyingDTDModel,
     register_model,
 )
 
@@ -215,6 +216,7 @@ __all__ = [
     "SystemOptimumModel",
     "TapasModel",
     "TrafficAssignmentModel",
+    "UnifyingDTDModel",
     "register_model",
     "__version__",
 ]
