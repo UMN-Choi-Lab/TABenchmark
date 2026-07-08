@@ -444,6 +444,7 @@ class Scenario:
     combined_demand: CombinedDemand | None = None
     br_epsilon: float | None = None
     side_capacities: np.ndarray | None = None
+    link_interaction: np.ndarray | None = None
 
     def __post_init__(self) -> None:
         if self.demand.n_zones != self.network.n_zones:
@@ -527,6 +528,32 @@ class Scenario:
                     f"Scenario '{self.name}': side_capacities is mutually exclusive "
                     "with sue_theta, elastic_demand, combined_demand and br_epsilon"
                 )
+        if self.link_interaction is not None:
+            c = _as_f64(self.link_interaction)
+            object.__setattr__(self, "link_interaction", c)
+            m = self.network.n_links
+            if c.shape != (m, m):
+                raise ValueError(
+                    f"Scenario '{self.name}': link_interaction must have shape "
+                    f"({m}, {m}), got {c.shape}"
+                )
+            if not np.all(np.isfinite(c)):
+                raise ValueError(
+                    f"Scenario '{self.name}': link_interaction must be finite"
+                )
+            if (
+                self.sue_theta is not None
+                or self.elastic_demand is not None
+                or self.combined_demand is not None
+                or self.br_epsilon is not None
+                or self.side_capacities is not None
+            ):
+                raise ValueError(
+                    f"Scenario '{self.name}': link_interaction is mutually exclusive "
+                    "with sue_theta, elastic_demand, combined_demand, br_epsilon and "
+                    "side_capacities (it is a deterministic fixed-demand VI with "
+                    "non-separable link costs)"
+                )
 
     def content_hash(self) -> str:
         """SHA-256 over the canonical serialization of all scored content (P2)."""
@@ -587,4 +614,10 @@ class Scenario:
         if self.side_capacities is not None:
             h.update(b"side_cap")
             h.update(_as_f64(self.side_capacities).tobytes())
+        # Non-separable link-cost interaction operator C (t(v) = t_BPR(v) + C v);
+        # a possibly-asymmetric C is scored instance content, hashed only when set,
+        # so every scenario without it hashes exactly as before (golden-hash test).
+        if self.link_interaction is not None:
+            h.update(b"link_interaction")
+            h.update(_as_f64(self.link_interaction).tobytes())
         return h.hexdigest()

@@ -10,6 +10,7 @@ from .builtin import (
     evans_symmetric_scenario,
     sc_two_route_scenario,
     two_route_scenario,
+    vi_two_route_scenario,
 )
 from .fetcher import ChecksumError, cache_dir, citation, fetch
 from .registry import REGISTRY, NetworkSpec
@@ -22,6 +23,7 @@ __all__ = [
     "evans_symmetric_scenario",
     "br_two_route_scenario",
     "sc_two_route_scenario",
+    "vi_two_route_scenario",
     "ChecksumError",
     "cache_dir",
     "citation",

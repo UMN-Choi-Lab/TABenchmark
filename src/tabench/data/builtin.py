@@ -25,6 +25,7 @@ __all__ = [
     "evans_symmetric_scenario",
     "br_two_route_scenario",
     "sc_two_route_scenario",
+    "vi_two_route_scenario",
 ]
 
 _EPS = 1e-6
@@ -519,4 +520,89 @@ def sc_two_route_scenario(demand: float = 10.0, cap: float = 4.0) -> Scenario:
         reference=reference,
         family="builtin-sc",
         side_capacities=side,
+    )
+
+
+def vi_two_route_scenario(
+    demand: float = 10.0, c13: float = 0.5, c31: float = 0.2
+) -> Scenario:
+    """Two disjoint 2-link routes with an ASYMMETRIC link-cost interaction: the
+    analytic anchor for the Dafermos (1980) / Smith (1979) variational-inequality
+    UE (adr-011).
+
+    Route A = 1->3->2, route B = 1->4->2 (link order 1->3, 3->2, 1->4, 4->2). The
+    congestible legs 3->2 (link 1, carries f_A) and 4->2 (link 3, carries f_B)
+    interact: link 1's cost rises with link 3's flow and vice versa, but
+    ASYMMETRICALLY (``C[1,3] = c13 != c31 = C[3,1]``), so ``t(v) = t_BPR(v) + C v``
+    has NO Beckmann potential. With ``t_1 = f_A + c13 f_B``, ``t_3 = f_B + c31 f_A``,
+    and constant legs ``1->3 = 1``, ``1->4 = 2``, the route costs are
+
+        c_A = 1 + f_A + c13 f_B,   c_B = 2 + f_B + c31 f_A.
+
+    The VI equilibrium equalizes ``c_A = c_B`` with ``f_A + f_B = D``, giving the
+    hand-derived closed form
+
+        f_A* = (1 + (1 - c13) D) / (2 - c13 - c31).
+
+    At ``D = 10, c13 = 0.5, c31 = 0.2``: ``f_A* = 6 / 1.3 = 4.615384...``, link
+    flows ``(f_A*, f_A*, D - f_A*, D - f_A*)``, both route costs ``8.3077``.
+    Ignoring the interaction (``C = 0``) gives the plain-UE ``f_A = (D+1)/2 = 5.5``,
+    so the asymmetric coupling SHIFTS the equilibrium -- a flow no Beckmann / FW
+    solver can reach. The Jacobian's symmetric part
+    ``[[1, (c13+c31)/2], [(c13+c31)/2, 1]]`` is positive definite for
+    ``c13 + c31 < 2``, so the cost map is strictly monotone and ``v*`` is unique.
+    """
+    # Link order: 1->3, 3->2, 1->4, 4->2
+    init = np.array([1, 3, 1, 4], dtype=np.int64)
+    term = np.array([3, 2, 4, 2], dtype=np.int64)
+    params = [
+        _bpr_linear(1.0, 0.0),  # 1->3: constant 1
+        _bpr_linear(0.0, 1.0),  # 3->2: f_A   (interacting leg, link 1)
+        _bpr_linear(2.0, 0.0),  # 1->4: constant 2
+        _bpr_linear(0.0, 1.0),  # 4->2: f_B   (interacting leg, link 3)
+    ]
+    fft = np.array([p[0] for p in params])
+    b = np.array([p[1] for p in params])
+    capacity = np.array([p[2] for p in params])
+
+    network = Network(
+        name="vi-two-route",
+        n_nodes=4,
+        n_zones=2,
+        first_thru_node=1,
+        init_node=init,
+        term_node=term,
+        capacity=capacity,
+        length=np.zeros(4),
+        free_flow_time=fft,
+        b=b,
+        power=np.ones(4),
+        toll=np.zeros(4),
+        link_type=np.ones(4, dtype=np.int64),
+        units=(("time", "abstract"), ("flow", "abstract")),
+    )
+
+    od = np.zeros((2, 2))
+    od[0, 1] = demand
+    c = np.zeros((4, 4))
+    c[1, 3] = c13
+    c[3, 1] = c31  # asymmetric: C[1,3] != C[3,1] -> no Beckmann potential
+
+    f_a = (1.0 + (1.0 - c13) * demand) / (2.0 - c13 - c31)
+    reference = ReferenceSolution(
+        link_flows=np.array([f_a, f_a, demand - f_a, demand - f_a]),
+        source="analytic",
+        note=(
+            f"Asymmetric-VI UE, f_A* = (1 + (1-c13) D)/(2 - c13 - c31) = {f_a}; "
+            f"plain-UE (C=0) would give (D+1)/2 = {0.5 * (demand + 1.0)}."
+        ),
+    )
+
+    return Scenario(
+        name="vi-tworoute",
+        network=network,
+        demand=Demand(matrix=od),
+        reference=reference,
+        family="builtin-vi",
+        link_interaction=c,
     )

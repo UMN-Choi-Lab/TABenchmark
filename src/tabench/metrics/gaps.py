@@ -170,6 +170,15 @@ class Evaluator:
         # correct SC equilibrium (binding links carry flow that would prefer to
         # grow), so it is reported but is not the acceptance criterion.
         self._side_capacities = scenario.side_capacities
+        # Asymmetric-VI UE (adr-011, Dafermos 1980 / Smith 1979): non-separable
+        # link costs t(v) = t_BPR(v) + C v with C possibly asymmetric, so there is
+        # NO Beckmann potential. The scored quantity is the Smith/Dafermos VI
+        # residual, which is EXACTLY the normalized relative gap evaluated at this
+        # (asymmetric) cost map -- a VI gap needs no potential -- so the certificate
+        # reuses the ordinary relative_gap machinery verbatim, only swapping the
+        # cost function. beckmann_objective is not a valid potential here (reported
+        # as NaN). The fixed-demand feasibility audit is unchanged.
+        self._link_interaction = scenario.link_interaction
         # Logit SUE certifies through the closed-form Dial-STOCH map; probit
         # SUE has no closed form, so the harness pins ONE Monte Carlo
         # perturbation matrix E per task, drawn from the reserved evaluation
@@ -203,7 +212,15 @@ class Evaluator:
         # No scenario field: the SO gap needs no instance data — UE and SO
         # runs answer two questions about ONE hashed instance.
         self.so_metrics = so_metrics
-        self._marginal = marginal_network(scenario.network) if so_metrics else None
+        # SO marginal costs are the gradient of the Beckmann potential, which does
+        # not exist for a non-separable VI cost, so SO metrics are undefined on a
+        # link_interaction task: never enable the (BPR-only) marginal there, or the
+        # reported SO gap would silently be on the wrong (interaction-ignoring) map.
+        self._marginal = (
+            marginal_network(scenario.network)
+            if so_metrics and self._link_interaction is None
+            else None
+        )
 
     def _censored(self, reason: str) -> dict[str, float]:
         metrics = {
@@ -254,6 +271,14 @@ class Evaluator:
         v = np.maximum(v, 0.0)
 
         costs = net.link_cost(v)
+        if self._link_interaction is not None:
+            # Non-separable VI cost t(v) = t_BPR(v) + C v (C possibly asymmetric).
+            # The relative gap at THIS cost is the normalized Smith/Dafermos VI
+            # residual. A black box can emit any flow, so censor if the interaction
+            # drives an augmented cost non-positive (shortest paths need costs > 0).
+            costs = costs + self._link_interaction @ v
+            if not np.all(np.isfinite(costs)) or costs.min() <= 0.0:
+                return self._censored("non-positive augmented cost (link interaction)")
         tstt = float(v @ costs)
         realized_total: float | None = None
         if self._elastic is not None:
@@ -330,7 +355,11 @@ class Evaluator:
             # Report raw totals for diagnosis; the *scored* gaps stay censored.
             metrics["tstt"] = tstt
             metrics["sptt"] = sptt
-            metrics["beckmann_objective"] = float(net.link_cost_integral(v).sum())
+            metrics["beckmann_objective"] = (
+                float("nan")
+                if self._link_interaction is not None  # no potential for asymmetric t
+                else float(net.link_cost_integral(v).sum())
+            )
             return metrics
 
         # AEC divides the excess by the number of trips actually made — the
@@ -365,6 +394,12 @@ class Evaluator:
             metrics["max_capacity_violation"] = float(overload.max())
             rel_overload = float((overload / self._side_capacities).max())
             metrics["sc_capacity_feasible"] = 1.0 if rel_overload <= self.feasibility_tol else 0.0
+        if self._link_interaction is not None:
+            # No Beckmann potential exists for an asymmetric cost map, so the
+            # separable-part integral reported above is NOT the VI potential -- NaN
+            # it to avoid a misleading monotone-descent reading. The scored VI
+            # residual is relative_gap, computed at t(v)+Cv (adr-011).
+            metrics["beckmann_objective"] = float("nan")
         if realized_total is not None:
             # Certified realized demand — the endogenous-demand scored quantity
             # (how much travel the equilibrium induces): Sum_rs D_rs(u_rs) for

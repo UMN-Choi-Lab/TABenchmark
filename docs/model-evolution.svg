@@ -120,7 +120,7 @@
 <text x="44" y="514" text-anchor="middle" font-size="9.5" fill="#000">Dafermos 1972</text>
 <rect x="-8" y="656" width="104" height="17" rx="4" fill="#e8e8e8" stroke="#333" stroke-dasharray="3,2"/>
 <text x="44" y="668" text-anchor="middle" font-size="9.5" fill="#000">Smith 1979</text>
-<rect x="-8" y="678" width="104" height="17" rx="4" fill="#e8e8e8" stroke="#333" stroke-dasharray="3,2"/>
+<rect x="-8" y="678" width="104" height="17" rx="4" fill="#e8e8e8" stroke="#333"/>
 <text x="44" y="690" text-anchor="middle" font-size="9.5" fill="#000">Dafermos 1980</text>
 <rect x="242" y="150" width="104" height="17" rx="4" fill="#d6e4ff" stroke="#333"/>
 <text x="294" y="162" text-anchor="middle" font-size="9.5" fill="#000">Frank 1956</text>

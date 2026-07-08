@@ -30,7 +30,7 @@ graph TD
   n_daganzostochastic1939(["Daganzo 1977"]):::c3
   n_merchantmodel1560["Merchant 1978"]:::c8
   n_smithexistence5776["Smith 1979"]:::c0
-  n_dafermostraffic4000["Dafermos 1980"]:::c0
+  n_dafermostraffic4000(["Dafermos 1980"]):::c0
   n_fisksome1742(["Fisk 1980"]):::c3
   n_vanzuylenmost4944(["Van Zuylen 1980"]):::c10
   n_powellconvergence3924(["Powell 1982"]):::c3
@@ -221,7 +221,7 @@ Characterized user equilibrium by a variational-inequality / monotone route-swap
 
 ### Dafermos (1980) — Traffic Equilibrium and Variational Inequalities
 
-_roadmap_ · UE as a variational inequality (asymmetric, non-integrable costs) · `[dafermos1980traffic]`
+`vi-asym` · **shipped** · UE as a variational inequality (asymmetric, non-integrable costs) · `[dafermos1980traffic]`
 
 Formulated traffic equilibrium as a variational inequality, delivering existence and uniqueness for general asymmetric, non-separable link costs that have no equivalent optimization (Beckmann) program.
 
@@ -229,7 +229,7 @@ Formulated traffic equilibrium as a variational inequality, delivering existence
 
 **Formulation.** `Find x* in K: t(x*).(x - x*) >= 0 for all x in K. Existence if t continuous (Brouwer/VI existence); unique if t is strictly monotone (positive-definite, not necessarily symmetric, Jacobian).`
 
-**Validation.** Not shipped; a VI solver (diagonalization or projection) is numpy-tractable and would be validated by reducing to the shipped Beckmann UE on symmetric/separable BPR costs (a known fixed point) plus cross-solver on a small asymmetric instance. The original paper is analytic — no reproducible numeric benchmark.
+**Validation.** SHIPPED as `vi-asym` (paradigm static_ue_vi): the asymmetric variational-inequality UE with NON-SEPARABLE link costs t(v)=t_BPR(v)+C v, C=scenario.link_interaction possibly asymmetric so nabla t is non-symmetric and NO Beckmann potential exists -- the equilibrium is defined only by the VI <t(v*),v-v*> >= 0 for all demand-feasible v (Smith 1979 / Dafermos 1980). Solved by Dafermos diagonalization: freeze the interaction offset=C v (making the cost separable), solve the ordinary UE by Frank-Wolfe (exact Brent line search), re-freeze, repeat, with an outer relaxation step; the fixed point solves the VI. Reduces EXACTLY to Frank-Wolfe UE when C=0 (regression-tested vs bfw). Certified by the VI RESIDUAL = the normalized relative gap evaluated at the asymmetric cost (a VI gap needs no potential, so metrics/gaps.py reuses the relative_gap machinery verbatim, only swapping the cost map); it is 0 iff v solves the VI (necessary AND sufficient), fully harness-recomputed, never a self-report. beckmann_objective is NaN (no potential); a flow driving an augmented cost non-positive is censored. NEW optional Scenario field link_interaction, hashed only when set (golden Braess hash byte-identical, re-asserted); no FlowState/Trace/Evaluator signature change. Validated (recomputed, no trusted digits): the 2-route asymmetric anchor f_A* = (1+(1-c13)D)/(2-c13-c31) = 6/1.3 = 4.6154 at D=10,c13=0.5,c31=0.2, VI residual->0, feasible=1; DISTINCTNESS -- the flow differs from the plain-UE split (D+1)/2=5.5 AND from the symmetrized-interaction Beckmann split 7.5/1.3=5.769, so the asymmetry is load-bearing and the equilibrium is one no potential-minimizing solver reaches; monotone c13 sweep matches the closed form; mutual-exclusivity + shape validation; self-report == harness residual (P1). Adversarial review (5 lenses, 3-refuter verify): findings addressed. Strict monotonicity (nabla t PD symmetric part; Dafermos 1980) guarantees the VI SOLUTION is unique but NOT diagonalization convergence, which needs the stronger Dafermos 1982 dominance condition + positive augmented costs along the iteration: positive diagonally-dominant C (the anchor) converges, a competitive/skew C with negative off-diagonals can drive an augmented cost non-positive from the free-flow start and is then CENSORED (feasible=0, never a false accept). Neither is enforced (both flow-dependent); the always-reported VI residual makes non-convergence visible. FLAGGED: this ships the VI/non-separable slice of the multiclass-VI roadmap item; full per-class multiclass demand (Dafermos 1972) needs a per-class output-shape core change and is a separate sprint. Primary Dafermos 1980 (TS 14(1):42-54) + Smith 1979 (TR-B 13(4):295-304) attributed; VI condition, monotonicity uniqueness and the diagonalization algorithm (Dafermos 1982) cross-verified from the open Boyles TNA non-separable-cost chapter; no numbers fabricated.
 
 *Builds on:* Smith 1979, Beckmann, McGuire & Winsten 1956, Dafermos 1972.
 

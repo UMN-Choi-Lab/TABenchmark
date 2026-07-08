@@ -17,7 +17,7 @@ T3 interventions.
 - [x] Bureau of Public Roads (1964) — *Traffic Assignment Manual* (network-loading component) — **shipped in v0** (BPR link performance function (Network.link_cost))
 - [ ] Dafermos (1972) — *The Traffic Assignment Problem for Multiclass-User Transportation Networks* (white-box solver)
 - [ ] Smith (1979) — *The Existence, Uniqueness and Stability of Traffic Equilibria* (metric/protocol)
-- [ ] Dafermos (1980) — *Traffic Equilibrium and Variational Inequalities* (white-box solver)
+- [x] Dafermos (1980) — *Traffic Equilibrium and Variational Inequalities* (white-box solver) — **shipped** as `vi-asym`
 
 ## Link-based UE algorithms — v0 (FW, MSA) / v0.x (CFW, BFW)
 

@@ -29,6 +29,7 @@ from .data import (
     load_scenario,
     sc_two_route_scenario,
     two_route_scenario,
+    vi_two_route_scenario,
 )
 from .dnl import (
     DestinationNode,
@@ -90,6 +91,7 @@ from .models import (
     MODEL_REGISTRY,
     AlgorithmBModel,
     AllOrNothingModel,
+    AsymmetricVIModel,
     BiconjugateFrankWolfeModel,
     BoundedlyRationalUEModel,
     CallableModel,
@@ -142,6 +144,7 @@ __all__ = [
     "evans_symmetric_scenario",
     "br_two_route_scenario",
     "sc_two_route_scenario",
+    "vi_two_route_scenario",
     "TimeGrid",
     "assert_wave_resolved",
     "FundamentalDiagram",
@@ -212,6 +215,7 @@ __all__ = [
     "RouteSwapDTDModel",
     "RouteSwapSUEModel",
     "SideConstrainedModel",
+    "AsymmetricVIModel",
     "SueProbitMsaModel",
     "SystemOptimumModel",
     "TapasModel",

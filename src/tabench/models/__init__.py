@@ -24,6 +24,7 @@ from .so import SystemOptimumModel, marginal_network
 from .sue_logit import DialSUEModel
 from .sue_probit import SueProbitMsaModel
 from .tapas import TapasModel
+from .vi_asym import AsymmetricVIModel
 
 __all__ = [
     "AlgorithmBModel",
@@ -54,5 +55,6 @@ __all__ = [
     "SideConstrainedModel",
     "SystemOptimumModel",
     "TapasModel",
+    "AsymmetricVIModel",
     "marginal_network",
 ]
