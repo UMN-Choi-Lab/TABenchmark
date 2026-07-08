@@ -40,7 +40,8 @@ reproducible link flows:
 | `sue-probit-msa` | Sheffi & Powell 1982; Daganzo & Sheffi 1977 | probit SUE — **no closed form**; algorithm + MC loading | analytic/MC 2-route probit `f_A ≈ 2.444` at β=0.1, certified by the ADR-003 MC residual (`test_probit.py`) |
 | `fw-elastic` | Florian & Nguyen 1974 (**paywalled/unread**); Gartner 1980; Sheffi 1985 ch.6 / Boyles §9.1 | elastic-demand equilibrium method | analytic elastic 2-route: `u=5, f_A=3, f_B=2`, realized demand `5`, flows `(3,3,2,2)` (recomputed by `brentq`, `test_elastic.py`) |
 | `learned-surrogate` | Rahman & Hasan 2023 (learned-TA line) | link-flow MAE/correlation (the literature's metric) | not a certification target; the harness recomputes the gap — corr `0.63–0.99` across TNTP yet `feasible=0` on all (ADR-006, `test_learned.py`) |
-| T2 estimators (`vzw-entropy`, `gls`, `spiess`, `spsa`) | Van Zuylen & Willumsen 1980; Cascetta 1984; Spiess 1990; Spall 1992 | OD estimation is underdetermined — no reproducible standard flow | planted-matrix recovery on synthetic counts + held-out sensor fit (`test_estimation.py`, ADR-002) |
+| `vi-asym` | Dafermos 1980 (*Transp. Sci.* 14(1), **paywalled/unread**); Smith 1979 (*TR-B* 13(4)); cross-verified vs Boyles TNA non-separable-cost chapter | an asymmetric-Jacobian equilibrium minimizes no Beckmann potential, so there is no reproducible standard flow — validated by a hand-derived analytic VI anchor | 2-route asymmetric anchor `f_A* = (1+(1−c₁₃)D)/(2−c₁₃−c₃₁) = 6/1.3 ≈ 4.6154` (D=10, c₁₃=0.5, c₃₁=0.2), a flow distinct from BOTH the plain-UE split `5.5` **and** the symmetrized-Beckmann split `≈5.769` — one no potential solver reaches; VI residual harness-recomputed at the asymmetric cost, reducing exactly to FW UE when `C=0` (ADR-011, `test_vi_asym.py`) |
+| T2 estimators (`vzw-entropy`, `gls`, `spiess`, `spsa`, `od-congested`, `od-kalman`) | Van Zuylen & Willumsen 1980; Cascetta 1984; Spiess 1990; Spall 1992; Yang et al. 1992; Davis & Nihan 1993 (**read**, JSTOR stable/171951) | OD estimation is underdetermined — no reproducible standard flow | planted-matrix recovery on synthetic counts + held-out sensor fit; `od-congested` adds a closed-form θ-weighted anchor (GLS with scalar variances `1/θ`, `1/(1−θ)`), prior↔count θ-limit consistency, and congested-fixed-point recovery of the equilibrium-consistent truth; `od-kalman` adds the Davis–Nihan large-population Gaussian limit — a two-route DN cross-link covariance closed form `Var(link) = (D²/N)·p_A·p_B` (same-route `+`, cross-route `−` correlation), the single-sensor DN-GLS closed form `g* = (g_pr/w² + p·c/s²)/(1/w² + p²/s²)`, and the AR(1) effective-sample-size factor `τ = (1+ρ)/(1−ρ)` recovered from the count series (`test_estimation.py`, `test_dn_kalman.py`, ADR-002/ADR-012) |
 
 ## The one external objective pin
 
@@ -57,8 +58,8 @@ pinned in `test_validation.py`.
   Lindberg 2013, and even there the gap definition differs, so it is a ranking pin. Every
   other UE paper uses non-TNTP/private instances or hardware-bound timings; the best-known
   flow oracle + cross-solver agreement is the correct, honest fallback.
-- `algb`, `tapas`, and `fw-elastic` cite **paywalled primaries that were not read**; their
-  formulas were cross-verified against open secondary sources (Boyles TNA, TAsK, iTAPAS,
+- `algb`, `tapas`, `fw-elastic`, and `vi-asym` cite **paywalled primaries that were not read**;
+  their formulas were cross-verified against open secondary sources (Boyles TNA, TAsK, iTAPAS,
   Sheffi 1985) — see each model's module docstring and the relevant ADR.
 - Iteration counts are **BLAS-sensitive** (they vary across platforms and Python builds), so
   only *rankings* and *order-of-magnitude* ratios are pinned, never exact counts.

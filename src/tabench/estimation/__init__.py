@@ -19,6 +19,7 @@ from .base import (
     PriorBaseline,
     register_estimator,
 )
+from .dn_kalman import DavisNihanKalmanEstimator, ar1_tau, dn_gls_solve
 from .entropy import VZWEntropyEstimator, vzw_balance
 from .gls import GLSEstimator, gls_solve
 from .spiess import SpiessEstimator, spiess_step
@@ -47,4 +48,7 @@ __all__ = [
     "SPSAEstimator",
     "Yang1992Estimator",
     "yang_solve",
+    "DavisNihanKalmanEstimator",
+    "ar1_tau",
+    "dn_gls_solve",
 ]

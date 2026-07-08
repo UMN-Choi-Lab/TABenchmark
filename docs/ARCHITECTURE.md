@@ -51,6 +51,7 @@ integer route flows per Hazelton). Every data level is a seeded, versioned proje
 | `FullOD` | — |
 | `NoisyOD` | coefficient of variation |
 | `LinkCounts` | sensor subset (mask), noise model, number of observation periods N |
+| `DayToDayCounts` | sensor subset, N periods, `population_scale`, day-to-day persistence `rho` (Davis–Nihan large-population VAR(1) count series, ADR-012) |
 | `Trajectories` | penetration rate, sampling noise |
 | `StalePriorOD` | prior age/quality (Gamma pseudo-counts) |
 
@@ -292,8 +293,8 @@ certification where static costs permit; otherwise scored on the observational t
 
 ## 5. Implementation roadmap
 
-Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 172 references:
-57 tier-1, 80 tier-2, 35 context):
+Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 246 references:
+63 tier-1, 134 tier-2, 49 tier-3):
 
 - **v0 (this repo, now):** core abstractions; TNTP fetcher+parser with units metadata;
   Braess (builtin, analytic) + Sioux Falls scenarios; AON, MSA, Frank–Wolfe;

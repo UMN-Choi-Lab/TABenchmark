@@ -3,6 +3,7 @@
 from .levels import (
     DataLevel,
     Dataset,
+    DayToDayCounts,
     FullOD,
     LinkCounts,
     StalePriorOD,
@@ -13,6 +14,7 @@ from .levels import (
 __all__ = [
     "Dataset",
     "DataLevel",
+    "DayToDayCounts",
     "FullOD",
     "LinkCounts",
     "StalePriorOD",

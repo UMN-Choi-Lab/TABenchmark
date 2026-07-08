@@ -44,6 +44,7 @@ from ..metrics.gaps import Evaluator
 from ..models.base import TrafficAssignmentModel
 from ..models.frank_wolfe import BiconjugateFrankWolfeModel
 from ..observe.levels import (
+    DayToDayCounts,
     LinkCounts,
     StalePriorOD,
     distinct_nonzero_columns,
@@ -559,6 +560,9 @@ def run_estimation_experiment(
     ho_hash.update(f"ho_periods={ho_periods};".encode())
     heldout_digest = ho_hash.hexdigest()
     noise = estimation.get("noise", "poisson")
+    # Davis-Nihan day-to-day dials (ADR-012); ignored for other noise modes.
+    dn_population_scale = float(estimation.get("population_scale", 50.0))
+    dn_rho = float(estimation.get("rho", 0.5))
     prior_cfg = estimation.get("prior") or {"kind": "stale", "cv": 0.3}
     prior_cv = float(prior_cfg.get("cv", 0.3))
     id_k_inner = int(estimation.get("identifiability_k_inner", 40))
@@ -575,12 +579,22 @@ def run_estimation_experiment(
             scenario, oracle_flows, rb.generator(SOURCE_PRIOR)
         )
         prior = Demand(matrix=prior_ds.payload["prior_od"])
-        obs_ds = LinkCounts(obs_sensors, n_periods, noise).observe(
-            scenario, oracle_flows, rb.generator(SOURCE_OBSERVATION)
-        )
-        ho_ds = LinkCounts(heldout_sensors, ho_periods, noise).observe(
-            scenario, oracle_flows, rb.generator(SOURCE_EVALUATION)
-        )
+        if noise == "day_to_day":
+            # Davis-Nihan large-population VAR(1) count series (ADR-012), centered
+            # on the UE loading so the pinned-UE certifier still applies.
+            obs_ds = DayToDayCounts(
+                obs_sensors, n_periods, dn_population_scale, dn_rho, id_k_inner
+            ).observe(scenario, oracle_flows, rb.generator(SOURCE_OBSERVATION))
+            ho_ds = DayToDayCounts(
+                heldout_sensors, ho_periods, dn_population_scale, dn_rho, id_k_inner
+            ).observe(scenario, oracle_flows, rb.generator(SOURCE_EVALUATION))
+        else:
+            obs_ds = LinkCounts(obs_sensors, n_periods, noise).observe(
+                scenario, oracle_flows, rb.generator(SOURCE_OBSERVATION)
+            )
+            ho_ds = LinkCounts(heldout_sensors, ho_periods, noise).observe(
+                scenario, oracle_flows, rb.generator(SOURCE_EVALUATION)
+            )
         task = EstimationTask(
             name=scenario.name,
             network=network,
@@ -637,6 +651,11 @@ def run_estimation_experiment(
             "n_periods": n_periods,
             "heldout_n_periods": ho_periods,
             "noise": noise,
+            **(
+                {"population_scale": dn_population_scale, "rho": dn_rho}
+                if noise == "day_to_day"
+                else {}
+            ),
             "prior": {"kind": prior_cfg.get("kind", "stale"), "cv": prior_cv},
             "stochastic": stochastic,
         },

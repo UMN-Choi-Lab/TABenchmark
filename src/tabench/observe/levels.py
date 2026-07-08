@@ -26,6 +26,7 @@ __all__ = [
     "DataLevel",
     "FullOD",
     "LinkCounts",
+    "DayToDayCounts",
     "StalePriorOD",
     "random_sensor_mask",
     "distinct_nonzero_columns",
@@ -103,6 +104,100 @@ class LinkCounts(DataLevel):
             meta={
                 "n_periods": self.n_periods,
                 "noise": self.noise,
+                "coverage": len(self.sensor_links) / scenario.network.n_links,
+            },
+        )
+
+
+class DayToDayCounts(DataLevel):
+    """Davis & Nihan (1993) large-population day-to-day link-count series (ADR-012).
+
+    A benchmark realization of the Davis-Nihan Gaussian limit (Prop 3): the
+    monitored link counts are a stationary vector-autoregressive VAR(1) process
+
+        x(t) = x_UE + e(t),   e(t) = rho * e(t-1) + a(t),   a(t) ~ N(0, (1-rho^2) Q),
+
+    so ``e(t)`` has stationary covariance ``Q`` -- the route-level DN multinomial
+    covariance (:func:`~tabench.observe._dn_process.dn_spatial_covariance`) -- and
+    the series is centered on ``x_UE = P g`` (the deterministic UE loading the T2
+    certifier pins, so an SUE certifier is not required). ``rho`` in ``[0, 1)`` is
+    the day-to-day persistence dial standing in for Davis-Nihan's cost-adjustment
+    memory; ``rho = 0`` gives IID (only cross-link-correlated) counts. The finite
+    population is ``N_j = max(1, round(population_scale * g_j))`` per OD pair, so
+    the fluctuation vanishes as ``1 / population_scale`` (Prop 2 SLLN) and the
+    process reduces to ``noise='none'`` as ``population_scale -> inf``.
+
+    The temporal (AR) and cross-link (off-diagonal ``Q``) structure is exactly
+    what ``od-kalman`` exploits and the classical (``mean``-collapsing) T2
+    estimators discard; counts are the large-``N`` Gaussian object, so individual
+    periods may be non-integer or (rarely, at low flow) negative -- faithful to
+    the limit, and the certifier scores the period *mean*, which is ``x_UE``.
+
+    The observed and held-out sensor sets are drawn as *independent* realizations
+    of this process (separate RNG substreams, as for ``LinkCounts``); both are
+    centered on ``x_UE``, so the mean-based held-out metric stays consistent. The
+    cross-link correlation this level carries is exploited *within* the observed
+    series, not across the obs/held-out split.
+    """
+
+    name = "day_to_day_counts"
+
+    def __init__(
+        self,
+        sensor_links: np.ndarray,
+        n_periods: int = 30,
+        population_scale: float = 50.0,
+        rho: float = 0.5,
+        k_inner: int = 80,
+    ) -> None:
+        if n_periods < 1:
+            raise ValueError("n_periods must be >= 1")
+        if not np.isfinite(population_scale) or population_scale <= 0:
+            raise ValueError("population_scale must be finite and > 0")
+        if not (0.0 <= rho < 1.0):
+            raise ValueError("rho (day-to-day persistence) must be in [0, 1)")
+        if k_inner < 1:
+            raise ValueError("k_inner must be >= 1")
+        self.sensor_links = np.asarray(sensor_links, dtype=np.int64)
+        self.n_periods = int(n_periods)
+        self.population_scale = float(population_scale)
+        self.rho = float(rho)
+        self.k_inner = int(k_inner)
+
+    def observe(
+        self, scenario: Scenario, link_flows: np.ndarray, rng: np.random.Generator
+    ) -> Dataset:
+        from ._dn_process import active_od_pairs, dn_spatial_covariance, psd_factor
+
+        x_ue = np.asarray(link_flows, dtype=np.float64)
+        n_links = x_ue.size
+        demand = scenario.demand
+        pairs = active_od_pairs(demand.matrix)
+        g = np.array([demand.matrix[i, j] for (i, j) in pairs], dtype=np.float64)
+        n_trav = np.maximum(1, np.rint(self.population_scale * g)).astype(np.int64)
+        q_cov = dn_spatial_covariance(
+            scenario.network, demand, g, n_trav, self.k_inner, pairs=pairs
+        )
+        factor = psd_factor(q_cov)  # (n_links, n_links); factor @ factor.T == Q
+        rank = factor.shape[1]
+        inn_scale = float(np.sqrt(max(1.0 - self.rho * self.rho, 0.0)))
+
+        counts_full = np.empty((self.n_periods, n_links), dtype=np.float64)
+        e = factor @ rng.standard_normal(rank)  # e(0) ~ N(0, Q): start stationary
+        for t in range(self.n_periods):
+            counts_full[t] = x_ue + e
+            a = inn_scale * (factor @ rng.standard_normal(rank))
+            e = self.rho * e + a
+        counts = counts_full[:, self.sensor_links]
+
+        return Dataset(
+            kind=self.name,
+            payload={"counts": counts, "sensor_links": self.sensor_links.copy()},
+            meta={
+                "n_periods": self.n_periods,
+                "noise": "day_to_day",
+                "population_scale": self.population_scale,
+                "rho": self.rho,
                 "coverage": len(self.sensor_links) / scenario.network.n_links,
             },
         )
