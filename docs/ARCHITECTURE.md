@@ -77,9 +77,10 @@ class TrafficAssignmentModel(ABC):
 ```
 
 `Capabilities` declares paradigm (`static_ue | static_ue_elastic | static_ue_combined |
-static_br_ue | static_sc_ue | static_so | sue | dta | day_to_day | learned | heuristic`), determinism, required inputs
+static_br_ue | static_sc_ue | static_ue_vi | static_ue_multiclass | static_so | sue | dta | day_to_day |
+learned | heuristic | estimation`), determinism, required inputs
 (`od_matrix`, `link_counts`, …),
-emitted outputs (`link_flows`, `path_flows`, `flow_distribution`, `od_estimate`),
+emitted outputs (`link_flows`, `class_link_flows`, `path_flows`, `flow_distribution`, `od_estimate`),
 `provides_gap`, `seedable`, and `trained_on` lineage (learned models). The harness
 auto-filters the scenario×model×task matrix by compatibility — a counts-only task
 refuses a model that requires full OD; a gradient-requiring solver never meets a

@@ -18,6 +18,7 @@ __all__ = [
     "Demand",
     "ElasticDemand",
     "CombinedDemand",
+    "MulticlassDemand",
     "ReferenceSolution",
     "Scenario",
 ]
@@ -363,6 +364,87 @@ class CombinedDemand:
 
 
 @dataclass(frozen=True)
+class MulticlassDemand:
+    """Multiclass-user demand + linear class-interaction (Dafermos 1972; adr-013).
+
+    ``K >= 2`` user classes share one physical network. Each class ``i`` has its
+    own OD demand matrix ``matrices[i]`` (so the classes couple only through the
+    link costs, never the demand constraints — the feasible set is a Cartesian
+    product of per-class demand polytopes) and perceives a class-specific link
+    cost that is the shared BPR latency of the **total** link flow plus a linear
+    class interaction
+
+        t_a^i(V) = t_a^BPR(v_a) + sum_j interaction[i, j] * v_a^j,
+        v_a = sum_j v_a^j   (total flow on link a),   v_a^j = class j's flow on a.
+
+    ``interaction`` is a ``(K, K)`` matrix applied per link (units of cost per
+    unit class-``j`` link flow). It is what makes the split among classes
+    well-defined: with ``interaction = 0`` every class sees the identical cost
+    ``t_a^BPR(v_a)`` and the per-class split is arbitrary (the model degenerates
+    to a single-class UE on the summed demand). A **symmetric** ``interaction``
+    (``interaction[i,j] == interaction[j,i]``) makes the equilibrium the
+    minimizer of a convex multiclass-Beckmann potential (the integrable case
+    Dafermos 1972 characterizes); an **asymmetric** one makes it a genuine
+    variational inequality with no equivalent optimization (Smith 1979; Dafermos
+    1980) — the block-structured generalization of the single-class ``vi-asym``
+    cost ``t(v) = t_BPR(v) + C v``.
+
+    This is task data, content-hashed with the scenario when set. No sign
+    constraint is imposed on ``interaction`` (a pathological entry that drives a
+    cost non-positive is caught by the solver and censored by the certificate,
+    exactly as for ``vi-asym``)."""
+
+    matrices: np.ndarray  # (K, n_zones, n_zones) float64, per-class OD demand
+    interaction: np.ndarray  # (K, K) float64, linear class-coupling applied per link
+
+    def __post_init__(self) -> None:
+        m = _as_f64(self.matrices)
+        c = _as_f64(self.interaction)
+        object.__setattr__(self, "matrices", m)
+        object.__setattr__(self, "interaction", c)
+        if m.ndim != 3 or m.shape[1] != m.shape[2]:
+            raise ValueError(
+                "MulticlassDemand matrices must have shape (n_classes, n_zones, n_zones)"
+            )
+        if m.shape[0] < 2:
+            raise ValueError(
+                "MulticlassDemand needs >= 2 classes (a single class is an ordinary "
+                "UE; use Demand); got n_classes="
+                f"{m.shape[0]}"
+            )
+        if np.any(m < 0) or not np.all(np.isfinite(m)):
+            raise ValueError("MulticlassDemand matrices must be finite and nonnegative")
+        if c.shape != (m.shape[0], m.shape[0]):
+            raise ValueError(
+                f"MulticlassDemand interaction must have shape ({m.shape[0]}, "
+                f"{m.shape[0]}), got {c.shape}"
+            )
+        if not np.all(np.isfinite(c)):
+            raise ValueError("MulticlassDemand interaction must be finite")
+
+    @property
+    def n_classes(self) -> int:
+        return self.matrices.shape[0]
+
+    @property
+    def n_zones(self) -> int:
+        return self.matrices.shape[1]
+
+    @property
+    def total_matrix(self) -> np.ndarray:
+        """Class-summed OD matrix — the aggregate demand the network carries."""
+        return self.matrices.sum(axis=0)
+
+    @property
+    def total(self) -> float:
+        return float(self.matrices.sum())
+
+    def symmetric(self, tol: float = 1e-12) -> bool:
+        """True iff the class interaction is symmetric (the integrable case)."""
+        return bool(np.allclose(self.interaction, self.interaction.T, atol=tol, rtol=0.0))
+
+
+@dataclass(frozen=True)
 class ReferenceSolution:
     """Best-known solution used as a regression oracle (with provenance)."""
 
@@ -431,6 +513,17 @@ class Scenario:
     delay / toll that is zero off the binding set. It is per-link task data,
     content-hashed only when set, and mutually exclusive with the SUE / elastic /
     combined / BR fields.
+
+    ``multiclass`` (optional) makes this a **multiclass-user** equilibrium task
+    (Dafermos 1972; docs/design/adr-013): ``K >= 2`` user classes share the
+    network, each with its own OD demand and a class-specific link cost coupling
+    the classes (:class:`MulticlassDemand`). The aggregate ``demand`` must equal
+    the class sum (so single-class consumers of ``demand`` stay consistent). It
+    is task data, content-hashed only when set, and mutually exclusive with the
+    SUE / elastic / combined / BR / side-constrained / link-interaction fields
+    (``link_interaction`` is its single-class special case). Certifying it needs
+    the model's per-class link flows (``FlowState.class_link_flows``); the scored
+    quantity is the class-summed VI residual.
     """
 
     name: str
@@ -445,6 +538,7 @@ class Scenario:
     br_epsilon: float | None = None
     side_capacities: np.ndarray | None = None
     link_interaction: np.ndarray | None = None
+    multiclass: MulticlassDemand | None = None
 
     def __post_init__(self) -> None:
         if self.demand.n_zones != self.network.n_zones:
@@ -554,6 +648,37 @@ class Scenario:
                     "side_capacities (it is a deterministic fixed-demand VI with "
                     "non-separable link costs)"
                 )
+        if self.multiclass is not None:
+            mc = self.multiclass
+            if mc.n_zones != self.network.n_zones:
+                raise ValueError(
+                    f"Scenario '{self.name}': multiclass demand has {mc.n_zones} "
+                    f"zones, network declares {self.network.n_zones}"
+                )
+            # The aggregate `demand` must equal the class sum, so the network's
+            # total loading and every single-class consumer of `demand` (feasibility
+            # scale, fairness gate) stay consistent with the per-class task.
+            if not np.allclose(mc.total_matrix, self.demand.matrix, rtol=1e-9, atol=1e-9):
+                raise ValueError(
+                    f"Scenario '{self.name}': demand matrix must equal the multiclass "
+                    "class sum (multiclass.matrices.sum(axis=0)); pass "
+                    "Demand(multiclass.total_matrix) as the aggregate demand"
+                )
+            if (
+                self.sue_theta is not None
+                or self.elastic_demand is not None
+                or self.combined_demand is not None
+                or self.br_epsilon is not None
+                or self.side_capacities is not None
+                or self.link_interaction is not None
+            ):
+                raise ValueError(
+                    f"Scenario '{self.name}': multiclass is mutually exclusive with "
+                    "sue_theta, elastic_demand, combined_demand, br_epsilon, "
+                    "side_capacities and link_interaction (multiclass demand is a "
+                    "distinct per-class equilibrium; link_interaction is its "
+                    "single-class special case)"
+                )
 
     def content_hash(self) -> str:
         """SHA-256 over the canonical serialization of all scored content (P2)."""
@@ -620,4 +745,13 @@ class Scenario:
         if self.link_interaction is not None:
             h.update(b"link_interaction")
             h.update(_as_f64(self.link_interaction).tobytes())
+        # Multiclass per-class demand + class-interaction is scored instance
+        # content; appended last and only when set, so every scenario without it
+        # (the aggregate `demand` bytes above are the class sum) hashes exactly as
+        # before this field existed (golden-hash test).
+        if self.multiclass is not None:
+            h.update(b"multiclass_matrices")
+            h.update(_as_f64(self.multiclass.matrices).tobytes())
+            h.update(b"multiclass_interaction")
+            h.update(_as_f64(self.multiclass.interaction).tobytes())
         return h.hexdigest()

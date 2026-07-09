@@ -179,6 +179,20 @@ class Evaluator:
         # cost function. beckmann_objective is not a valid potential here (reported
         # as NaN). The fixed-demand feasibility audit is unchanged.
         self._link_interaction = scenario.link_interaction
+        # Multiclass-user UE (adr-013, Dafermos 1972): K >= 2 classes share the
+        # network with a class-coupled cost t_a^i = t_BPR(v_a) + sum_j M_ij v_a^j.
+        # Certifying a per-class Wardrop condition needs the model's per-class link
+        # flows (FlowState.class_link_flows) -- a first-class emitted object, so the
+        # harness recomputes the class-summed VI residual from it (P1), not from a
+        # self-report. The per-class demand matrices are cached as Demand objects
+        # for the per-class all-or-nothing lower bound. Like link_interaction there
+        # is no Beckmann potential for an asymmetric M (beckmann_objective NaN).
+        self._multiclass = scenario.multiclass
+        self._class_demands = (
+            [Demand(scenario.multiclass.matrices[i]) for i in range(scenario.multiclass.n_classes)]
+            if scenario.multiclass is not None
+            else None
+        )
         # Logit SUE certifies through the closed-form Dial-STOCH map; probit
         # SUE has no closed form, so the harness pins ONE Monte Carlo
         # perturbation matrix E per task, drawn from the reserved evaluation
@@ -218,7 +232,7 @@ class Evaluator:
         # reported SO gap would silently be on the wrong (interaction-ignoring) map.
         self._marginal = (
             marginal_network(scenario.network)
-            if so_metrics and self._link_interaction is None
+            if so_metrics and self._link_interaction is None and self._multiclass is None
             else None
         )
 
@@ -249,7 +263,9 @@ class Evaluator:
                 metrics[key] = float("nan")
         return metrics
 
-    def evaluate(self, link_flows: np.ndarray) -> dict[str, float]:
+    def evaluate(
+        self, link_flows: np.ndarray, class_link_flows: np.ndarray | None = None
+    ) -> dict[str, float]:
         """Certified metrics for one emitted flow state.
 
         Infeasible or invalid flows are censored (``feasible=0``, NaN gaps),
@@ -257,11 +273,19 @@ class Evaluator:
         emitting garbage must not crash the experiment nor top a leaderboard.
         Only a wrong-shaped array raises, since that is a programming error
         in the wrapper, not a property of the solution.
+
+        ``class_link_flows`` (optional ``(n_classes, n_links)``) is required on
+        a multiclass scenario and ignored otherwise; a multiclass scenario with
+        no per-class flows is censored (an aggregate flow cannot certify a
+        per-class equilibrium).
         """
         net = self.scenario.network
         v = np.asarray(link_flows, dtype=np.float64)
         if v.shape != (net.n_links,):
             raise ValueError(f"link_flows shape {v.shape} != ({net.n_links},)")
+
+        if self._multiclass is not None:
+            return self._evaluate_multiclass(class_link_flows)
 
         if not np.all(np.isfinite(v)):
             return self._censored("non-finite flows")
@@ -440,3 +464,77 @@ class Evaluator:
                     else 0.0
                 )
         return metrics
+
+    def _evaluate_multiclass(self, class_link_flows: np.ndarray | None) -> dict[str, float]:
+        """Certify a multiclass equilibrium from the emitted per-class flows (adr-013).
+
+        The scored quantity is the class-summed VI residual at the coupled cost
+        ``t_a^i = t_BPR(v_a) + sum_j M_ij v_a^j`` (``v_a`` the total link flow);
+        feasibility is per-class demand conservation. ``beckmann_objective`` is
+        NaN (no potential for an asymmetric interaction). Everything is recomputed
+        from ``V`` and the content-hashed interaction/demands (P1); the emitted
+        aggregate ``link_flows`` is not trusted (the total is recomputed as the
+        class sum). A multiclass scenario with no per-class flows is censored — an
+        aggregate flow cannot certify a per-class equilibrium.
+        """
+        net = self.scenario.network
+        mc = self._multiclass
+        k, m = mc.n_classes, net.n_links
+        if class_link_flows is None:
+            return self._censored("multiclass scenario requires per-class link flows")
+        capital_v = np.asarray(class_link_flows, dtype=np.float64)
+        if capital_v.shape != (k, m):
+            raise ValueError(f"class_link_flows shape {capital_v.shape} != ({k}, {m})")
+        if not np.all(np.isfinite(capital_v)):
+            return self._censored("non-finite class flows")
+        scale = max(1.0, float(np.abs(capital_v).max()))
+        if capital_v.min() < -self._CLIP_TOL * scale:
+            return self._censored("negative class flows")
+        capital_v = np.maximum(capital_v, 0.0)
+
+        total = capital_v.sum(axis=0)
+        base = net.link_cost(total)
+        interaction = mc.interaction
+        tstt = 0.0
+        sptt = 0.0
+        max_balance = 0.0
+        for i in range(k):
+            # Coupled cost of class i at the joint flow: t_BPR(total) + (M V)_i.
+            cost_i = base + interaction[i] @ capital_v
+            if not np.all(np.isfinite(cost_i)) or cost_i.min() <= 0.0:
+                return self._censored("non-positive multiclass coupled cost")
+            tstt += float(capital_v[i] @ cost_i)
+            _, s_i = self._engine.all_or_nothing(cost_i, self._class_demands[i])
+            sptt += s_i
+            # Each class must conserve ITS OWN demand (the product feasible set).
+            bal_i = node_balance_residual(
+                self.scenario, capital_v[i], demand_matrix=mc.matrices[i]
+            )
+            max_balance = max(max_balance, bal_i)
+
+        excess = tstt - sptt
+        demand_scale = max(1.0, self._total_demand)
+        conserves = max_balance <= self.feasibility_tol * demand_scale
+        # SPTT > TSTT is impossible for demand-feasible flows: censor it too.
+        nonnegative_excess = excess >= -self.feasibility_tol * max(tstt, 1.0)
+        feasible = conserves and nonnegative_excess
+
+        if not feasible:
+            metrics = self._censored("failed multiclass feasibility audit")
+            metrics["node_balance_residual"] = max_balance
+            metrics["tstt"] = tstt
+            metrics["sptt"] = sptt
+            return metrics
+
+        return {
+            "tstt": tstt,
+            "sptt": sptt,
+            "relative_gap": excess / tstt if tstt > 0 else 0.0,
+            "average_excess_cost": (
+                excess / self._total_demand if self._total_demand > 0 else 0.0
+            ),
+            # No Beckmann potential for a coupled (asymmetric) cost map.
+            "beckmann_objective": float("nan"),
+            "node_balance_residual": max_balance,
+            "feasible": 1.0,
+        }

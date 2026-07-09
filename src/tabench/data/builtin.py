@@ -13,6 +13,7 @@ from ..core.scenario import (
     CombinedDemand,
     Demand,
     ElasticDemand,
+    MulticlassDemand,
     Network,
     ReferenceSolution,
     Scenario,
@@ -26,6 +27,7 @@ __all__ = [
     "br_two_route_scenario",
     "sc_two_route_scenario",
     "vi_two_route_scenario",
+    "multiclass_two_route_scenario",
 ]
 
 _EPS = 1e-6
@@ -605,4 +607,115 @@ def vi_two_route_scenario(
         reference=reference,
         family="builtin-vi",
         link_interaction=c,
+    )
+
+
+# Symmetric (integrable) vs asymmetric (genuine-VI) class interactions for the
+# multiclass anchor. Each is HALF the parallel-link coupling B derived by hand
+# (Dafermos 1972), because the diamond routes 1->3->2 / 1->4->2 apply the
+# per-link coupling on BOTH of a route's two legs, so the route-level coupling is
+# 2 * interaction (adr-013). Symmetric -> the equilibrium minimizes a convex
+# multiclass-Beckmann potential; asymmetric -> a genuine VI no Beckmann/FW solver
+# reaches.
+_MC_INTERACTION_SYMMETRIC = np.array([[0.5, 0.25], [0.25, 0.5]])
+_MC_INTERACTION_ASYMMETRIC = np.array([[0.5, 0.5], [0.0, 0.5]])
+
+
+def multiclass_two_route_scenario(
+    g_cars: float = 4.0,
+    g_trucks: float = 2.0,
+    a2: float = 1.5,
+    interaction: np.ndarray | None = None,
+) -> Scenario:
+    """Two disjoint 2-link routes, two user classes: the analytic anchor for the
+    Dafermos (1972) multiclass-user equilibrium (adr-013).
+
+    Route A = 1->3->2, route B = 1->4->2 (link order 1->3, 3->2, 1->4, 4->2). Two
+    classes (0 = cars demand ``g_cars``, 1 = trucks demand ``g_trucks``, both
+    1->2) share the network. All BPR slopes are zero, so the ONLY congestion is
+    the per-link class interaction ``M = interaction``: class ``i``'s cost on link
+    ``a`` is ``t_a^i = t_BPR(v_a) + sum_j M_ij v_a^j`` with ``t_BPR`` the (here
+    constant) free-flow times — route A free-flow 0, route B free-flow ``a2`` on
+    its first leg. With ``M`` applied on both legs of each 2-link route, the
+    per-class equilibrium (route-A flows ``p`` for cars, ``q`` for trucks) equalizes
+    each class's own route costs and solves the linear system
+
+        4 M @ [p - g_cars/2, q - g_trucks/2]^T = [a2, a2]^T,
+
+    i.e. the hand-derived closed form ``[p, q] = [g_cars/2, g_trucks/2] +
+    (a2/4) M^{-1} [1, 1]^T``. The default ``interaction`` is SYMMETRIC (integrable;
+    ``M = [[0.5, 0.25], [0.25, 0.5]]``) → cars ``(2.5, 1.5)``, trucks ``(1.5, 0.5)``,
+    aggregate link flows ``(4, 4, 2, 2)``, class costs equalized at 3.25 / 2.75.
+    Passing ``_MC_INTERACTION_ASYMMETRIC`` (``M = [[0.5, 0.5], [0, 0.5]]``, trucks
+    slow cars but not vice versa) makes it a GENUINE VI → cars ``(2.0, 2.0)``,
+    trucks ``(1.75, 0.25)``, aggregate ``(3.75, 3.75, 2.25, 2.25)`` — a flow no
+    Beckmann/Frank-Wolfe solver can reach. Both are exact multiples of 0.125.
+    """
+    if interaction is None:
+        interaction = _MC_INTERACTION_SYMMETRIC
+    interaction = np.asarray(interaction, dtype=np.float64)
+
+    # Link order: 1->3, 3->2, 1->4, 4->2 (route A legs, then route B legs). All
+    # slopes zero — congestion is entirely the class interaction; the route-B
+    # first leg carries the free-flow offset a2.
+    init = np.array([1, 3, 1, 4], dtype=np.int64)
+    term = np.array([3, 2, 4, 2], dtype=np.int64)
+    params = [
+        _bpr_linear(0.0, 0.0),  # 1->3: ~0
+        _bpr_linear(0.0, 0.0),  # 3->2: ~0
+        _bpr_linear(a2, 0.0),   # 1->4: constant a2 (route-B free-flow offset)
+        _bpr_linear(0.0, 0.0),  # 4->2: ~0
+    ]
+    fft = np.array([p[0] for p in params])
+    b = np.array([p[1] for p in params])
+    capacity = np.array([p[2] for p in params])
+
+    network = Network(
+        name="multiclass-two-route",
+        n_nodes=4,
+        n_zones=2,
+        first_thru_node=1,
+        init_node=init,
+        term_node=term,
+        capacity=capacity,
+        length=np.zeros(4),
+        free_flow_time=fft,
+        b=b,
+        power=np.ones(4),
+        toll=np.zeros(4),
+        link_type=np.ones(4, dtype=np.int64),
+        units=(("time", "abstract"), ("flow", "abstract")),
+    )
+
+    od_cars = np.zeros((2, 2))
+    od_cars[0, 1] = g_cars
+    od_trucks = np.zeros((2, 2))
+    od_trucks[0, 1] = g_trucks
+    mc = MulticlassDemand(
+        matrices=np.stack([od_cars, od_trucks]), interaction=interaction
+    )
+
+    # Closed-form equilibrium route-A flows per class.
+    pq = (a2 / 4.0) * np.linalg.solve(interaction, np.ones(2))
+    p = g_cars / 2.0 + pq[0]
+    q = g_trucks / 2.0 + pq[1]
+    v_cars = np.array([p, p, g_cars - p, g_cars - p])
+    v_trucks = np.array([q, q, g_trucks - q, g_trucks - q])
+    reference = ReferenceSolution(
+        link_flows=v_cars + v_trucks,
+        source="analytic",
+        note=(
+            "Multiclass equilibrium: cars route-A flow "
+            f"p = {p}, trucks route-A flow q = {q} (closed form "
+            "[p,q] = [g_cars/2, g_trucks/2] + (a2/4) M^-1 [1,1])."
+        ),
+    )
+
+    return Scenario(
+        name="multiclass",
+        network=network,
+        demand=Demand(matrix=mc.total_matrix),
+        reference=reference,
+        family="builtin-multiclass",
+        multiclass=mc,
     )

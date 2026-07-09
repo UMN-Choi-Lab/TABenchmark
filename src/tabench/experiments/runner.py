@@ -126,7 +126,9 @@ def _score_bundle(
     reference = scenario.reference
     rows = []
     for state in bundle.trace:
-        metrics = evaluator.evaluate(state.link_flows)
+        # Per-class flows (multiclass only; None elsewhere) let the harness
+        # recompute the per-class VI residual from a first-class object (adr-013).
+        metrics = evaluator.evaluate(state.link_flows, state.class_link_flows)
         row: dict[str, Any] = {
             "scenario": scenario.name,
             "scenario_hash": scenario_hash[:16],

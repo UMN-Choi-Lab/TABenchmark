@@ -16,6 +16,7 @@ PARADIGMS = frozenset(
         "static_br_ue",
         "static_sc_ue",
         "static_ue_vi",
+        "static_ue_multiclass",
         "static_so",
         "sue",
         "dta",

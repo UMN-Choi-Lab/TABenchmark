@@ -18,6 +18,7 @@ from .frank_wolfe import BiconjugateFrankWolfeModel, ConjugateFrankWolfeModel, F
 from .gradient_projection import GradientProjectionModel
 from .learned import LearnedSurrogateModel
 from .msa import MSAModel
+from .multiclass import MulticlassModel
 from .oba import OriginBasedModel
 from .sc_tap import SideConstrainedModel
 from .so import SystemOptimumModel, marginal_network
@@ -51,6 +52,7 @@ __all__ = [
     "GradientProjectionModel",
     "LearnedSurrogateModel",
     "MSAModel",
+    "MulticlassModel",
     "OriginBasedModel",
     "SideConstrainedModel",
     "SystemOptimumModel",

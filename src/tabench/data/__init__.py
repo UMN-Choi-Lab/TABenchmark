@@ -8,6 +8,7 @@ from .builtin import (
     braess_scenario,
     elastic_two_route_scenario,
     evans_symmetric_scenario,
+    multiclass_two_route_scenario,
     sc_two_route_scenario,
     two_route_scenario,
     vi_two_route_scenario,
@@ -24,6 +25,7 @@ __all__ = [
     "br_two_route_scenario",
     "sc_two_route_scenario",
     "vi_two_route_scenario",
+    "multiclass_two_route_scenario",
     "ChecksumError",
     "cache_dir",
     "citation",
@@ -58,10 +60,15 @@ def load_scenario(key: str) -> Scenario:
         return br_two_route_scenario()
     if key == "sc-tworoute":
         return sc_two_route_scenario()
+    if key == "vi-tworoute":
+        return vi_two_route_scenario()
+    if key == "multiclass":
+        return multiclass_two_route_scenario()
     if key not in REGISTRY:
         raise KeyError(
             f"Unknown scenario {key!r}; available: braess, tworoute, "
-            f"elastic-tworoute, evans, br-tworoute, sc-tworoute, {sorted(REGISTRY)}"
+            "elastic-tworoute, evans, br-tworoute, sc-tworoute, vi-tworoute, "
+            f"multiclass, {sorted(REGISTRY)}"
         )
     spec = REGISTRY[key]
     paths: dict[str, Path] = fetch(spec)

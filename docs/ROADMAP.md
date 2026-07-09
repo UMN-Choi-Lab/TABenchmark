@@ -15,7 +15,7 @@ T3 interventions.
 - [x] Wardrop (1952) — *Some Theoretical Aspects of Road Traffic Research* (metric/protocol) — **shipped in v0** (equilibrium conditions in the certified gap)
 - [x] Beckmann et al. (1956) — *Studies in the Economics of Transportation* (white-box solver) — **shipped in v0** (Beckmann objective in metrics)
 - [x] Bureau of Public Roads (1964) — *Traffic Assignment Manual* (network-loading component) — **shipped in v0** (BPR link performance function (Network.link_cost))
-- [ ] Dafermos (1972) — *The Traffic Assignment Problem for Multiclass-User Transportation Networks* (white-box solver)
+- [x] Dafermos (1972) — *The Traffic Assignment Problem for Multiclass-User Transportation Networks* (white-box solver) — **shipped** as `multiclass` (adr-013)
 - [ ] Smith (1979) — *The Existence, Uniqueness and Stability of Traffic Equilibria* (metric/protocol)
 - [x] Dafermos (1980) — *Traffic Equilibrium and Variational Inequalities* (white-box solver) — **shipped** as `vi-asym`
 

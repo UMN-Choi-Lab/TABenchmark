@@ -116,7 +116,7 @@
 <text x="44" y="74" text-anchor="middle" font-size="9.5" fill="#000">Wardrop 1952</text>
 <rect x="-8" y="326" width="104" height="17" rx="4" fill="#e8e8e8" stroke="#333"/>
 <text x="44" y="338" text-anchor="middle" font-size="9.5" fill="#000">Bureau of Public Roads (BPR) 1964</text>
-<rect x="-8" y="502" width="104" height="17" rx="4" fill="#e8e8e8" stroke="#333" stroke-dasharray="3,2"/>
+<rect x="-8" y="502" width="104" height="17" rx="4" fill="#e8e8e8" stroke="#333"/>
 <text x="44" y="514" text-anchor="middle" font-size="9.5" fill="#000">Dafermos 1972</text>
 <rect x="-8" y="656" width="104" height="17" rx="4" fill="#e8e8e8" stroke="#333" stroke-dasharray="3,2"/>
 <text x="44" y="668" text-anchor="middle" font-size="9.5" fill="#000">Smith 1979</text>

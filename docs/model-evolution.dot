@@ -40,7 +40,7 @@ digraph TA_evolution {
   { rank=same; "ryu2025bo4mob" }
   "wardrop1952some" [label="Wardrop 1952\n",fillcolor="#e8e8e8",style="rounded,filled,dashed"];
   "bpr1964traffic" [label="Bureau of Public Roads (BPR) 1964\n",fillcolor="#e8e8e8",style="rounded,filled"];
-  "dafermos1972traffic" [label="Dafermos 1972\n",fillcolor="#e8e8e8",style="rounded,filled,dashed"];
+  "dafermos1972traffic" [label="Dafermos 1972\nmulticlass",fillcolor="#e8e8e8",style="rounded,filled"];
   "smith1979existence" [label="Smith 1979\n",fillcolor="#e8e8e8",style="rounded,filled,dashed"];
   "dafermos1980traffic" [label="Dafermos 1980\nvi-asym",fillcolor="#e8e8e8",style="rounded,filled"];
   "frank1956algorithm" [label="Frank 1956\nfw",fillcolor="#d6e4ff",style="rounded,filled"];

@@ -28,6 +28,8 @@ def _cmd_list(_: argparse.Namespace) -> int:
     print("  evans           (built-in, analytic combined distribution+assignment oracle)")
     print("  br-tworoute     (built-in, analytic boundedly-rational band oracle)")
     print("  sc-tworoute     (built-in, analytic side-constrained capacity oracle)")
+    print("  vi-tworoute     (built-in, analytic asymmetric-VI UE oracle)")
+    print("  multiclass      (built-in, analytic multiclass-user equilibrium oracle)")
     for key, spec in sorted(REGISTRY.items()):
         print(f"  {key:<14}({spec.repo_dir}, download-on-demand)")
     print("\nModels:")
@@ -123,6 +125,13 @@ def _cmd_run(args: argparse.Namespace) -> int:
         default_models = "br-ue"
     elif scenario.side_capacities is not None:
         default_models = "sc-tap"
+    elif scenario.multiclass is not None:
+        # Multiclass needs the per-class solver: single-class models emit no
+        # per-class flows and are censored on a multiclass task (adr-013).
+        default_models = "multiclass"
+    elif scenario.link_interaction is not None:
+        # Non-separable VI: fixed-demand separable solvers ignore the interaction.
+        default_models = "vi-asym"
     else:
         default_models = "aon,msa,fw"
     models = []

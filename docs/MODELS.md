@@ -23,7 +23,7 @@ graph TD
   n_bprtraffic563(["Bureau of Public Roads (BPR) 1964"]):::c0
   n_vickreycongestion3141["Vickrey 1969"]:::c8
   n_dialprobabilistic5178(["Dial 1971"]):::c3
-  n_dafermostraffic7276["Dafermos 1972"]:::c0
+  n_dafermostraffic7276(["Dafermos 1972"]):::c0
   n_florianmethod9428(["Florian 1974"]):::c5
   n_leblancefficient294(["LeBlanc 1975"]):::c1
   n_evansderivation1705(["Evans 1976"]):::c5
@@ -193,7 +193,7 @@ The empirical volume-delay (link performance) function t_a(v)=t0_a(1+alpha(v/cap
 
 ### Dafermos (1972) — The Traffic Assignment Problem for Multiclass-User Transportation Networks
 
-_roadmap_ · Multiclass UE (per-class Wardrop conditions with coupled link costs) · `[dafermos1972traffic]`
+`multiclass` · **shipped** · Multiclass UE (per-class Wardrop conditions with coupled link costs) · `[dafermos1972traffic]`
 
 Extended equilibrium assignment to multiple user classes whose flows interact on shared links, with each link's cost depending on the full vector of class flows rather than a single scalar.
 
@@ -201,7 +201,7 @@ Extended equilibrium assignment to multiple user classes whose flows interact on
 
 **Formulation.** `Class-i link cost t_a^i(x^1,...,x^m) depends on all class flows; per class i, used routes are equal-and-minimal in c^{pi,i}. An equivalent Beckmann convex program exists only if the class-flow cost Jacobian is symmetric (integrable).`
 
-**Validation.** Not shipped; a multiclass solver via diagonalization/relaxation is numpy-tractable and would be validated against a known fixed point — reducing to single-class Beckmann UE on the symmetric/separable case — plus cross-solver on a small asymmetric instance. The original paper is analytic with no standardized reproducible benchmark network.
+**Validation.** SHIPPED as `multiclass` (paradigm static_ue_multiclass; adr-013): K>=2 user classes share the network with a class-coupled cost t_a^i(V)=t_BPR(v_a)+sum_j M_ij v_a^j, v_a the total link flow and M=scenario.multiclass.interaction a (K,K) per-link class interaction. Stacking the class-indexed flows this is the block-structured single-class asymmetric VI (K=1 recovers vi-asym): the feasible set is a PRODUCT of per-class demand polytopes (routing per class) and M symmetric <=> integrable (convex multiclass-Beckmann) while M asymmetric <=> genuine VI with no equivalent optimization (Smith 1979 / Dafermos 1980). Solved by multiclass diagonalization (nonlinear Gauss-Seidel): freeze the other classes, solve each class's separable UE by Frank-Wolfe (exact Brent line search), relax, repeat -- reusing vi-asym's inner FW once per class. Certified (P1) by the class-summed VI residual gap = (sum_i <t^i,v^i> - sum_i min_{y^i in K_i} <t^i,y^i>)/sum_i <t^i,v^i>, recomputed by the harness from the model's per-class link flows (a NEW additive first-class object FlowState.class_link_flows, (K,n_links), None for every single-class model -> golden Braess hash byte-identical, no existing signature changed; NOT a self-report), 0 iff V solves the multiclass VI; per-class demand conservation is the feasibility audit; beckmann_objective NaN (no potential); an aggregate-only flow (no per-class breakdown) is censored. NEW MulticlassDemand dataclass + optional Scenario.multiclass field, hashed only when set, mutually exclusive with the other task fields, aggregate demand validated = class sum. Validated (recomputed, no trusted digits): two 2-class two-route anchors [p,q]=[g_cars/2,g_trucks/2]+(a2/4) M^-1 [1,1] -- SYMMETRIC/integrable M=[[.5,.25],[.25,.5]] -> cars (2.5,1.5)/trucks (1.5,0.5), aggregate (4,4,2,2); ASYMMETRIC/genuine-VI M=[[.5,.5],[0,.5]] -> cars (2,2)/trucks (1.75,0.25), aggregate (3.75,3.75,2.25,2.25), a flow no Beckmann/FW solver reaches, with cars and trucks routing DISTINCTLY; VI residual->0, feasible=1, per-class conservation audit, censoring of missing/negative/mis-conserved class flows, content-hash sensitivity to interaction and to the per-class split, P8 determinism, self-report == harness residual. This is the multiclass half of the multiclass-VI roadmap item (vi-asym shipped the single-class VI half); the output-contract change adr-011 deferred, done additively. Primary Dafermos 1972 (TS 6(1):73-87, exact Crossref) attributed; the block-VI reading, the symmetry/integrability boundary and both anchors cross-verified against an independent multiclass diagonalization; no numbers fabricated.
 
 *Builds on:* Beckmann, McGuire & Winsten 1956.
 
