@@ -12,6 +12,7 @@ from tabench.dnl import (
     DynamicScenario,
     LinkDynamics,
     NetworkLoader,
+    TampereNode,
     TimeGrid,
     TurningFractions,
     bottleneck_dynamic_scenario,
@@ -146,7 +147,10 @@ def test_network_loader_is_deterministic() -> None:
     np.testing.assert_array_equal(first.origin_release, second.origin_release)
 
 
-def test_network_loader_refuses_unsupplied_diverge_node_model() -> None:
+def test_network_loader_defaults_tampere_node_for_diverge() -> None:
+    """dnl-core used to raise for any non-1x1 interior node; the node-model
+    sprint makes the loader default to the Tampere generic node model (an
+    explicit node_models entry still overrides it)."""
     rates = np.zeros((1, 3, 3))
     rates[0, 0, 1] = 0.6
     rates[0, 0, 2] = 0.4
@@ -165,5 +169,7 @@ def test_network_loader_refuses_unsupplied_diverge_node_model() -> None:
         turns=TurningFractions(frac=((4, np.array([[0.6, 0.4]])),)),
     )
 
-    with pytest.raises(ValueError, match="explicit NodeModel"):
-        NetworkLoader(scenario, PointQueueLink)
+    loader = NetworkLoader(scenario, PointQueueLink)
+    assert isinstance(loader._interior_models[4], TampereNode)
+    out = loader.run()  # runs without an explicit node model
+    assert out.n_in.shape == (3, scenario.grid.n_steps + 1)

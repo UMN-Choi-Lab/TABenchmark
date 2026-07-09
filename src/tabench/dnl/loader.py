@@ -7,7 +7,7 @@ from collections.abc import Mapping
 import numpy as np
 
 from .link import LinkModel, LinkModelFactory
-from .node import NodeModel, OriginNode, SeriesNode
+from .node import NodeModel, OriginNode, SeriesNode, TampereNode
 from .output import DNLOutput
 from .scenario import DynamicScenario
 
@@ -55,11 +55,9 @@ class NetworkLoader:
             elif n_in == 1 and n_out == 1:
                 self._interior_models[node] = SeriesNode()
             else:
-                raise ValueError(
-                    f"NetworkLoader needs an explicit NodeModel for node {node} "
-                    f"(n_in={n_in}, n_out={n_out}); dnl-core only defaults 1-in/1-out "
-                    "series nodes"
-                )
+                # general merge/diverge: the Tampere (2011) generic first-order
+                # node model (a supplied node_models entry still overrides it).
+                self._interior_models[node] = TampereNode()
 
     def _origin_turns(self, node: int) -> np.ndarray:
         outs = self._out_links[node]

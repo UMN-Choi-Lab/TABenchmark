@@ -52,6 +52,7 @@ __all__ = [
     "SeriesNode",
     "OriginNode",
     "DestinationNode",
+    "TampereNode",
 ]
 
 
@@ -297,3 +298,73 @@ class DestinationNode(NodeModel):
     ) -> np.ndarray:
         s, r, turns, caps = _coerce_transfer_inputs(s, r, turns, caps)
         return s[:, None] * turns
+
+
+class TampereNode(NodeModel):
+    """Generic first-order merge/diverge node (Tampere et al. 2011).
+
+    Oriented-capacity-proportional supply distribution with a FIFO
+    supply-constraint interaction — the general n-in x n-out node that reduces to
+    ``min(s, r)`` at a 1x1 series node, capacity-proportional priority sharing at
+    a merge, and the FIFO hold-back (the whole approach throttled by its
+    most-blocked movement) at a diverge. Satisfies node axioms N1-N6.
+
+    Algorithm (Boyles TNA sec. 9.6.2 "equal priority movements" and Yperman 2007
+    thesis Ch. 5, both OPEN restatements; the Tampere TR-B 45(1) primary is
+    paywalled, attributed unread). Each active movement ``(i, j)`` — one with
+    ``turns[i, j] > 0`` and ``s[i] > 0`` — flows at the oriented-capacity rate
+    ``alpha[i, j] = caps[i] * turns[i, j]`` (``caps`` = the priority weights,
+    ``q_max_i * dt``). Advance every active movement by the largest common step
+    ``theta`` before some incoming link exhausts its sending (``s`` budget) or
+    some outgoing link saturates its receiving (``r``); a saturated outgoing link
+    then removes EVERY movement of each competing approach that uses it (the FIFO
+    rule — a blocked turn holds its whole approach back in proportion). Repeat
+    until no movement is active. It terminates in at most ``n_in`` rounds (each
+    binding constraint removes at least one incoming approach), and because every
+    movement of row ``i`` accrues ``turns[i, j] * (caps[i] * sum theta)``, the row
+    is turn-proportional by construction (N4 exact).
+    """
+
+    def transfer(
+        self, s: np.ndarray, r: np.ndarray, turns: np.ndarray, caps: np.ndarray
+    ) -> np.ndarray:
+        s, r, turns, caps = _coerce_transfer_inputs(s, r, turns, caps)
+        n_in, n_out = turns.shape
+        q = np.zeros((n_in, n_out), dtype=np.float64)
+        s_rem = s.copy()
+        r_rem = r.copy()
+        moves = turns > 0.0  # (n_in, n_out) active-movement mask
+        # PER-ELEMENT tolerances relative to each row's / column's OWN scale — a
+        # single global (s.sum()-scaled) tolerance would let one huge approach's
+        # float dust swallow a tiny co-incident approach's entire sending flow,
+        # dropping it to zero even against an unconstrained supply (an N5
+        # violation the adversarial review caught at ~1e12 capacity ratios). A
+        # row's scale is caps[i] (s <= caps), a finite column's is r[j].
+        s_tol = 1e-12 * np.maximum(1.0, caps)
+        finite_r = np.isfinite(r)
+        r_tol = np.where(finite_r, 1e-12 * np.maximum(1.0, r), 0.0)
+        # a row is active while it still has sending budget and any capacity
+        active = (s_rem > s_tol) & (caps > 0.0)
+        for _ in range(n_in + 1):  # <= n_in binding rounds; +1 is a belt-and-braces cap
+            if not active.any():
+                break
+            active_caps = np.where(active, caps, 0.0)  # (n_in,)
+            col_rate = active_caps @ turns  # (n_out,) inflow rate per outgoing link
+            # theta: largest common step before a sending budget or a FINITE
+            # receiving budget binds (active rows have caps > 0 so theta_row is
+            # finite). Divide only where a column is actually fed (no div-by-zero).
+            theta_row = np.full(n_in, np.inf)
+            theta_row[active] = s_rem[active] / caps[active]
+            theta_col = np.full(n_out, np.inf)
+            feeds = col_rate > 0.0
+            theta_col[feeds] = r_rem[feeds] / col_rate[feeds]
+            theta = max(0.0, min(float(theta_row.min()), float(theta_col.min())))
+            q += theta * (active_caps[:, None] * turns)
+            s_rem = s_rem - theta * active_caps
+            r_rem = r_rem - theta * col_rate
+            # remove rows whose sending is exhausted, and (FIFO) every row using a
+            # now-saturated (finite-supply) outgoing link.
+            saturated = finite_r & (r_rem <= r_tol)
+            fifo = moves[:, saturated].any(axis=1)
+            active = active & (s_rem > s_tol) & ~fifo
+        return q

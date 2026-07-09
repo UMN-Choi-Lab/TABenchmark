@@ -65,7 +65,7 @@ graph TD
   n_balakrishnaoffline5342["Balakrishna 2007"]:::c10
   n_bargeratraffic2251(["Bar-Gera 2010"]):::c2
   n_helinkbased819(["He 2010"]):::c6
-  n_tamperegeneric261["Tampère 2011"]:::c7
+  n_tamperegeneric261(["Tampère 2011"]):::c7
   n_mitradjievastiff2393(["Mitradjieva 2013"]):::c1
   n_smithrouteswapping5343(["Smith 2016"]):::c6
   n_stablertransportation4212["Stabler 2016"]:::c10
@@ -701,7 +701,7 @@ Applies Newell's exact cumulative-curve solution at link boundaries only — rea
 
 ### Tampère et al. (2011) — A generic class of first order node models for dynamic macroscopic simulation of traffic flows
 
-_roadmap_ · dynamic network loading (DNL) — junction flux-allocation model, not an equilibrium principle · `[tampere2011generic]`
+`node-model` · **shipped** · dynamic network loading (DNL) — junction flux-allocation model, not an equilibrium principle · `[tampere2011generic]`
 
 A single generic first-order node model for arbitrary numbers of incoming/outgoing links, defined by a requirement set (flow maximization, demand/supply feasibility, conservation, turn-fraction satisfaction, and an invariance principle) that subsumes the ad-hoc CTM merge/diverge rules.
 
@@ -709,7 +709,7 @@ A single generic first-order node model for arbitrary numbers of incoming/outgoi
 
 **Formulation.** `Given incoming demands S_i, outgoing supplies R_j, and turn fractions p_ij: solve for fluxes q_ij maximizing throughput s.t. Σ_j q_ij ≤ S_i, Σ_i q_ij ≤ R_j, q_ij = p_ij Σ_j q_ij (turn proportions), competing flows share constrained supply by oriented capacity proportions; reduces to Daganzo's merge/diverge in the 2-leg limits.`
 
-**Validation.** The node flux problem itself is a pure numpy/scipy fixed-point/allocation solver with well-defined inputs (demands, supplies, turn fractions) and a verifiable oracle — this component is tractable and unit-testable even without a dynamic core. Validation via the paper's requirement checklist (conservation, non-negativity, demand/supply feasibility, invariance, flow maximization) as known-answer tests, and by reduction to Daganzo's merge/diverge in limiting cases. Note the related non-uniqueness result (Corthout et al. 2012) motivates a determinacy check.
+**Validation.** SHIPPED as `node-model` (src/tabench/dnl/node.py, `TampereNode`), the general merge/diverge node on the dnl-core interface (adr-017) -- it unlocks NETWORK loading (ctm/ltm on arbitrary junctions; the loader used to raise for any non-1x1 interior node, now defaults to TampereNode). Oriented-capacity-proportional distribution with FIFO: each active movement (i,j) with turns[i,j]>0, s[i]>0 flows at rate alpha[i,j]=caps[i]*turns[i,j] (caps=q_max_i*dt=priority weights); advance all by the largest common step theta before a sending budget s[i] or receiving budget r[j] binds; a saturated out-link then removes EVERY movement of each approach using it (FIFO hold-back); repeat (<= n_in rounds). Satisfies node axioms N1-N6 (N4 exact by construction -- every movement of row i accrues turns[i,j]*(caps[i]*sum theta)); reduces to min(s,r) at a series node, capacity-proportional at a merge, FIFO at a diverge. Machine-verified anchors (test_dnl_tampere_node.py): merge caps=[1,1]->[0.5,0.5], caps=[2,1]->[2/3,1/3]; diverge FIFO [[0.6,0.4]] with out-link 2 blocked to 0.4 -> phi=0.5 -> q=[0.6,0.4] (1 of 2 veh held back on BOTH movements); 2x2 with out-link A binding -> [[105/37,45/37],[80/37,120/37]], A saturated at 5; N6 invariance (inflating a non-binding s leaves q bit-identical); a 300-case random fuzz all passing assert_node_axioms; end-to-end merge + diverge DynamicScenarios certified through NetworkLoader+DNLEvaluator (C1 conservation clean, C8 turn fidelity ~0, capacity-proportional bottleneck sharing) that previously raised. Adversarial review (300k+ fuzzed calls + loader end-to-end) confirmed termination (proven + 200k trials), N6, FIFO, determinism, and clean network loading; it CAUGHT one real N5 defect -- a global s.sum()-scaled tolerance dropped a tiny co-incident approach's whole sending flow at ~1e12 capacity ratios -- FIXED to per-element (per-row caps[i] / per-column r[j]) tolerances + regression-pinned. Tampere 2011 TR-B primary PAYWALLED/unread; algorithm restated from Boyles TNA sec.9.6.2 (open, read) + Yperman 2007 thesis Ch.5 (open, read); Corthout 2012 non-unique-flows + Flotterod-Rohde 2011 attributed via Boyles only. 12 tests + 1 loader-default test updated; additive -> 570-suite + golden Braess hash byte-untouched. Legacy note follows. The node flux problem itself is a pure numpy/scipy fixed-point/allocation solver with well-defined inputs (demands, supplies, turn fractions) and a verifiable oracle — this component is tractable and unit-testable even without a dynamic core. Validation via the paper's requirement checklist (conservation, non-negativity, demand/supply feasibility, invariance, flow maximization) as known-answer tests, and by reduction to Daganzo's merge/diverge in limiting cases. Note the related non-uniqueness result (Corthout et al. 2012) motivates a determinacy check.
 
 *Builds on:* Daganzo 1995, Lebacque 1996.
 

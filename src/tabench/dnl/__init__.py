@@ -14,6 +14,7 @@ from .node import (
     NodeTopology,
     OriginNode,
     SeriesNode,
+    TampereNode,
     assert_node_axioms,
 )
 from .output import DNLOutput
@@ -39,6 +40,7 @@ __all__ = [
     "SeriesNode",
     "OriginNode",
     "DestinationNode",
+    "TampereNode",
     "NetworkLoader",
     "DNLOutput",
     "single_link_dynamic_scenario",
