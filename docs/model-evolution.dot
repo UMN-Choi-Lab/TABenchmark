@@ -75,7 +75,7 @@ digraph TA_evolution {
   "daganzo1994cell" [label="Daganzo 1994\nctm",fillcolor="#f5e6d6",style="rounded,filled"];
   "daganzo1995cell" [label="Daganzo 1995\n",fillcolor="#f5e6d6",style="rounded,filled,dashed"];
   "lebacque1996godunov" [label="Lebacque 1996\n",fillcolor="#f5e6d6",style="rounded,filled,dashed"];
-  "yperman2007link" [label="Yperman 2007\n",fillcolor="#f5e6d6",style="rounded,filled,dashed"];
+  "yperman2007link" [label="Yperman 2007\nltm",fillcolor="#f5e6d6",style="rounded,filled"];
   "tampere2011generic" [label="Tampère 2011\n",fillcolor="#f5e6d6",style="rounded,filled,dashed"];
   "vickrey1969congestion" [label="Vickrey 1969\n",fillcolor="#f0d6e6",style="rounded,filled,dashed"];
   "merchant1978model" [label="Merchant 1978\n",fillcolor="#f0d6e6",style="rounded,filled,dashed"];

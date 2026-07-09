@@ -186,7 +186,7 @@
 <text x="1794" y="1020" text-anchor="middle" font-size="9.5" fill="#000">Daganzo 1995</text>
 <rect x="1742" y="1030" width="104" height="17" rx="4" fill="#f5e6d6" stroke="#333" stroke-dasharray="3,2"/>
 <text x="1794" y="1042" text-anchor="middle" font-size="9.5" fill="#000">Lebacque 1996</text>
-<rect x="1742" y="1272" width="104" height="17" rx="4" fill="#f5e6d6" stroke="#333" stroke-dasharray="3,2"/>
+<rect x="1742" y="1272" width="104" height="17" rx="4" fill="#f5e6d6" stroke="#333"/>
 <text x="1794" y="1284" text-anchor="middle" font-size="9.5" fill="#000">Yperman 2007</text>
 <rect x="1742" y="1360" width="104" height="17" rx="4" fill="#f5e6d6" stroke="#333" stroke-dasharray="3,2"/>
 <text x="1794" y="1372" text-anchor="middle" font-size="9.5" fill="#000">Tampère 2011</text>

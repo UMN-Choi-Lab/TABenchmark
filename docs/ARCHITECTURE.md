@@ -248,6 +248,7 @@ TABenchmark/
 │   │                      # + domain-separated hash), link.py + node.py (S/R interfaces),
 │   │                      # loader.py, output.py (DNLOutput P1 artifact), _reference.py
 │   │                      # (test-only point queue), ctm.py (Daganzo CTM LinkModel, ADR-015),
+│   │                      # ltm.py (Yperman LTM LinkModel, ADR-016),
 │   │                      # builtin.py — shared by ctm/ltm/newell/godunov/node
 │   ├── transit/           # Transit optimal strategies (ADR-014): network.py (TransitNetwork
 │   │                      # directed multigraph + TransitScenario, domain-separated hash),

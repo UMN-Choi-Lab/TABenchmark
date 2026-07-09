@@ -61,7 +61,7 @@ graph TD
   n_roughgardenhow4698(["Roughgarden 2002"]):::c4
   n_boyceconvergence3048["Boyce 2004"]:::c10
   n_dialpath6641(["Dial 2006"]):::c2
-  n_ypermanlink2548["Yperman 2007"]:::c7
+  n_ypermanlink2548(["Yperman 2007"]):::c7
   n_balakrishnaoffline5342["Balakrishna 2007"]:::c10
   n_bargeratraffic2251(["Bar-Gera 2010"]):::c2
   n_helinkbased819(["He 2010"]):::c6
@@ -687,7 +687,7 @@ Recasts CTM as a special case of the Godunov finite-volume scheme for LWR and in
 
 ### Yperman (2007) — The Link Transmission Model for dynamic network loading
 
-_roadmap_ · dynamic network loading (DNL) — inner loading map, not an equilibrium principle · `[yperman2007link]`
+`ltm` · **shipped** · dynamic network loading (DNL) — inner loading map, not an equilibrium principle · `[yperman2007link]`
 
 Applies Newell's exact cumulative-curve solution at link boundaries only — reading sending/receiving flows off the upstream/downstream N-curves with free-flow and backward-wave time lags — giving diffusion-free shockwaves with state stored only at link ends.
 
@@ -695,7 +695,7 @@ Applies Newell's exact cumulative-curve solution at link boundaries only — rea
 
 **Formulation.** `Sending S(t)=N_up(t+Δt-L/u_f) - N_down(t); Receiving R(t)=N_down(t+Δt-L/w) + k_j L - N_up(t); transferred flow = min(S,R), evaluated on cumulative curves at link ends (Newell's minimum principle).`
 
-**Validation.** PhD thesis (KU Leuven), not Crossref-indexed. Validation via zero-diffusion match to the exact LWR shockwave solution and agreement with CTM in the fine-grid limit; the thesis reports corridor comparisons but there is no single canonical benchmark with distributable ground truth.
+**Validation.** SHIPPED as `ltm` (src/tabench/dnl/ltm.py, `LTMLink`), the second DNL link model (adr-016). A STATELESS LinkModel on the dnl-core sending/receiving interface: the Newell-Daganzo cumulative-curve method reads the base cumulative curves n_in/n_out directly (no cells, _advance_state is the base no-op, no turning logic). sending(k)=min(interp_curve(n_in, t_{k+1}-L/vf)-n_out[k], q_max*dt) -- byte-identical to the point-queue reference; receiving(k)=min(interp_curve(n_out, t_{k+1}-L/w)+kappa*L-n_in[k], q_max*dt) -- the kappa*L storage term IS the finite backward wave (so LTM requires finite kappa, mirror of the point queue's kappa=inf). Needs no CFL=1 cell alignment, only the existing assert_wave_resolved bound dt<=min(L/vf,L/w) (also the causality guarantee). Four machine-verified anchors (test_dnl_ltm.py): (a) free-flow translation bit-exact (n_out(t)=n_in(t-L/vf), TSTT=16) -- identical to CTM (a); (b) the SAME symmetric bottleneck as CTM reproduced BYTE-FOR-BYTE (RH shock -0.5, n_out=max(0,0.5(t-4)), storage 14) -- a cross-model consistency check; (c) an asymmetric w<vf spillback (vf=2,w=1,kappa=3): RH speed -0.25, shock reaches x=0 at t=18, n_out=max(0,0.5(t-2)), storage k_B*L=2.5*4=10 (Yperman receiving recursion); (d) the LTM advantage -- runs on a non-cell-aligned grid (L=3,vf=2,dt=1 -> L/vf=1.5) where CTMLink RAISES, free-flow-translating by the 1.5 lag exactly. Certified by the shipped DNLEvaluator; C1-C4/C6 gate clean. Honest scope: the theoretical zero-diffusion advantage over CTM does NOT manifest on these small single-shock anchors (CTM's O((w/vf)^n_cells) spreading stays below the certificate tolerance, so C5 residual ~0 for both) -- the sprint asserts grid flexibility, not an undemonstrable diffusion gap. BOTH primaries open and READ: Yperman 2007 thesis eq.4.31/4.35 + Boyles TNA sec.9.5.2 eq.9.65/9.67 (worked Table 9.6); sign-convention note -- Yperman's signed w<0 typesets +L/w, this repo's w>0 uses -L/w (verified vs Boyles R(10)=5). 8 tests; additive parallel module -> the 562-test suite + golden Braess hash byte-untouched. Legacy note follows. PhD thesis (KU Leuven), not Crossref-indexed. Validation via zero-diffusion match to the exact LWR shockwave solution and agreement with CTM in the fine-grid limit; the thesis reports corridor comparisons but there is no single canonical benchmark with distributable ground truth.
 
 *Builds on:* Newell 1993, Daganzo 1994.
 

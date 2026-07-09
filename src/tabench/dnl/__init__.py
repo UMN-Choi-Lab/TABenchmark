@@ -7,6 +7,7 @@ from .fd import FundamentalDiagram, LinkDynamics, TriangularFD
 from .grid import TimeGrid, assert_wave_resolved
 from .link import LinkModel, LinkModelFactory, interp_curve
 from .loader import NetworkLoader
+from .ltm import LTMLink
 from .node import (
     DestinationNode,
     NodeModel,
@@ -30,6 +31,7 @@ __all__ = [
     "LinkModel",
     "LinkModelFactory",
     "CTMLink",
+    "LTMLink",
     "interp_curve",
     "NodeModel",
     "NodeTopology",

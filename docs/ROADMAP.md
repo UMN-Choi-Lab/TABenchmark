@@ -67,7 +67,7 @@ T3 interventions.
 - [x] Daganzo (1994) — *The cell transmission model: A dynamic representation of highway traffic consistent with the hydrodynamic theory* (network-loading component) — **shipped** as `ctm` (adr-015, the first DNL `LinkModel` on the dnl-core; Godunov cell dynamics at CFL=1, free-flow translation bit-exact + RH shock/spillback anchors)
 - [ ] Daganzo (1995) — *The cell transmission model, part II: Network traffic* (network-loading component)
 - [ ] Lebacque (1996) — *The Godunov scheme and what it means for first order traffic flow models* (network-loading component)
-- [ ] Yperman (2007) — *The Link Transmission Model for dynamic network loading* (network-loading component)
+- [x] Yperman (2007) — *The Link Transmission Model for dynamic network loading* (network-loading component) — **shipped** as `ltm` (adr-016, the second DNL `LinkModel`; stateless Newell-Daganzo cumulative-curve method, matches CTM byte-for-byte on aligned grids + runs on non-cell-aligned grids CTM rejects)
 - [ ] Tampère et al. (2011) — *A generic class of first order node models for dynamic macroscopic simulation of traffic flows* (network-loading component)
 
 ## Simulation-based DTA & software — v2 (adapters)
