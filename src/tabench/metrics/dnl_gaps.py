@@ -29,40 +29,44 @@ GATING certificates (any failure censors):
   exact when ``L/(vf*dt)`` is an integer (the sanctioned CFL = 1 cell-aligned
   operating point; CFL < 1 cell schemes are NOT promised to pass and are
   answerable to the always-reported raw residual).
-* **C6 FIFO / travel-time consistency** — level-matched inverse interpolation
-  of both cumulative curves; no count level may traverse faster than free
-  flow (the travel-time face of C4, sensitive to sub-step violations the
-  grid-edge relaxation of C4 admits). Honesty note: with single-commodity
-  cumulative counts, within-link FIFO is definitional — physical overtaking
-  is not observable from aggregate counts (the same aggregate-vs-disaggregate
-  limitation the static node-balance audit documents); per-commodity FIFO
-  certification requires per-commodity emissions, a reserved additive
-  extension.
-
-  SCOPE (CFL = 1, matching C4). C6 is exact and gating on the sanctioned
-  cell-aligned operating point ``L/(vf*dt)`` integer. Off it, the inverse
-  interpolation carries an O(dt) time-quantization error the current gate does
-  NOT correct, so on unaligned grids C6 (a) may false-CENSOR a correct emission
-  by up to one step, and (b) because it samples entry-curve levels only
-  (``np.unique(n_in)``), can miss a sub-step violation confined to an exit-curve
-  level between two entry edges that C4's one-step slack admits — the same
-  "unaligned schemes are answerable to the raw residual, not the flag"
-  declaration C4 carries. The ``fifo_residual`` is always reported and is the
-  science off CFL = 1. A sound joint hardening (sample the union of both curves'
-  edge levels AND relax by the principled per-level interpolation bound, not a
-  flat ``dt`` — the two directions are coupled) is reserved; it is a certificate
-  numeric change and must land through the adversarial DNL review, not ad hoc.
-
-RESERVED (hashed content not yet gated):
-
-* **Turning-fraction fidelity** — ``scenario.turns`` is content-hashed but no
-  certificate reads it, so a diverge that violates a mandated split is not yet
-  censored. From aggregate per-link counts the split is exactly recoverable at a
-  1-in diverge (``d_in[o] == frac[o] * d_out[in]``) and underdetermined at a
-  multi-in node; a gating check must also settle the congested-diverge
-  convention (turn-fraction conservation under supply limits), so it is a
-  reserved additive gating extension, deferred to the DNL review. No shipped
-  scenario has a diverge, so the gap is latent, not active.
+* **C6 FIFO / travel-time consistency** — the per-entered-level (Newell
+  travel-time) restatement of C4's free-flow envelope: for each count level ``L``
+  (drawn from the union of both curves' edge levels so the check is
+  self-contained), the exit-inverse time ``t_out(L)`` is checked against the
+  entry curve at the grid edge at-or-after ``t_out(L) - L/vf`` — C4's own one-step
+  relaxation. This form (replacing an old level-DIFFERENCE form that
+  false-censored off CFL = 1 by O(dt)) shares C4's soundness (a correct emission
+  is never censored). It is a REDUNDANT, independently-derived restatement of C4,
+  not added coverage — an empirical fuzz (~2M trials) plus a short monotonicity
+  argument show C4-passing implies C6-passing — kept as a belt-and-suspenders
+  cross-check (an implementation bug in either C4 or C6 would disagree) and for
+  the per-vehicle travel-time ``fifo_residual`` it reports. Like C4/C5 it is
+  gating-COMPLETE only at CFL = 1: off the cell-aligned point a genuine sub-step
+  violation can slip past both, so the raw ``fifo_residual`` (a COUNT, matching
+  C4/C5) is the science off CFL = 1, not the flag. Honesty note: with
+  single-commodity cumulative counts, within-link
+  FIFO is definitional — physical overtaking is not observable from aggregate
+  counts (the same aggregate-vs-disaggregate limitation the static node-balance
+  audit documents); per-commodity FIFO certification requires per-commodity
+  emissions, a reserved additive extension.
+* **C8 turning-fraction fidelity** — ``scenario.turns`` (content-hashed) is now
+  gated at every diverge (>= 1 incoming, >= 2 outgoing). Because each incoming
+  link's outflow ``d_out[in_i]`` is observed separately, the mandated split is
+  exactly recoverable from aggregate per-link counts without per-commodity
+  attribution: ``d_in[out_j] == sum_i frac[i, j] * d_out[in_i]`` every step
+  (Daganzo 1995 conservation of turning fractions / node axiom N4; holds even
+  under a congested FIFO diverge, which holds the whole approach back in the same
+  ratio, and under a merge, whose realized transfers are already in each
+  ``d_out[in_i]``). This is a NECESSARY condition, so a correct emission passes
+  and a wrong split is censored — at multi-in nodes as well as 1-in diverges (an
+  earlier 1-in-only restriction wrongly abstained on this decidable check; the
+  adversarial DNL review 2026-07-09 caught the gap). It is also SUFFICIENT at a
+  1-in diverge (aggregate ≡ the one row); at a multi-in node it is necessary but
+  not sufficient — a wrong per-row split whose rows cross-cancel to the correct
+  column totals is unobservable from per-link aggregate counts (the same
+  aggregate-vs-per-commodity limit C6 carries). ``turns=None`` (every currently
+  shipped scenario) is a trivial pass, so the gate is inert until a diverge
+  scenario ships.
 * **C7 demand coupling** — no origin releases more than its cumulative
   demand (no phantom vehicles).
 
@@ -119,6 +123,7 @@ _RESIDUAL_KEYS = (
     "causality_residual",
     "fifo_residual",
     "demand_coupling_residual",
+    "turn_residual",
     "kw_backward_residual",
     "kw_backward_residual_rel",
     "kw_backward_exact",
@@ -293,34 +298,111 @@ class DNLEvaluator:
         return max(resid, 0.0), resid <= self._eps_count
 
     def _fifo(self, n_in: np.ndarray, n_out: np.ndarray) -> tuple[float, bool]:
-        """C6: level-matched curve inversion (earliest-time convention on
-        plateaus); every entered count level must travel >= L/vf. Levels never
-        exiting in-horizon are unreported, not violations. Curves are
-        monotone-regularized by running max first (deviation <= eps_count once
-        C0 passes; keeps the inversion well-posed on eps-scale dips)."""
+        """C6: free-flow travel-time consistency — the per-entered-level (Newell
+        travel-time) restatement of C4's free-flow envelope.
+
+        For every count level ``L`` reached on exit, the level exits at the
+        (exact, piecewise-linear) inverse time ``t_out(L)`` and must have
+        entered no later than ``t_out(L) - L/vf``; relaxed to the entry curve at
+        the grid edge AT-OR-AFTER that deadline — the SAME one-step relaxation
+        C4 uses — the gate is ``n_in(edge_at_or_after(t_out(L)-tau)) >= L``. The
+        residual is a COUNT (matching C4/C5): vehicles that exited faster than
+        free flow. Curves are monotone-regularized by running max first
+        (deviation <= eps_count once C0 passes; keeps the inversion well-posed on
+        eps-scale dips); levels never exiting in-horizon are unreported.
+
+        Why this replaced the old level-DIFFERENCE form: sampling at exit-inverse
+        times with C4's own relaxation makes a correct emission pass (the old
+        ``tau - (t_exit - t_entry)`` form false-censored by O(dt) off CFL = 1);
+        the levels are drawn from the UNION of both curves so the check is
+        self-contained. SCOPE, honestly (the adversarial DNL review 2026-07-09):
+        C6 shares C4's soundness — a correct emission is never censored — and is a
+        REDUNDANT, independently-derived restatement of C4, NOT added coverage: an
+        empirical fuzz (~2M trials) and a short monotonicity argument both show
+        C4-passing implies C6-passing (for any level ``L`` C6 probes, ``L`` is an
+        ``n_in`` grid value, and its entry index either coincides with the one C4
+        already uses or, by monotonicity, forces ``n_in >= n_out > L`` — no index
+        makes C6 fire while C4 passes). It is kept as a belt-and-suspenders
+        cross-check and for the per-vehicle travel-time residual, not for extra
+        catches. Like C4/C5 it is gating-COMPLETE only at CFL = 1: off the
+        cell-aligned point a genuine sub-step violation can slip past both, so the
+        raw ``fifo_residual`` is the science, not the flag — the same declaration
+        C4 and C5 carry.
+
+        Honesty note: with single-commodity cumulative counts, within-link FIFO
+        is definitional — physical overtaking is not observable from aggregate
+        counts; per-commodity FIFO certification is a reserved additive
+        extension."""
         dt = self.scenario.grid.dt
+        n_steps = self.scenario.grid.n_steps
         resid, ok = 0.0, True
         for a in range(n_in.shape[0]):
             cin = np.maximum.accumulate(n_in[a])
             cout = np.maximum.accumulate(n_out[a])
-            levels = np.unique(cin)
+            levels = np.unique(np.concatenate((cin, cout)))
             levels = levels[levels > 0.0]
             if levels.size == 0:
                 continue
-            t_entry = _earliest_times(cin, levels, dt)
-            t_exit = _earliest_times(cout, levels, dt)
-            reached = np.isfinite(t_exit)
+            t_out = _earliest_times(cout, levels, dt)
+            reached = np.isfinite(t_out)
             if not reached.any():
                 continue
-            deficit = self._tau_ff[a] - (t_exit[reached] - t_entry[reached])
+            lv = levels[reached]
+            deadline = t_out[reached] - self._tau_ff[a]
+            # entry curve at the grid edge at-or-after the free-flow deadline
+            # (C4's one-step relaxation; 1e-12 slack for edge-aligned deadlines)
+            edge = np.clip(np.ceil(deadline / dt - 1e-12).astype(np.int64), 0, n_steps)
+            deficit = lv - cin[edge]
             m = float(deficit.max())
             resid = max(resid, m)
-            ok = ok and m <= self.tol * max(1.0, float(self._tau_ff[a]))
-            # Belt-and-braces: exit times nondecreasing in level — implied by
-            # C0 monotonicity (post-regularization the inversion is exactly
-            # monotone), asserted as a documented sanity check.
-            ok = ok and bool((np.diff(t_exit[reached]) >= 0.0).all())
+            ok = ok and m <= self._eps_count
         return max(resid, 0.0), ok
+
+    def _turn_fidelity(self, d_in: np.ndarray, d_out: np.ndarray) -> tuple[float, bool]:
+        """Turning-fraction fidelity at every diverge (reads ``scenario.turns``).
+
+        The mandated split is exactly recoverable from aggregate per-link counts
+        at ANY diverge node (>= 1 incoming, >= 2 outgoing), because each incoming
+        link's outflow ``d_out[in_i]`` — the total it transfers into the node —
+        is observed separately, so no per-commodity attribution is needed. Node
+        axiom N4 (Daganzo 1995 conservation of turning fractions) forces
+        ``q[i, j] = frac[i, j] * d_out[in_i]``, hence every step and every
+        outgoing link ``j``::
+
+            d_in[out_j] == sum_i frac[i, j] * d_out[in_i]     ( = frac.T @ d_out[ins] )
+
+        This holds per step even under a congested / FIFO diverge, because a
+        blocked movement holds the whole approach back in the SAME ratio, and
+        under a merge, because each incoming link's realized transfer is already
+        reflected in its observed ``d_out[in_i]``. It is a NECESSARY condition for
+        a correct emission (never false-censors) that a wrong split violates — at
+        multi-in nodes as well as 1-in diverges (the earlier 1-in-only restriction
+        wrongly abstained on this decidable check; the adversarial DNL review
+        2026-07-09 caught the gap).
+
+        SUFFICIENCY scope (same review). At a 1-in diverge the aggregate column
+        identity IS the per-row N4 (one row), so C8 fully gates. At a MULTI-in
+        node it is necessary but not sufficient: a wrong per-row split whose rows
+        cross-cancel to the correct column totals (e.g. row0 sends 90/10, row1
+        0/100, both aggregating to the mandated column sums) is unobservable from
+        per-link aggregate counts — the same aggregate-vs-per-commodity limit C6
+        FIFO carries, reserved for a per-commodity emission. ``turns=None`` (every
+        currently shipped scenario) is a trivial pass, so this gate is inert until
+        a diverge scenario ships."""
+        turns = self.scenario.turns
+        if turns is None:
+            return 0.0, True
+        resid, ok = 0.0, True
+        for node_id, matrix in turns.frac:
+            ins = self._in_links[node_id]
+            outs = self._out_links[node_id]
+            if ins.size == 0 or outs.size < 2:
+                continue  # single-out carries an implicit column of ones (no split)
+            mandated = matrix.T @ d_out[ins]  # (n_out, n_steps); frac cols align with outs
+            r = float(np.abs(d_in[outs] - mandated).max(initial=0.0))
+            resid = max(resid, r)
+            ok = ok and r <= self.tol * max(1.0, float(self._F[ins].sum())) + self._eps_count
+        return resid, ok
 
     def _demand_coupling(self, release: np.ndarray) -> tuple[float, bool]:
         """C7: Release_o(t_k) <= D_o(t_k) at every origin and edge."""
@@ -411,6 +493,7 @@ class DNLEvaluator:
         caus_resid, c4_ok = self._causality(n_in, n_out)
         fifo_resid, c6_ok = self._fifo(n_in, n_out)
         dc_resid, c7_ok = self._demand_coupling(release)
+        turn_resid, turn_ok = self._turn_fidelity(d_in, d_out)
         kw_resid, kw_rel, kw_exact, kw_at_res = self._kw_backward(n_in, n_out)
         for ok, label in (
             (c1_ok, "C1 conservation"),
@@ -419,6 +502,7 @@ class DNLEvaluator:
             (c4_ok, "C4 free-flow causality"),
             (c6_ok, "C6 FIFO travel time"),
             (c7_ok, "C7 demand coupling"),
+            (turn_ok, "C8 turning-fraction fidelity"),
         ):
             if not ok:
                 failures.append(label)
@@ -430,6 +514,7 @@ class DNLEvaluator:
             "causality_residual": caus_resid,
             "fifo_residual": fifo_resid,
             "demand_coupling_residual": dc_resid,
+            "turn_residual": turn_resid,
             "kw_backward_residual": kw_resid,
             "kw_backward_residual_rel": kw_rel,
             "kw_backward_exact": kw_exact,

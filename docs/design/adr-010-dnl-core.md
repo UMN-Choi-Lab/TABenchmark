@@ -83,25 +83,40 @@ byte-identical.
 
 ## Known limitations & deferred hardening
 
-Recorded honestly from the post-implementation adversarial review (2026-07-07):
+Recorded honestly from the post-implementation adversarial reviews (2026-07-07, and
+the gated DNL review 2026-07-09 that landed the two items below):
 
-- **C6 off CFL = 1 (deferred, latent).** C6 is exact and gating on aligned grids.
-  Off them the inverse interpolation carries an O(`dt`) time-quantization error the
-  current gate does not correct, so it can (a) false-**censor** correct emissions by
-  up to one step, and (b) because it samples entry-curve levels only, miss a sub-step
-  violation confined to an exit-curve level between two entry edges that C4's slack
-  admits (false-**accept**). Both are out of the CFL = 1 promise; the raw
-  `fifo_residual` is always reported. The sound joint fix — sample the **union** of
-  both curves' edge levels **and** relax by the principled per-level interpolation
-  bound (the two directions are coupled; a flat `dt` relaxation reopens the
-  false-accept) — is a certificate-numeric change reserved for the adversarial DNL
-  review. No shipped scenario is unaligned, so the gap is latent.
-- **Turn-fraction fidelity (deferred, latent).** `scenario.turns` is hashed content
-  but not yet read by any certificate, so a diverge violating a mandated split is not
-  yet censored. The split is exactly recoverable at a 1-in diverge and
-  underdetermined at a multi-in node; a gating check must also settle the
-  congested-diverge turn-conservation convention. Reserved additive gating extension.
-  No shipped scenario has a diverge.
+- **C6 false-censor fixed; off-CFL completeness honestly scoped (landed 2026-07-09).**
+  C6 was reformulated as the per-entered-level (Newell travel-time) restatement of
+  C4's free-flow envelope: each count level's exit-inverse time is checked against the
+  entry curve at the grid edge at-or-after `t_out(L) − L/vf` — C4's own one-step
+  relaxation, over levels drawn from the union of both curves. This removes the old
+  O(`dt`) **false-censor** off CFL = 1 (a correct emission now passes). The gated
+  review's key correction: C6 adds **no coverage** over C4 — an empirical fuzz (~2M
+  trials) and a short monotonicity argument show C4-passing **implies** C6-passing —
+  so it is a redundant, independently-derived **restatement** of C4 (belt-and-suspenders
+  against an implementation bug in either check, plus the per-vehicle travel-time
+  residual), not a gap-closer, and a genuine off-CFL sub-step violation still slips
+  past *both*. So C6, exactly like C4/C5, is gating-**complete only at CFL = 1**; off
+  it the raw `fifo_residual` is the science, not the flag. The earlier "sample the
+  union … and it closes the false-accept" plan was retired as unsupported. No shipped
+  scenario is unaligned, so the residual gap stays latent.
+- **Turn-fraction fidelity gated at every diverge as C8 (landed 2026-07-09).**
+  `scenario.turns` is now read: at any node with ≥ 1 incoming and ≥ 2 outgoing links,
+  `d_in[out_j] == Σ_i frac[i, j] · d_out[in_i]` is checked every step. Because each
+  incoming link's outflow `d_out[in_i]` is observed separately, this is decidable from
+  aggregate single-commodity counts at **multi-in nodes too** — the original
+  "underdetermined at a multi-in node" belief was **wrong**, and the gated review
+  caught that the 1-in-only draft silently certified a gross merge-diverge violation.
+  The check is node axiom N4 (Daganzo 1995 CTF), a necessary condition that holds per
+  step even under a congested FIFO diverge (whole approach held back in ratio) and a
+  supply-limited merge (each realized transfer already in `d_out[in_i]`), so it never
+  false-censors a correct emission. It is *sufficient* at a 1-in diverge (aggregate ≡
+  the single row); at a multi-in node it is necessary but not sufficient — a wrong
+  per-row split whose rows cross-cancel to the correct column totals is unobservable
+  from per-link aggregate counts (the same aggregate-vs-per-commodity limit C6 FIFO
+  carries; reserved for a per-commodity emission). No shipped scenario has a diverge,
+  so the gate is inert until one ships.
 - **Certificate test coverage.** The review found four surviving mutations
   (tolerance magnitude, C2 inflow-side, C1 origin-coupling, C6 plateau convention).
   Regression tests pinning each were added in the hardening commit and this scope was
