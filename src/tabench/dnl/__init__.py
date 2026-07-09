@@ -1,6 +1,7 @@
 """Dynamic network loading primitives and reference runner."""
 
 from .builtin import bottleneck_dynamic_scenario, single_link_dynamic_scenario
+from .ctm import CTMLink
 from .demand import DynamicDemand, TurningFractions
 from .fd import FundamentalDiagram, LinkDynamics, TriangularFD
 from .grid import TimeGrid, assert_wave_resolved
@@ -28,6 +29,7 @@ __all__ = [
     "DynamicScenario",
     "LinkModel",
     "LinkModelFactory",
+    "CTMLink",
     "interp_curve",
     "NodeModel",
     "NodeTopology",

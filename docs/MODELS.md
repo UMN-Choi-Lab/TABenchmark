@@ -50,7 +50,7 @@ graph TD
   n_cascettadynamic7177["Cascetta 1993"]:::c10
   n_jayakrishnanfaster1323(["Jayakrishnan 1994"]):::c2
   n_frieszdaytoday4558(["Friesz 1994"]):::c6
-  n_daganzocell7244["Daganzo 1994"]:::c7
+  n_daganzocell7244(["Daganzo 1994"]):::c7
   n_larssonaugmented3883(["Larsson 1995"]):::c5
   n_cantarelladynamic9699(["Cantarella 1995"]):::c6
   n_daganzocell6348["Daganzo 1995"]:::c7
@@ -647,7 +647,7 @@ A cumulative-count (N-curve) reformulation of the LWR kinematic-wave model that,
 
 ### Daganzo (1994) — The cell transmission model: A dynamic representation of highway traffic consistent with the hydrodynamic theory
 
-_roadmap_ · dynamic network loading (DNL) — inner loading map, not an equilibrium principle · `[daganzo1994cell]`
+`ctm` · **shipped** · dynamic network loading (DNL) — inner loading map, not an equilibrium principle · `[daganzo1994cell]`
 
 A simple, convergent cell-based discretization of the LWR model in which flow between adjacent cells is the minimum of upstream 'sending' and downstream 'receiving' capacity, automatically producing shocks, queues, and spillback.
 
@@ -655,7 +655,7 @@ A simple, convergent cell-based discretization of the LWR model in which flow be
 
 **Formulation.** `n_i(t+1) = n_i(t) + y_i(t) - y_{i+1}(t);  y_{i+1}(t) = min{ n_i(t),  q_max Δt,  (w/u_f)(N̄_{i+1} - n_{i+1}(t)) } (sending vs receiving, trapezoidal/triangular FD).`
 
-**Validation.** Paper gives worked single-link examples (shock, rarefaction, queue). Validation via convergence to the analytic LWR solution as Δt→0 and correct wave speeds; the known weakness is numerical diffusion, which is the explicit motivation for LTM. No canonical benchmark network with distributable ground-truth flows.
+**Validation.** SHIPPED as `ctm` (src/tabench/dnl/ctm.py, `CTMLink`), the first DNL link model on the adr-010 core (adr-015). A LinkModel subclass on the generic sending/receiving interface: at CFL=1 (cell length dx=vf*dt) a link of length L is n=L/dx cells with occupancy occ[i], sending=last cell's Lebacque demand_at*dt (capped by occ), receiving=first cell's supply_at*dt, interior Godunov flux y_i=min(demand_at(k_i),supply_at(k_{i+1}))*dt, conservation update occ[:-1]-=y; occ[1:]+=y; occ[0]+=inflow; occ[-1]-=outflow. NO turning logic (merges/diverges are the node models' job; the 1995 network extension = daganzo1995cell is the node-model sprint's, not this link sprint's). Requires finite jam density (bounded storage; the point queue is the test-only reference) and a cell-aligned length (raises otherwise). Three hand-derived + machine-verified analytic anchors (test_dnl_ctm.py): (a) FREE-FLOW translation bit-exact at CFL=1 (Courant number 1 upwind advection, zero diffusion) -- n_out(t)=n_in(t-L/vf), TSTT=(L/vf)*D=16; (b) QUEUE SPILLBACK -- link1 (L=4,cap2) feeding a 0.5 bottleneck at inflow 1.5 builds a backward shock at the exact Rankine-Hugoniot speed s=(q_A-q_B)/(k_A-k_B)=(1.5-0.5)/(1.5-3.5)=-0.5, reaching x=0 (full spillback) at t=12; exact bottleneck boundary curves n_in=1.5t, n_out=max(0,0.5(t-4)), storage@t=12 = k_B*L = 3.5*4 = 14; (c) the congested cells settle at the supply-side root k_B=kappa-q_B/w=3.5 (root of supply_at(k)=q_B). Certified by the shipped DNLEvaluator (P1): C1-C4/C6 gating pass; the backward-wave envelope C5 stays non-gating Tier-B because standard CTM's congested branch (Courant w/vf<1) is provably diffusive (Daganzo 1999 open restatement; Boyles TNA sec.10.5), a known scheme property not a bug. Requires w <= vf at CFL=1 (the backward wave must be resolved per cell — dt<=dx/max(vf,w) reduces to w<=vf; a legal w>vf FD would overfill a cell past jam, so CTMLink raises): an adversarial-review CATCH — the scenario-level assert_wave_resolved uses whole-link L, missing this per-cell condition, and 66% of w>vf configs otherwise produced C3-censored physically-impossible output. Two review agents (physics/conservation fuzz + anchor re-derivation) otherwise confirmed the S/R contracts, multi-cell free-flow bit-exactness, and all three anchors. Original 1994/1995 TR-B paywalled/unread; the min(sending,receiving) recipe, the (vf,w,kappa) FD, and the anchors cross-verified from Boyles TNA + Daganzo's open ISTTT 1999. 10 tests; additive parallel module -> the 552-test suite and golden Braess hash byte-untouched. Legacy note follows. Paper gives worked single-link examples (shock, rarefaction, queue). Validation via convergence to the analytic LWR solution as Δt→0 and correct wave speeds; the known weakness is numerical diffusion, which is the explicit motivation for LTM. No canonical benchmark network with distributable ground-truth flows.
 
 ### Daganzo (1995) — The cell transmission model, part II: Network traffic
 

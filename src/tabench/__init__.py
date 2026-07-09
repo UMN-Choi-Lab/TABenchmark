@@ -34,6 +34,7 @@ from .data import (
     vi_two_route_scenario,
 )
 from .dnl import (
+    CTMLink,
     DestinationNode,
     DNLOutput,
     DynamicDemand,
@@ -173,6 +174,7 @@ __all__ = [
     "DynamicScenario",
     "LinkModel",
     "LinkModelFactory",
+    "CTMLink",
     "interp_curve",
     "NodeModel",
     "NodeTopology",

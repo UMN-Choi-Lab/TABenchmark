@@ -64,7 +64,7 @@ T3 interventions.
 ## Dynamic network loading — v2
 
 - [ ] Newell (1993) — *A simplified theory of kinematic waves in highway traffic, part I: General theory* (network-loading component)
-- [ ] Daganzo (1994) — *The cell transmission model: A dynamic representation of highway traffic consistent with the hydrodynamic theory* (network-loading component)
+- [x] Daganzo (1994) — *The cell transmission model: A dynamic representation of highway traffic consistent with the hydrodynamic theory* (network-loading component) — **shipped** as `ctm` (adr-015, the first DNL `LinkModel` on the dnl-core; Godunov cell dynamics at CFL=1, free-flow translation bit-exact + RH shock/spillback anchors)
 - [ ] Daganzo (1995) — *The cell transmission model, part II: Network traffic* (network-loading component)
 - [ ] Lebacque (1996) — *The Godunov scheme and what it means for first order traffic flow models* (network-loading component)
 - [ ] Yperman (2007) — *The Link Transmission Model for dynamic network loading* (network-loading component)

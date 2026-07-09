@@ -247,7 +247,8 @@ TABenchmark/
 │   │                      # fd.py (fundamental diagram), demand.py, scenario.py (DynamicScenario
 │   │                      # + domain-separated hash), link.py + node.py (S/R interfaces),
 │   │                      # loader.py, output.py (DNLOutput P1 artifact), _reference.py
-│   │                      # (test-only point queue), builtin.py — shared by ctm/ltm/newell/godunov/node
+│   │                      # (test-only point queue), ctm.py (Daganzo CTM LinkModel, ADR-015),
+│   │                      # builtin.py — shared by ctm/ltm/newell/godunov/node
 │   ├── transit/           # Transit optimal strategies (ADR-014): network.py (TransitNetwork
 │   │                      # directed multigraph + TransitScenario, domain-separated hash),
 │   │                      # strategy.py (Spiess & Florian 1989 two-pass solver), builtin.py
