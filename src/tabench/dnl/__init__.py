@@ -3,7 +3,8 @@
 from .builtin import bottleneck_dynamic_scenario, single_link_dynamic_scenario
 from .ctm import CTMLink
 from .demand import DynamicDemand, TurningFractions
-from .fd import FundamentalDiagram, LinkDynamics, TriangularFD
+from .fd import FundamentalDiagram, GreenshieldsFD, LinkDynamics, TriangularFD
+from .godunov import GodunovLink
 from .grid import TimeGrid, assert_wave_resolved
 from .link import LinkModel, LinkModelFactory, interp_curve
 from .loader import NetworkLoader
@@ -25,6 +26,7 @@ __all__ = [
     "assert_wave_resolved",
     "FundamentalDiagram",
     "TriangularFD",
+    "GreenshieldsFD",
     "LinkDynamics",
     "DynamicDemand",
     "TurningFractions",
@@ -33,6 +35,7 @@ __all__ = [
     "LinkModelFactory",
     "CTMLink",
     "LTMLink",
+    "GodunovLink",
     "interp_curve",
     "NodeModel",
     "NodeTopology",

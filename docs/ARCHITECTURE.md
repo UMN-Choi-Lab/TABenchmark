@@ -250,6 +250,7 @@ TABenchmark/
 │   │                      # (test-only point queue), ctm.py (Daganzo CTM LinkModel, ADR-015),
 │   │                      # ltm.py (Yperman LTM LinkModel, ADR-016),
 │   │                      # node.py TampereNode (generic merge/diverge, ADR-017),
+│   │                      # godunov.py + fd.GreenshieldsFD (general-FD Godunov, ADR-018),
 │   │                      # builtin.py — shared by ctm/ltm/newell/godunov
 │   ├── transit/           # Transit optimal strategies (ADR-014): network.py (TransitNetwork
 │   │                      # directed multigraph + TransitScenario, domain-separated hash),

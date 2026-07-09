@@ -23,7 +23,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-__all__ = ["FundamentalDiagram", "TriangularFD", "LinkDynamics"]
+__all__ = ["FundamentalDiagram", "TriangularFD", "GreenshieldsFD", "LinkDynamics"]
 
 
 class FundamentalDiagram(ABC):
@@ -180,6 +180,71 @@ class TriangularFD(FundamentalDiagram):
         flows, so the envelope still majorizes; the C2 certificate uses the
         capped :attr:`capacity`, staying tight at bottlenecks)."""
         return (self.vf, self.w, self.kappa)
+
+
+@dataclass(frozen=True)
+class GreenshieldsFD(FundamentalDiagram):
+    """Parabolic Greenshields FD ``Q(k) = vf * k * (1 - k/kappa)`` on ``[0, kappa]``.
+
+    The first SMOOTH, strictly concave (non-triangular) fundamental diagram in the
+    benchmark — used by the Godunov-scheme link (``godunov.py``) to exercise
+    rarefaction physics a triangular FD cannot produce. Derived quantities::
+
+        critical density  k_c = kappa / 2
+        capacity          q_max = Q(k_c) = vf * kappa / 4
+        free speed        vf = Q'(0)
+        wave speed        w = |Q'(kappa)| = vf   (symmetric parabola)
+
+    The Lebacque demand ``Q(min(k, k_c))`` and supply ``Q(max(k, k_c))`` give the
+    exact Godunov flux ``min(demand, supply)`` for any concave FD, so the shipped
+    cell scheme loads it unchanged. The inherited ``envelope_params`` triangular
+    majorant ``(vf, vf, kappa)`` is sound: ``Q(k) <= min(vf*k, vf*(kappa - k))``
+    (equality only at ``k = 0``/``kappa``), so every certificate stays a necessary
+    condition.
+    """
+
+    vf: float
+    kappa: float
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "vf", float(self.vf))
+        object.__setattr__(self, "kappa", float(self.kappa))
+        if not (math.isfinite(self.vf) and self.vf > 0):
+            raise ValueError(f"GreenshieldsFD vf must be finite and > 0, got {self.vf!r}")
+        if not (math.isfinite(self.kappa) and self.kappa > 0):
+            raise ValueError(f"GreenshieldsFD kappa must be finite and > 0, got {self.kappa!r}")
+
+    @property
+    def capacity(self) -> float:
+        return self.vf * self.kappa / 4.0
+
+    @property
+    def critical_density(self) -> float:
+        return self.kappa / 2.0
+
+    @property
+    def jam_density(self) -> float:
+        return self.kappa
+
+    @property
+    def free_speed(self) -> float:
+        return self.vf
+
+    @property
+    def wave_speed(self) -> float:
+        return self.vf  # |Q'(kappa)| = |vf (1 - 2)| = vf
+
+    def flow_at(self, k: np.ndarray) -> np.ndarray:
+        k = np.asarray(k, dtype=np.float64)
+        return np.clip(self.vf * k * (1.0 - k / self.kappa), 0.0, None)
+
+    def demand_at(self, k: np.ndarray) -> np.ndarray:
+        k = np.asarray(k, dtype=np.float64)
+        return self.flow_at(np.minimum(k, self.critical_density))
+
+    def supply_at(self, k: np.ndarray) -> np.ndarray:
+        k = np.asarray(k, dtype=np.float64)
+        return self.flow_at(np.maximum(k, self.critical_density))
 
 
 @dataclass(frozen=True)

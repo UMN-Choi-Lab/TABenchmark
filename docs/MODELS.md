@@ -54,7 +54,7 @@ graph TD
   n_larssonaugmented3883(["Larsson 1995"]):::c5
   n_cantarelladynamic9699(["Cantarella 1995"]):::c6
   n_daganzocell6348["Daganzo 1995"]:::c7
-  n_lebacquegodunov3835["Lebacque 1996"]:::c7
+  n_lebacquegodunov3835(["Lebacque 1996"]):::c7
   n_yangprinciple7580(["Yang 1998"]):::c4
   n_ziliaskopouloslinear4836["Ziliaskopoulos 2000"]:::c8
   n_bargeraorigin7268(["Bar-Gera 2002"]):::c2
@@ -673,7 +673,7 @@ Extends CTM from a single homogeneous highway to general networks by adding merg
 
 ### Lebacque (1996) — The Godunov scheme and what it means for first order traffic flow models
 
-_roadmap_ · dynamic network loading (DNL) — flux framework for link/node loading, not an equilibrium principle · `[lebacque1996godunov]`
+`godunov` · **shipped** · dynamic network loading (DNL) — flux framework for link/node loading, not an equilibrium principle · `[lebacque1996godunov]`
 
 Recasts CTM as a special case of the Godunov finite-volume scheme for LWR and introduces the local link demand Δ(k) and supply Σ(k) functions, so every inter-cell/inter-link flux is simply min(demand, supply).
 
@@ -681,7 +681,7 @@ Recasts CTM as a special case of the Godunov finite-volume scheme for LWR and in
 
 **Formulation.** `Φ = min{ Δ(k_up),  Σ(k_down) }; Δ = local link demand (sending), Σ = local link supply (receiving); CTM recovered exactly with a triangular FD.`
 
-**Validation.** Conference paper (13th ISTTT); largely theoretical. Validation via exact equivalence to CTM on a triangular FD and against Riemann-problem analytic solutions of LWR; no reproducible benchmark numerics in the original.
+**Validation.** SHIPPED as `godunov` (src/tabench/dnl/godunov.py, `GodunovLink` + src/tabench/dnl/fd.py `GreenshieldsFD`), the general-FD Godunov scheme on the dnl-core (adr-018). CTM is the Godunov scheme for the TRIANGULAR FD; godunov runs the SAME min(demand,supply) cell flux on a GENERAL concave FD -- the first non-triangular FD (`GreenshieldsFD`, parabolic Q(k)=vf*k*(1-k/kappa), k_c=kappa/2, q_max=vf*kappa/4, w=vf) -- so it captures RAREFACTION fans a triangular FD cannot (the first rarefaction physics in the benchmark). GodunovLink is a thin CTMLink subclass that substitutes a GreenshieldsFD built from the link's (vf, kappa) and reuses the verified (w>vf-hardened) cell update unchanged; it guards that the LinkDynamics is Greenshields-consistent (wave_speed==free_speed, capacity==vf*kappa/4) so the certifier never gates the wrong capacity. The certifier is UNCHANGED and stays sound: its triangular-majorant envelopes (vf,vf,kappa) + capacity vf*kappa/4 majorize the concave Greenshields FD (Q(k)<=min(vf*k,vf*(kappa-k))), and Greenshields' density-dependent free-flow speed vf(1-k/kappa)<vf is slower than the Newell-vf envelope so C4 holds a fortiori. Machine-verified anchors (test_dnl_godunov.py): GreenshieldsFD derived quantities + parabolic demand/supply branches + majorant soundness + validation; the transonic Godunov flux min(demand(3.5),supply(0.5))=q_max=2 (entropy-correct rarefaction, not shock, value); a Greenshields loading certified through NetworkLoader+DNLEvaluator (dnl_feasible=1, triangular majorant sound on the smooth FD); and the distinguishing anchor -- a dam-break Riemann rarefaction converging to the analytic self-similar fan k(x,t)=(kappa/2)(1-(x-x0)/(vf t)), L1 error 0.128->0.041 monotone over 20->160 cells (first-order Godunov, slowed by the sonic-point sqrt singularity). Lebacque 1996 ISTTT-13 demand/supply formalism + Greenshields 1935 FD + Godunov 1959/LeVeque exact-Riemann flux; open restatements, no DOIs reproduced. 10 tests; additive (new FD + new link + exports) -> 582-suite + golden Braess hash byte-untouched. Legacy note follows. Conference paper (13th ISTTT); largely theoretical. Validation via exact equivalence to CTM on a triangular FD and against Riemann-problem analytic solutions of LWR; no reproducible benchmark numerics in the original.
 
 *Builds on:* Daganzo 1994.
 
