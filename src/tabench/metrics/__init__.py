@@ -5,12 +5,14 @@ from .estimation import CERTIFICATE_DEFAULTS, ODCertifier
 from .flows import nrmse, rmse
 from .gaps import Evaluator, node_balance_residual
 from .so import marginal_cost_tolls, marginal_costs, price_of_anarchy, tolled_network
+from .transit_gaps import TransitEvaluator
 
 __all__ = [
     "nrmse",
     "rmse",
     "Evaluator",
     "DNLEvaluator",
+    "TransitEvaluator",
     "node_balance_residual",
     "marginal_costs",
     "price_of_anarchy",
