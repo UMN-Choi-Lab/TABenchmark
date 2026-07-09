@@ -77,7 +77,7 @@ digraph TA_evolution {
   "lebacque1996godunov" [label="Lebacque 1996\ngodunov",fillcolor="#f5e6d6",style="rounded,filled"];
   "yperman2007link" [label="Yperman 2007\nltm",fillcolor="#f5e6d6",style="rounded,filled"];
   "tampere2011generic" [label="Tampère 2011\nnode-model",fillcolor="#f5e6d6",style="rounded,filled"];
-  "vickrey1969congestion" [label="Vickrey 1969\n",fillcolor="#f0d6e6",style="rounded,filled,dashed"];
+  "vickrey1969congestion" [label="Vickrey 1969\nvickrey",fillcolor="#f0d6e6",style="rounded,filled"];
   "merchant1978model" [label="Merchant 1978\n",fillcolor="#f0d6e6",style="rounded,filled,dashed"];
   "friesz1993variational" [label="Friesz 1993\n",fillcolor="#f0d6e6",style="rounded,filled,dashed"];
   "ziliaskopoulos2000linear" [label="Ziliaskopoulos 2000\n",fillcolor="#f0d6e6",style="rounded,filled,dashed"];

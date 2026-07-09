@@ -21,7 +21,7 @@ graph TD
   n_frankalgorithm6385(["Frank 1956"]):::c1
   n_beckmannstudies2645(["Beckmann 1956"]):::c4
   n_bprtraffic563(["Bureau of Public Roads (BPR) 1964"]):::c0
-  n_vickreycongestion3141["Vickrey 1969"]:::c8
+  n_vickreycongestion3141(["Vickrey 1969"]):::c8
   n_dialprobabilistic5178(["Dial 1971"]):::c3
   n_dafermostraffic7276(["Dafermos 1972"]):::c0
   n_florianmethod9428(["Florian 1974"]):::c5
@@ -717,7 +717,7 @@ A single generic first-order node model for arbitrary numbers of incoming/outgoi
 
 ### Vickrey (1969) — Congestion Theory and Transport Investment
 
-_roadmap_ · dynamic-UE over the departure-time margin (Wardrop's principle applied to time-of-day choice; deterministic queue) · `[vickrey1969congestion]`
+`vickrey` · **shipped** · dynamic-UE over the departure-time margin (Wardrop's principle applied to time-of-day choice; deterministic queue) · `[vickrey1969congestion]`
 
 Analytical departure-time equilibrium at a single deterministic-queue (point-queue) bottleneck, where commuters trade queueing delay against early/late schedule-delay penalties.
 
@@ -725,7 +725,7 @@ Analytical departure-time equilibrium at a single deterministic-queue (point-que
 
 **Formulation.** `Cost of departing at t: c(t)=queue-delay(t)+beta*[t*-a(t)]^+ + gamma*[a(t)-t*]^+, a(t)=arrival time. Equilibrium: every used departure time has equal cost c = (beta*gamma/(beta+gamma))*(N/s); arrival window [t*-gamma*N/((beta+gamma)s), t*+beta*N/((beta+gamma)s)]. SO loads uniformly at rate s with zero queue; PoA = 2; optimal dynamic toll(t) = queue delay(t).`
 
-**Validation.** Analytic anchor: the paper's equilibrium is a closed form (equal cost, arrival window, departure-rate expressions, PoA=2, toll = queue delay) that is directly and exactly reproducible in numpy on a single bottleneck. No network-scale numerics in the original, but the single-bottleneck closed form is an unusually clean analytic oracle.
+**Validation.** SHIPPED as `vickrey` (src/tabench/bottleneck/, adr-019), the first departure-TIME equilibrium and the entry of the analytical-DTA track -- a parallel module (like transit/, dnl/) touching no road code. BottleneckScenario = six scalars (N, s, alpha, beta, gamma, t*), frozen + content-hashed (domain prefix tabench-bottleneck-scenario-v1;). Closed-form ue_closed_form/so_closed_form emit a BottleneckSchedule (cumulative departure curve R(t) on a time grid = the P1 artifact). P1 certifier metrics.BottleneckEvaluator recomputes, from the EMITTED R(t) only (never the solver's r_early/t1/C* provenance): the deterministic point queue n_{k+1}=max(0,n_k+dR_k-s*dt), each used departure time's generalized cost c=alpha*T+beta*[t*-(t+T)]+ +gamma*[(t+T)-t*]+ (T=n/s), and equilibrium_gap=(max c - min c)/C* over used times -- 0 iff a user equilibrium (no traveler can improve by shifting), positive otherwise; feasibility gates on conservation (R ends at N), monotonicity, hash. Machine-verified anchors (worked instance N=6000,s=3000,alpha=1,beta=0.5,gamma=2,t*=9): C*=beta*gamma/(beta+gamma)*N/s=0.8; window t1=7.4,t2=9.4 (width N/s=2); peak t_n=8.2; r_early=6000,r_late=1000; max queue 2400; the UE certifies equilibrium_gap=0 (every departure time exactly C*) with total 4800, while the SO (uniform metering at s, no queue) certifies a POSITIVE gap (it is NOT a departure-time equilibrium) with total 2400 -- PoA=UE/SO=2 for ANY beta,gamma (general result, regression-fuzzed over random penalties). A perturbed schedule certifies positive gap; non-conserving/non-monotone/wrong-hash censored. Adversarial review CAUGHT two real certifier bugs -- a CRITICAL false-accept (a start-of-step cost sample let a burst-dump schedule certify gap~0 at 2.1x the true UE cost) and a false-censor on fine grids/tiny N -- both FIXED by scoring PER TRAVELER (invert both the arrival curve and the bottleneck-served curve D=min(A,D_prev+s*dt) at each count level, the DNL/transit level-based approach) + regression-pinned. Deterministic single bottleneck is the correct v2 scope (multi-bottleneck/network departure-time DUE is separately roadmapped under Friesz 1993 + Ziliaskopoulos 2000). Vickrey 1969 AER P&P 59(2):251-260 (no DOI; JSTOR 1823678) attributed; closed form from Boyles TNA Ch.10 (open) + independent re-derivation from the first-order equal-cost conditions + a discrete-event queue sim; ADPL 1990 JUE attributed (not full-text-read). 13 tests; additive parallel module -> 592-suite + golden Braess hash byte-untouched. Legacy note follows. Analytic anchor: the paper's equilibrium is a closed form (equal cost, arrival window, departure-rate expressions, PoA=2, toll = queue delay) that is directly and exactly reproducible in numpy on a single bottleneck. No network-scale numerics in the original, but the single-bottleneck closed form is an unusually clean analytic oracle.
 
 *Builds on:* Wardrop 1952.
 

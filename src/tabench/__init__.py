@@ -4,6 +4,13 @@ See docs/ARCHITECTURE.md for the design and docs/REFERENCES.md for the
 verified reference canon this benchmark implements.
 """
 
+from .bottleneck import (
+    BottleneckScenario,
+    BottleneckSchedule,
+    so_closed_form,
+    ue_closed_form,
+    vickrey_worked_scenario,
+)
 from .core import (
     Budget,
     BudgetCoords,
@@ -84,6 +91,7 @@ from .experiments import (
 )
 from .metrics import (
     CERTIFICATE_DEFAULTS,
+    BottleneckEvaluator,
     DNLEvaluator,
     Evaluator,
     ODCertifier,
@@ -204,6 +212,12 @@ __all__ = [
     "common_lines_scenario",
     "common_lines_unattractive_scenario",
     "common_lines_expected_cost",
+    "BottleneckScenario",
+    "BottleneckSchedule",
+    "ue_closed_form",
+    "so_closed_form",
+    "vickrey_worked_scenario",
+    "BottleneckEvaluator",
     "run_experiment",
     "run_estimation_experiment",
     "identifiability_report",

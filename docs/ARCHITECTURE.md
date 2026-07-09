@@ -255,9 +255,13 @@ TABenchmark/
 │   ├── transit/           # Transit optimal strategies (ADR-014): network.py (TransitNetwork
 │   │                      # directed multigraph + TransitScenario, domain-separated hash),
 │   │                      # strategy.py (Spiess & Florian 1989 two-pass solver), builtin.py
+│   ├── bottleneck/        # Vickrey (1969) departure-time equilibrium (ADR-019): scenario.py
+│   │                      # (BottleneckScenario, domain-separated hash), solve.py (closed-form
+│   │                      # UE/SO + emitted BottleneckSchedule), builtin.py
 │   ├── metrics/           # gaps.py, flows.py, so.py, estimation.py, dnl_gaps.py (DNL P1
-│   │                      # certificates C0–C7, ADR-010), transit_gaps.py (TransitEvaluator,
-│   │                      # ADR-014) (planned: distributional.py)
+│   │                      # certificates C0–C8, ADR-010), transit_gaps.py (TransitEvaluator,
+│   │                      # ADR-014), bottleneck_gaps.py (BottleneckEvaluator, ADR-019)
+│   │                      # (planned: distributional.py)
 │   ├── experiments/       # runner.py incl. manifests, bootstrap.py (planned: profiles.py)
 │   └── cli.py             # tabench fetch | list | run (planned: validate)
 ├── scenarios/             # declarative YAML scenario cards (ladder: 0braess, 1siouxfalls, …)

@@ -56,7 +56,7 @@ T3 interventions.
 
 ## Analytical DTA — v2
 
-- [ ] Vickrey (1969) — *Congestion Theory and Transport Investment* (white-box solver)
+- [x] Vickrey (1969) — *Congestion Theory and Transport Investment* (white-box solver) — **shipped** as `vickrey` (adr-019, the first departure-time equilibrium — a parallel `bottleneck/` module with a closed-form UE/SO and a P1 certifier that recomputes the point queue + generalized costs from the emitted departure curve; `equilibrium_gap=0` for the UE, PoA=2)
 - [ ] Merchant & Nemhauser (1978) — *A Model and an Algorithm for the Dynamic Traffic Assignment Problems* (white-box solver)
 - [ ] Friesz et al. (1993) — *A Variational Inequality Formulation of the Dynamic Network User Equilibrium Problem* (white-box solver)
 - [ ] Ziliaskopoulos (2000) — *A Linear Programming Model for the Single Destination System Optimum Dynamic Traffic Assignment Problem* (white-box solver)

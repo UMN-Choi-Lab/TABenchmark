@@ -1,5 +1,6 @@
 """Metric definitions: certified gaps, flow accuracy. Single source of truth."""
 
+from .bottleneck_gaps import BottleneckEvaluator
 from .dnl_gaps import DNLEvaluator
 from .estimation import CERTIFICATE_DEFAULTS, ODCertifier
 from .flows import nrmse, rmse
@@ -13,6 +14,7 @@ __all__ = [
     "Evaluator",
     "DNLEvaluator",
     "TransitEvaluator",
+    "BottleneckEvaluator",
     "node_balance_residual",
     "marginal_costs",
     "price_of_anarchy",
