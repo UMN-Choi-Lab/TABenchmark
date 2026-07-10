@@ -68,6 +68,14 @@ from .dnl import (
     interp_curve,
     single_link_dynamic_scenario,
 )
+from .dta import (
+    DTATrajectory,
+    SODTAScenario,
+    canonical_lp,
+    mn_metering_scenario,
+    mn_parallel_scenario,
+    solve_so_dta,
+)
 from .estimation import (
     ESTIMATOR_REGISTRY,
     CallableEstimator,
@@ -95,6 +103,7 @@ from .metrics import (
     DNLEvaluator,
     Evaluator,
     ODCertifier,
+    SODTAEvaluator,
     TransitEvaluator,
     marginal_cost_tolls,
     marginal_costs,
@@ -218,6 +227,13 @@ __all__ = [
     "so_closed_form",
     "vickrey_worked_scenario",
     "BottleneckEvaluator",
+    "SODTAScenario",
+    "DTATrajectory",
+    "canonical_lp",
+    "solve_so_dta",
+    "mn_parallel_scenario",
+    "mn_metering_scenario",
+    "SODTAEvaluator",
     "run_experiment",
     "run_estimation_experiment",
     "identifiability_report",

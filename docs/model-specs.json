@@ -792,8 +792,8 @@
   "equilibrium_principle": "dynamic system-optimal (SO), single-destination, fixed demand-time profile",
   "math_sketch": "State x_a(t) = occupancy of link a; exit flow g_a(x_a(t)). min sum_t sum_a [travel-cost] s.t. conservation x_a(t+1)=x_a(t)+inflow_a(t)-g_a(x_a(t)) and node balance. The nonlinear exit functions g_a make the feasible region/objective NONCONVEX (a piecewise-linear special case is LP-solvable).",
   "innovation": "The first DTA model of any kind: generalizes static system-optimal assignment to time-varying flows by introducing link 'exit functions' g_a(x_a) that endogenize congestion dynamics, and frames DTA as a discrete-time optimal-control / nonlinear program. Founds the field of network DTA. Its companion paper (merchant1978optimality) derives the bang-bang/Pontryagin-type optimality conditions and exposes the nonconvexity that dominates the next two decades of DTA research.",
-  "shipped": false,
-  "tabench_name": "",
+  "shipped": true,
+  "tabench_name": "merchant-nemhauser",
   "evolved_from": [
    "beckmann1956studies"
   ],

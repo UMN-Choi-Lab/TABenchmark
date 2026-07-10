@@ -2,6 +2,7 @@
 
 from .bottleneck_gaps import BottleneckEvaluator
 from .dnl_gaps import DNLEvaluator
+from .dta_gaps import SODTAEvaluator
 from .estimation import CERTIFICATE_DEFAULTS, ODCertifier
 from .flows import nrmse, rmse
 from .gaps import Evaluator, node_balance_residual
@@ -15,6 +16,7 @@ __all__ = [
     "DNLEvaluator",
     "TransitEvaluator",
     "BottleneckEvaluator",
+    "SODTAEvaluator",
     "node_balance_residual",
     "marginal_costs",
     "price_of_anarchy",

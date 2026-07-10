@@ -28,7 +28,7 @@ graph TD
   n_leblancefficient294(["LeBlanc 1975"]):::c1
   n_evansderivation1705(["Evans 1976"]):::c5
   n_daganzostochastic1939(["Daganzo 1977"]):::c3
-  n_merchantmodel1560["Merchant 1978"]:::c8
+  n_merchantmodel1560(["Merchant 1978"]):::c8
   n_smithexistence5776["Smith 1979"]:::c0
   n_dafermostraffic4000(["Dafermos 1980"]):::c0
   n_fisksome1742(["Fisk 1980"]):::c3
@@ -731,7 +731,7 @@ Analytical departure-time equilibrium at a single deterministic-queue (point-que
 
 ### Merchant & Nemhauser (1978) — A Model and an Algorithm for the Dynamic Traffic Assignment Problems
 
-_roadmap_ · dynamic system-optimal (SO), single-destination, fixed demand-time profile · `[merchant1978model]`
+`merchant-nemhauser` · **shipped** · dynamic system-optimal (SO), single-destination, fixed demand-time profile · `[merchant1978model]`
 
 The first network dynamic traffic assignment model: a discrete-time, single-destination system-optimal program that routes a time-varying demand profile through links whose outflow is governed by exit-flow functions.
 
