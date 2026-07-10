@@ -196,7 +196,7 @@
 <text x="2044" y="646" text-anchor="middle" font-size="9.5" fill="#000">Merchant 1978</text>
 <rect x="1992" y="964" width="104" height="17" rx="4" fill="#f0d6e6" stroke="#333" stroke-dasharray="3,2"/>
 <text x="2044" y="976" text-anchor="middle" font-size="9.5" fill="#000">Friesz 1993</text>
-<rect x="1992" y="1118" width="104" height="17" rx="4" fill="#f0d6e6" stroke="#333" stroke-dasharray="3,2"/>
+<rect x="1992" y="1118" width="104" height="17" rx="4" fill="#f0d6e6" stroke="#333"/>
 <text x="2044" y="1130" text-anchor="middle" font-size="9.5" fill="#000">Ziliaskopoulos 2000</text>
 <rect x="2242" y="1624" width="104" height="17" rx="4" fill="#d6f0ff" stroke="#333" stroke-dasharray="3,2"/>
 <text x="2294" y="1636" text-anchor="middle" font-size="9.5" fill="#000">Liu 2023</text>

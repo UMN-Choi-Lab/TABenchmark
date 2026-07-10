@@ -80,7 +80,7 @@ digraph TA_evolution {
   "vickrey1969congestion" [label="Vickrey 1969\nvickrey",fillcolor="#f0d6e6",style="rounded,filled"];
   "merchant1978model" [label="Merchant 1978\nmerchant-nemhauser",fillcolor="#f0d6e6",style="rounded,filled"];
   "friesz1993variational" [label="Friesz 1993\n",fillcolor="#f0d6e6",style="rounded,filled,dashed"];
-  "ziliaskopoulos2000linear" [label="Ziliaskopoulos 2000\n",fillcolor="#f0d6e6",style="rounded,filled,dashed"];
+  "ziliaskopoulos2000linear" [label="Ziliaskopoulos 2000\nlp-so-dta",fillcolor="#f0d6e6",style="rounded,filled"];
   "liu2023end" [label="Liu 2023\n",fillcolor="#d6f0ff",style="rounded,filled,dashed"];
   "rahman2023data" [label="Rahman 2023\nlearned-surrogate",fillcolor="#d6f0ff",style="rounded,filled"];
   "liu2024end" [label="Liu 2024\n",fillcolor="#d6f0ff",style="rounded,filled,dashed"];

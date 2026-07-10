@@ -831,8 +831,8 @@
   "equilibrium_principle": "dynamic system-optimal (SO), single-destination, CTM-based (spillback-capable)",
   "math_sketch": "min sum_t sum_cells n_i(t) (total system time) s.t. CTM linear dynamics: inter-cell flow y <= min{ n_upstream, Q_max*dt, (w/vf)*(N_jam - n_downstream) } written as linear inequalities, plus cell conservation n_i(t+1)=n_i(t)+inflow-outflow and sink/source balances. All constraints linear => global optimum obtainable by LP.",
   "innovation": "Turns SO-DTA into a globally solvable LINEAR PROGRAM, resolving the Merchant-Nemhauser nonconvexity for the single-destination case: it replaces generic nonlinear exit functions with the CTM's piecewise-LINEAR sending/receiving flow dynamics, whose min-constraints hold with equality at the optimum. First exact, polynomially solvable SO-DTA that carries realistic (queue-spillback) traffic dynamics. Permits vehicle 'holding' (a known LP artifact) that later combinatorial earliest-arrival methods (zheng2011network) remove.",
-  "shipped": false,
-  "tabench_name": "",
+  "shipped": true,
+  "tabench_name": "lp-so-dta",
   "evolved_from": [
    "merchant1978model",
    "daganzo1994cell"

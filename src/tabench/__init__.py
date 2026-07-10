@@ -69,12 +69,18 @@ from .dnl import (
     single_link_dynamic_scenario,
 )
 from .dta import (
+    CellSODTAScenario,
+    CellTrajectory,
     DTATrajectory,
     SODTAScenario,
     canonical_lp,
+    cell_canonical_lp,
     mn_metering_scenario,
     mn_parallel_scenario,
+    solve_cell_so_dta,
     solve_so_dta,
+    zil_corridor_scenario,
+    zil_diverge_spillback_scenario,
 )
 from .estimation import (
     ESTIMATOR_REGISTRY,
@@ -100,6 +106,7 @@ from .experiments import (
 from .metrics import (
     CERTIFICATE_DEFAULTS,
     BottleneckEvaluator,
+    CellSODTAEvaluator,
     DNLEvaluator,
     Evaluator,
     ODCertifier,
@@ -234,6 +241,13 @@ __all__ = [
     "mn_parallel_scenario",
     "mn_metering_scenario",
     "SODTAEvaluator",
+    "CellSODTAScenario",
+    "CellTrajectory",
+    "cell_canonical_lp",
+    "solve_cell_so_dta",
+    "zil_diverge_spillback_scenario",
+    "zil_corridor_scenario",
+    "CellSODTAEvaluator",
     "run_experiment",
     "run_estimation_experiment",
     "identifiability_report",

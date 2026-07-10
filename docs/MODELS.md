@@ -56,7 +56,7 @@ graph TD
   n_daganzocell6348["Daganzo 1995"]:::c7
   n_lebacquegodunov3835(["Lebacque 1996"]):::c7
   n_yangprinciple7580(["Yang 1998"]):::c4
-  n_ziliaskopouloslinear4836["Ziliaskopoulos 2000"]:::c8
+  n_ziliaskopouloslinear4836(["Ziliaskopoulos 2000"]):::c8
   n_bargeraorigin7268(["Bar-Gera 2002"]):::c2
   n_roughgardenhow4698(["Roughgarden 2002"]):::c4
   n_boyceconvergence3048["Boyce 2004"]:::c10
@@ -759,7 +759,7 @@ Recasts continuous-time dynamic USER equilibrium (route, and optionally departur
 
 ### Ziliaskopoulos (2000) — A Linear Programming Model for the Single Destination System Optimum Dynamic Traffic Assignment Problem
 
-_roadmap_ · dynamic system-optimal (SO), single-destination, CTM-based (spillback-capable) · `[ziliaskopoulos2000linear]`
+`lp-so-dta` · **shipped** · dynamic system-optimal (SO), single-destination, CTM-based (spillback-capable) · `[ziliaskopoulos2000linear]`
 
 Formulates single-destination system-optimal DTA as a single linear program by embedding Daganzo's Cell Transmission Model as linear cell-flow constraints.
 

@@ -49,10 +49,11 @@ import logging
 
 import numpy as np
 
+from ..dta.cells import CellSODTAScenario, CellTrajectory, cell_canonical_lp
 from ..dta.scenario import SODTAScenario
 from ..dta.solve import DTATrajectory, canonical_lp
 
-__all__ = ["SODTAEvaluator"]
+__all__ = ["SODTAEvaluator", "CellSODTAEvaluator"]
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,15 @@ _SCORED = (
     "total_cost",
     "max_occupancy",
     "exit_slack_max",
+    "dual_gap",
+    "dual_infeasibility",
+)
+
+_CELL_SCORED = (
+    "so_optimality_gap",
+    "total_cost",
+    "max_occupancy",
+    "holding_max",
     "dual_gap",
     "dual_infeasibility",
 )
@@ -200,9 +210,200 @@ class SODTAEvaluator:
             return {"dual_gap": float("inf"), "dual_infeasibility": float("inf")}
         if not (np.isfinite(y_eq).all() and np.isfinite(y_ub).all()):
             return {"dual_gap": float("inf"), "dual_infeasibility": float("inf")}
-        reduced = c - a_eq.T @ y_eq - a_ub.T @ y_ub
+        # Clip y_ub at 0 BEFORE computing the bound: a sign violation must not
+        # inflate the dual objective through large b entries (the review's
+        # scale-blindness finding — +1e-12 on a 1e12-sized spillback row moved
+        # the "certified" bound by 56x tol while infeasibility read 1e-12).
+        # The clipped vector is sign-feasible by construction, the bound it
+        # certifies is conservative, and the raw violation is still reported.
+        y_ub_eff = np.minimum(y_ub, 0.0)
+        reduced = c - a_eq.T @ y_eq - a_ub.T @ y_ub_eff
         infeas = max(0.0, float(y_ub.max(initial=0.0)), float(-reduced.min()))
-        dual_obj = float(b_eq @ y_eq + b_ub @ y_ub)
+        dual_obj = float(b_eq @ y_eq + b_ub @ y_ub_eff)
+        return {
+            "dual_gap": (total_cost - dual_obj) / self._z_star,
+            "dual_infeasibility": infeas,
+        }
+
+
+class CellSODTAEvaluator:
+    """Model-blind Ziliaskopoulos cell certifier: pure function of
+    ``(scenario, trajectory)`` — same two-scale, weak-duality-backstopped
+    design as :class:`SODTAEvaluator` (adr-021 inherits the adr-020 review
+    hardening). Gates recompute conservation (with the exogenous demand and
+    the absorbing sink), the four aggregate CTM bound families, the ``x <= N``
+    envelope, the initial condition, terminal clearance, and delivery into the
+    sink; scored quantities are the clamped-occupancy total cost, the gap
+    against an eagerly harness-resolved LP optimum ``Z*``, and the
+    pure-arithmetic dual-certificate checks. ``holding_max`` is a Tier-B
+    diagnostic — the largest headroom left unused by a connector whose tail
+    still queues (LP "traffic holding"): legitimate on the optimal face for a
+    single destination, never an error.
+
+    Raises ``ValueError`` at construction if the canonical LP is unsolvable
+    (the horizon cannot clear the demand) — a configuration error, never a
+    scoring-time crash.
+    """
+
+    def __init__(self, scenario: CellSODTAScenario, tol: float = 1e-6) -> None:
+        from scipy.optimize import linprog
+
+        self.scenario = scenario
+        self.tol = float(tol)
+        self._hash = scenario.content_hash()
+        self._lp = cell_canonical_lp(scenario)
+        c, a_eq, b_eq, a_ub, b_ub = self._lp
+        res = linprog(c, A_ub=a_ub, b_ub=b_ub, A_eq=a_eq, b_eq=b_eq, method="highs")
+        if res.status != 0:
+            raise ValueError(
+                f"canonical cell LP unsolvable for '{scenario.name}' (status "
+                f"{res.status}: {res.message}) — the horizon T cannot clear the demand"
+            )
+        self._z_star = float(res.fun)
+
+    def _censored(self, reason: str) -> dict[str, float]:
+        logger.info("cell SO-DTA trajectory censored: %s", reason)
+        metrics = dict.fromkeys(_CELL_SCORED, float("nan"))
+        metrics["feasible"] = 0.0
+        return metrics
+
+    def certify(self, trajectory: CellTrajectory) -> dict[str, float]:
+        sc = self.scenario
+        x, y = trajectory.occupancies, trajectory.flows
+        n_t, n_c, n_e = sc.n_periods, sc.n_cells, sc.n_conns
+        if x.shape != (n_t + 1, n_c) or y.shape != (n_t, n_e):
+            raise ValueError(
+                f"CellTrajectory shape mismatch: occupancies {x.shape}, flows "
+                f"{y.shape}, scenario wants T={n_t}, n_cells={n_c}, n_conns={n_e}"
+            )
+        if trajectory.scenario_hash != self._hash:
+            return self._censored(
+                f"wrong scenario hash: trajectory ran on {trajectory.scenario_hash!r}, "
+                f"this instance is {self._hash!r}"
+            )
+        if not (np.isfinite(x).all() and np.isfinite(y).all()):
+            return self._censored("non-finite occupancies/flows")
+
+        total_mass = float(sc.demand.sum() + sc.initial_occupancy.sum())
+        eps = self.tol * max(
+            1.0, float(sc.demand.max(initial=0.0)), float(sc.initial_occupancy.max())
+        )
+        budget = self.tol * max(1.0, total_mass)
+        neg = float(np.clip(-x, 0.0, None).sum() + np.clip(-y, 0.0, None).sum())
+        if min(x.min(), y.min()) < -eps or neg > budget:
+            return self._censored("negative occupancy/flow")
+        # Two-scale here too: the adversarial review caught that a per-cell-only
+        # initial gate was the ONE unbudgeted door — with eps scaled by a large
+        # x0, whole vehicles could be deleted at loaded cells and conjured
+        # beside the sink (delivery nets out, conservation sees the CLAIMED
+        # x[0]), resurrecting the adr-020 teleport at ~500x tol.
+        init_diff = np.abs(x[0] - sc.initial_occupancy)
+        if init_diff.max() > eps or init_diff.sum() > budget:
+            return self._censored("occupancies[0] must equal the initial condition")
+
+        inflow = np.zeros((n_t, n_c))
+        outflow = np.zeros((n_t, n_c))
+        for c in range(n_e):
+            outflow[:, sc.conn_tail[c]] += y[:, c]
+            inflow[:, sc.conn_head[c]] += y[:, c]
+        cons = x[1:] - x[:-1] - sc.demand - inflow + outflow
+        if np.abs(cons).max() > eps or np.abs(cons).sum() > budget:
+            return self._censored(
+                f"cell conservation violated (max residual {np.abs(cons).max():.3e}, "
+                f"total {np.abs(cons).sum():.3e})"
+            )
+        # the four aggregate CTM bound families, each at both scales
+        send_occ = np.clip(outflow - x[:-1], 0.0, None)
+        send_cap = np.clip(outflow - sc.capacity, 0.0, None)
+        recv_cap = np.clip(inflow - sc.capacity, 0.0, None)
+        finite_n = np.isfinite(sc.storage)
+        space = np.where(finite_n, sc.delta * (sc.storage - x[:-1]), np.inf)
+        recv_space = np.clip(inflow - space, 0.0, None)
+        for label, exc in (
+            ("sending-occupancy", send_occ),
+            ("sending-capacity", send_cap),
+            ("receiving-capacity", recv_cap),
+            ("receiving-space (spillback)", recv_space),
+        ):
+            if exc.max() > eps or exc.sum() > budget:
+                return self._censored(
+                    f"{label} bound violated (max excess {exc.max():.3e}, "
+                    f"total {exc.sum():.3e})"
+                )
+        overfill = np.clip(x - np.where(finite_n, sc.storage, np.inf), 0.0, None)
+        if overfill.max() > eps:
+            return self._censored(
+                f"occupancy exceeds storage (max excess {overfill.max():.3e})"
+            )
+        non_sink = np.arange(n_c) != sc.sink
+        if x[-1, non_sink].max() > eps or x[-1, non_sink].sum() > budget:
+            return self._censored(
+                f"stranded flow: non-sink x(T) totals {x[-1, non_sink].sum():.3e}"
+            )
+        if abs(float(x[-1, sc.sink]) - total_mass) > budget:
+            return self._censored(
+                f"delivery mismatch: sink holds {x[-1, sc.sink]!r} at T, total "
+                f"demand is {total_mass!r}"
+            )
+
+        total_cost = float(np.sum(np.maximum(x[:-1, non_sink], 0.0)))
+        z_star = self._z_star
+        gap = (total_cost - z_star) / z_star
+        if gap < -self.tol:
+            return self._censored(
+                f"cost {total_cost!r} undercuts the certified LP optimum {z_star!r} "
+                "beyond tolerance — by weak duality no feasible plan can, so this "
+                "is a proof of infeasibility"
+            )
+        # Tier-B holding diagnostic: headroom below ALL four bounds on a
+        # connector whose tail still queues after this interval's outflow.
+        holding = 0.0
+        for c in range(n_e):
+            i, j = int(sc.conn_tail[c]), int(sc.conn_head[c])
+            oth_out = outflow[:, i] - y[:, c]
+            oth_in = inflow[:, j] - y[:, c]
+            room = np.minimum(x[:-1, i] - oth_out, sc.capacity[i] - oth_out)
+            room = np.minimum(room, sc.capacity[j] - oth_in)
+            if finite_n[j]:
+                room = np.minimum(room, space[:, j] - oth_in)
+            queued = x[:-1, i] - outflow[:, i] > eps
+            held = np.where(queued, room - y[:, c], 0.0)
+            holding = max(holding, float(held.max(initial=0.0)))
+        metrics = {
+            "feasible": 1.0,
+            "so_optimality_gap": gap,
+            "total_cost": total_cost,
+            "max_occupancy": float(x[:, non_sink].max()),
+            "holding_max": holding,
+            "dual_gap": float("nan"),
+            "dual_infeasibility": float("nan"),
+        }
+        if trajectory.duals is not None:
+            metrics.update(self._verify_dual_certificate(trajectory, total_cost))
+        return metrics
+
+    def _verify_dual_certificate(
+        self, trajectory: CellTrajectory, total_cost: float
+    ) -> dict[str, float]:
+        """Identical pure-arithmetic weak-duality check to
+        :meth:`SODTAEvaluator._verify_dual_certificate`, against the cell LP."""
+        assert trajectory.duals is not None
+        c, a_eq, b_eq, a_ub, b_ub = self._lp
+        y_eq, y_ub = trajectory.duals["eq"], trajectory.duals["ub"]
+        if y_eq.shape != b_eq.shape or y_ub.shape != b_ub.shape:
+            return {"dual_gap": float("inf"), "dual_infeasibility": float("inf")}
+        if not (np.isfinite(y_eq).all() and np.isfinite(y_ub).all()):
+            return {"dual_gap": float("inf"), "dual_infeasibility": float("inf")}
+        # Clip y_ub at 0 BEFORE computing the bound: a sign violation must not
+        # inflate the dual objective through large b entries (the review's
+        # scale-blindness finding — +1e-12 on a 1e12-sized spillback row moved
+        # the "certified" bound by 56x tol while infeasibility read 1e-12).
+        # The clipped vector is sign-feasible by construction, the bound it
+        # certifies is conservative, and the raw violation is still reported.
+        y_ub_eff = np.minimum(y_ub, 0.0)
+        reduced = c - a_eq.T @ y_eq - a_ub.T @ y_ub_eff
+        infeas = max(0.0, float(y_ub.max(initial=0.0)), float(-reduced.min()))
+        dual_obj = float(b_eq @ y_eq + b_ub @ y_ub_eff)
         return {
             "dual_gap": (total_cost - dual_obj) / self._z_star,
             "dual_infeasibility": infeas,

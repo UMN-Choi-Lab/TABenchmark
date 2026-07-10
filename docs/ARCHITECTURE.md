@@ -258,14 +258,17 @@ TABenchmark/
 │   ├── bottleneck/        # Vickrey (1969) departure-time equilibrium (ADR-019): scenario.py
 │   │                      # (BottleneckScenario, domain-separated hash), solve.py (closed-form
 │   │                      # UE/SO + emitted BottleneckSchedule), builtin.py
-│   ├── dta/               # Merchant & Nemhauser (1978) exit-function SO-DTA (ADR-020):
-│   │                      # scenario.py (SODTAScenario, domain-separated hash), solve.py
-│   │                      # (canonical Carey-relaxed LP + emitted DTATrajectory w/ duals),
-│   │                      # builtin.py
+│   ├── dta/               # Analytical DTA: Merchant & Nemhauser (1978) exit-function
+│   │                      # SO-DTA (ADR-020: scenario.py, solve.py — canonical
+│   │                      # Carey-relaxed LP + emitted DTATrajectory w/ duals) and
+│   │                      # Ziliaskopoulos (2000) LP SO-DTA on CTM cells (ADR-021:
+│   │                      # cells.py — CellSODTAScenario w/ finite storage/spillback,
+│   │                      # cell LP + CellTrajectory w/ duals), builtin.py
 │   ├── metrics/           # gaps.py, flows.py, so.py, estimation.py, dnl_gaps.py (DNL P1
 │   │                      # certificates C0–C8, ADR-010), transit_gaps.py (TransitEvaluator,
 │   │                      # ADR-014), bottleneck_gaps.py (BottleneckEvaluator, ADR-019),
-│   │                      # dta_gaps.py (SODTAEvaluator, ADR-020)
+│   │                      # dta_gaps.py (SODTAEvaluator ADR-020 + CellSODTAEvaluator
+│   │                      # ADR-021)
 │   │                      # (planned: distributional.py)
 │   ├── experiments/       # runner.py incl. manifests, bootstrap.py (planned: profiles.py)
 │   └── cli.py             # tabench fetch | list | run (planned: validate)
