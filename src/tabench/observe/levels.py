@@ -27,6 +27,7 @@ __all__ = [
     "FullOD",
     "LinkCounts",
     "DayToDayCounts",
+    "DynamicLinkCounts",
     "StalePriorOD",
     "random_sensor_mask",
     "distinct_nonzero_columns",
@@ -198,6 +199,66 @@ class DayToDayCounts(DataLevel):
                 "noise": "day_to_day",
                 "population_scale": self.population_scale,
                 "rho": self.rho,
+                "coverage": len(self.sensor_links) / scenario.network.n_links,
+            },
+        )
+
+
+class DynamicLinkCounts(DataLevel):
+    """Within-day time-sliced link counts on a monitored subset (ADR-023).
+
+    Cascetta, Inaudi & Marquis (1993) observe counts *per interval* ``t = 1..T``
+    on monitored links, generated from a time-slice demand profile through the
+    exogenous lagged assignment map. This level takes the already-computed
+    **expected interval crossing counts** ``(T, n_links)`` (``sum_l M[l] @
+    d*_{t-l}`` on the full network, from :func:`~tabench.estimation._dynamic_map.
+    predict_interval_counts`) and draws the observed series:
+
+    * ``noise='poisson'`` draws each ``(day, interval, sensor)`` count as Poisson
+      with mean equal to the expected crossing count (independent across days —
+      day-to-day sampling of the same within-day profile);
+    * ``noise='none'`` repeats the exact expected counts ``n_days`` times.
+
+    The estimand is the ``(H, Z, Z)`` profile, so unlike ``LinkCounts`` the count
+    axis ``t`` is *never* collapsed to a mean by the certifier — averaging over
+    ``t`` is exactly the information-destroying move the dynamic anchors punish.
+    Payload: ``counts`` ``(n_days, T, S)`` and the ``sensor_links``.
+    """
+
+    name = "dynamic_link_counts"
+
+    def __init__(
+        self, sensor_links: np.ndarray, n_days: int = 1, noise: str = "poisson"
+    ) -> None:
+        if noise not in ("poisson", "none"):
+            raise ValueError(f"Unknown noise model {noise!r}")
+        if n_days < 1:
+            raise ValueError("n_days must be >= 1")
+        self.sensor_links = np.asarray(sensor_links, dtype=np.int64)
+        self.n_days = int(n_days)
+        self.noise = noise
+
+    def observe(
+        self, scenario: Scenario, link_flows: np.ndarray, rng: np.random.Generator
+    ) -> Dataset:
+        """``link_flows`` here is the expected interval-crossing counts ``(T, n_links)``."""
+        expected = np.asarray(link_flows, dtype=np.float64)
+        if expected.ndim != 2:
+            raise ValueError("DynamicLinkCounts expects (T, n_links) expected crossing counts")
+        truth = expected[:, self.sensor_links]  # (T, S)
+        if self.noise == "poisson":
+            counts = rng.poisson(
+                lam=np.tile(truth, (self.n_days, 1, 1))
+            ).astype(np.float64)
+        else:
+            counts = np.tile(truth, (self.n_days, 1, 1))
+        return Dataset(
+            kind=self.name,
+            payload={"counts": counts, "sensor_links": self.sensor_links.copy()},
+            meta={
+                "n_days": self.n_days,
+                "n_intervals": int(expected.shape[0]),
+                "noise": self.noise,
                 "coverage": len(self.sensor_links) / scenario.network.n_links,
             },
         )

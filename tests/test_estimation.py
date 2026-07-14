@@ -325,6 +325,18 @@ def test_tiny_negative_clipped_not_censored():
     assert cert.certify(q)["od_feasible"] == 1.0
 
 
+def test_negativity_gate_immune_to_diagonal_scale():
+    """adr-023 review parity fix: a huge intrazonal diagonal cell must not
+    inflate the negativity tolerance under which a genuinely negative
+    inter-zonal cell escapes censoring (scale is off-diagonal only)."""
+    oracle = BRAESS_TRUTH
+    cert = _braess_certifier(obs=[2], heldout=[0], oracle=oracle)
+    q = _single_pair_prior(6.0)
+    q[1, 0] = -5.0
+    q[0, 0] = 1e12  # diagonal mass must not buy negativity tolerance
+    assert cert.certify(q)["od_feasible"] == 0.0
+
+
 # ---------------------------------------------------------------- identifiability
 
 

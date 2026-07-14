@@ -216,7 +216,7 @@
 <text x="2544" y="954" text-anchor="middle" font-size="9.5" fill="#000">Spall 1992</text>
 <rect x="2604" y="942" width="104" height="17" rx="4" fill="#eeeed6" stroke="#333"/>
 <text x="2656" y="954" text-anchor="middle" font-size="9.5" fill="#000">Yang 1992</text>
-<rect x="2492" y="964" width="104" height="17" rx="4" fill="#eeeed6" stroke="#333" stroke-dasharray="3,2"/>
+<rect x="2492" y="964" width="104" height="17" rx="4" fill="#eeeed6" stroke="#333"/>
 <text x="2544" y="976" text-anchor="middle" font-size="9.5" fill="#000">Cascetta 1993</text>
 <rect x="2492" y="1206" width="104" height="17" rx="4" fill="#eeeed6" stroke="#333" stroke-dasharray="3,2"/>
 <text x="2544" y="1218" text-anchor="middle" font-size="9.5" fill="#000">Boyce 2004</text>

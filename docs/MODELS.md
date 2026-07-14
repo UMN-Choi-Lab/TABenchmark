@@ -47,7 +47,7 @@ graph TD
   n_yangestimation3439(["Yang 1992"]):::c10
   n_newellsimplified1633["Newell 1993"]:::c7
   n_frieszvariational9239(["Friesz 1993"]):::c8
-  n_cascettadynamic7177["Cascetta 1993"]:::c10
+  n_cascettadynamic7177(["Cascetta 1993"]):::c10
   n_jayakrishnanfaster1323(["Jayakrishnan 1994"]):::c2
   n_frieszdaytoday4558(["Friesz 1994"]):::c6
   n_daganzocell7244(["Daganzo 1994"]):::c7
@@ -897,15 +897,15 @@ OD estimation on CONGESTED networks: a bilevel program whose lower level is user
 
 ### Cascetta, Inaudi & Marquis (1993) — Dynamic Estimators of Origin-Destination Matrices Using Traffic Counts
 
-_roadmap_ · dynamic OD-estimation (state-space / time-series GLS) · `[cascetta1993dynamic]`
+`od-dynamic` · **shipped** · dynamic OD-estimation (state-space / time-series GLS) · `[cascetta1993dynamic]`
 
-Extends GLS OD estimation to TIME-VARYING demand: estimates a sequence of within-day time-slice OD matrices from time-series link counts, via simultaneous (all slices jointly) and sequential (recursive, Kalman-like) estimators.
+Extends GLS OD estimation to WITHIN-DAY time-varying demand: estimates a sequence of departure-slice OD matrices from time-sliced link counts linked by an exogenous lagged assignment map, via a SIMULTANEOUS estimator (all slices jointly, efficient) and a SEQUENTIAL estimator (slice-by-slice, earlier estimates frozen, online-capable but provably less efficient).
 
-**What it does differently.** Introduces the time dimension and state-space structure to ODME. Rather than one static matrix, it estimates a temporal sequence of OD slices, exploiting the autoregressive/temporal correlation of demand and the time-lagged relationship between departures and downstream counts. The SIMULTANEOUS estimator stacks all slices into one big GLS; the SEQUENTIAL estimator processes slices recursively (a Kalman-filter-style update), the direct precursor to real-time state-space OD prediction (Ashok & Ben-Akiva 2000).
+**What it does differently.** Introduces the within-day time dimension to ODME. Rather than one static matrix, it estimates a temporal sequence of departure-slice OD matrices, exploiting the time-lagged relationship between departures and downstream counts (a slice-h trip crosses a link in a later interval set by its travel time). The SIMULTANEOUS estimator stacks all slices into one block-lower-banded GLS; the SEQUENTIAL estimator processes slices in order, fixing and subtracting earlier estimates without covariance propagation -- cheaper and online-capable but discarding what later counts say about earlier slices, so provably less efficient. The explicit Kalman/state-space covariance recursion belongs to the successor line (Ashok & Ben-Akiva 2000), not the 1993 paper.
 
-**Formulation.** `simultaneous: stack g_1..g_T, solve one GLS with temporal-correlation blocks and time-lagged assignment map. sequential: g_{h|h} = g_{h|h-1} + K_h(c_h - P_h g_{h|h-1}), a recursive GLS/Kalman update slice by slice.`
+**Formulation.** `counts model c_t = sum_l M[l] d_{t-l} with an exogenous lagged assignment map M[l] (fraction of a departure slice crossing a link l intervals later). simultaneous: one whitened nonnegative GLS over the stacked block-lower-banded system (all slices jointly). sequential: for each slice in order, GLS from its earliest observed interval with earlier slices frozen and subtracted.`
 
-**Validation.** The Transportation Science paper gives corridor/simulated numerical examples but no widely reproduced public benchmark. It would be validated against a known state-space fixed point, by reduction to static GLS (cascetta1984) in the stationary/single-slice limit, and by cross-check with a dynamic-network-loading oracle. Needs a dynamic core: the time-lagged mapping from time-varying OD to time-varying counts requires dynamic network loading / time-dependent proportions, which the current static assignment core does not provide.
+**Validation.** Shipped as od-dynamic-sim / od-dynamic-seq (adr-023). Validated by five hand-derived closed-form anchors recomputed in-test: an integer-lag reduction to the static gls closed form (sim == seq), a fractional-lag instance where the simultaneous estimate strictly dominates the sequential ((128/35, 142/35) vs (16/5, 94/25) against truth (4,6)), a pure-math pin with a rank-1 PSD efficiency gap, a mean-collapse distinctness witness (not a gls rename), and temporal-confounding / horizon-truncation identifiability edges. The exogenous free-flow lag map means no dynamic network loading is required.
 
 *Builds on:* Cascetta 1984.
 

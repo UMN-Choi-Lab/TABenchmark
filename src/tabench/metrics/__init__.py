@@ -5,6 +5,7 @@ from .dnl_gaps import DNLEvaluator
 from .dta_gaps import CellSODTAEvaluator, SODTAEvaluator
 from .due_gaps import DUEEvaluator
 from .estimation import CERTIFICATE_DEFAULTS, ODCertifier
+from .estimation_dynamic import DynamicODCertifier
 from .flows import nrmse, rmse
 from .gaps import Evaluator, node_balance_residual
 from .so import marginal_cost_tolls, marginal_costs, price_of_anarchy, tolled_network
@@ -26,5 +27,6 @@ __all__ = [
     "marginal_cost_tolls",
     "tolled_network",
     "ODCertifier",
+    "DynamicODCertifier",
     "CERTIFICATE_DEFAULTS",
 ]

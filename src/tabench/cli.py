@@ -14,10 +14,16 @@ from .core.budget import Budget
 from .core.scenario import ElasticDemand
 from .data import REGISTRY, ChecksumError, citation, fetch, load_scenario
 from .estimation.base import ESTIMATOR_REGISTRY
-from .experiments.runner import run_estimation_experiment, run_experiment
+from .estimation.dynamic_base import DYNAMIC_ESTIMATOR_REGISTRY
+from .experiments.runner import (
+    run_dynamic_estimation_experiment,
+    run_estimation_experiment,
+    run_experiment,
+)
 from .models.base import MODEL_REGISTRY
 
 _DEFAULT_ESTIMATORS = "prior,gls,vzw-entropy,spiess,spsa"
+_DEFAULT_DYNAMIC_ESTIMATORS = "prior-profile,od-dynamic-sim,od-dynamic-seq"
 
 
 def _cmd_list(_: argparse.Namespace) -> int:
@@ -42,6 +48,11 @@ def _cmd_list(_: argparse.Namespace) -> int:
         cls = ESTIMATOR_REGISTRY[name]
         caps = cls.capabilities
         print(f"  {name:<12}{caps.paradigm}, deterministic={caps.deterministic}")
+    print("\nDynamic estimators (T2 within-day, ADR-023):")
+    for name in sorted(DYNAMIC_ESTIMATOR_REGISTRY):
+        cls = DYNAMIC_ESTIMATOR_REGISTRY[name]
+        caps = cls.capabilities
+        print(f"  {name:<16}{caps.paradigm}, deterministic={caps.deterministic}")
     return 0
 
 
@@ -74,7 +85,10 @@ def _cmd_run(args: argparse.Namespace) -> int:
     iterations = iterations or 100
 
     scenario = load_scenario(scenario_key)
-    if "t2_estimation" in (card.get("tasks") or []):
+    tasks = card.get("tasks") or []
+    if "t2_dynamic_estimation" in tasks:
+        return _run_dynamic_estimation(args, card, scenario)
+    if "t2_estimation" in tasks:
         return _run_estimation(args, card, scenario)
     sue = card.get("sue")
     r_cert = 2000
@@ -260,6 +274,70 @@ def _run_estimation(args: argparse.Namespace, card: dict, scenario) -> int:
         "OD columns are descriptive"
         + ("" if ident["linear_identifiable"] else " (od_identifiable=0 here)")
         + " (ADR-002)."
+    )
+    if args.out:
+        print(f"\nWrote CSV + manifest to {args.out}/")
+    return 0
+
+
+def _run_dynamic_estimation(args: argparse.Namespace, card: dict, scenario) -> int:
+    """Dispatch a ``t2_dynamic_estimation`` card to the within-day dynamic runner."""
+    if scenario.sue_theta is not None:
+        # The exogenous free-flow lag map is defined on the deterministic instance
+        # (ADR-023): score against the UE instance.
+        scenario = dataclasses.replace(scenario, sue_theta=None, reference=None)
+    estimation = card.get("estimation") or {}
+    budgets = card.get("budgets") or {}
+    sp_calls = int(budgets.get("sp_calls", 2000))
+    macroreps = int(card.get("macroreps", estimation.get("macroreps", 1)))
+    models_arg = args.models or _DEFAULT_DYNAMIC_ESTIMATORS
+    estimators = []
+    for name in models_arg.split(","):
+        name = name.strip()
+        if name not in DYNAMIC_ESTIMATOR_REGISTRY:
+            print(f"Unknown dynamic estimator {name!r}; see `tabench list`", file=sys.stderr)
+            return 2
+        estimators.append(DYNAMIC_ESTIMATOR_REGISTRY[name]())
+    budget = Budget(sp_calls=sp_calls)
+    result = run_dynamic_estimation_experiment(
+        scenario, estimators, budget, seed=args.seed, macroreps=macroreps,
+        out_dir=args.out, estimation=estimation,
+    )
+    ident = result.manifest["identifiability"]
+    est_meta = result.manifest["estimation"]
+    print(
+        f"Scenario {scenario.name} (hash {scenario.content_hash()[:16]}), "
+        f"T2 within-day dynamic estimation, budget {sp_calls} sp_calls, seed {args.seed}\n"
+    )
+    print(
+        f"identifiability: n_active_pairs={ident['n_active_pairs']} "
+        f"H={est_meta['n_slices']} T={est_meta['n_intervals']} L={est_meta['n_lags']} "
+        f"hazelton_condition={ident.get('hazelton_condition')} "
+        f"linear_identifiable={ident['linear_identifiable']} "
+        f"(n_truncated_slices={ident.get('n_truncated_slices')}, "
+        f"n_confounded_columns={ident.get('n_confounded_columns')}, "
+        f"sensors={est_meta['sensors']['n']}, heldout={est_meta['heldout']['n']})\n"
+    )
+    last: dict[str, dict] = {}
+    for row in result.rows:
+        last[row["estimator"]] = row
+    header = (
+        f"{'estimator':<16}{'obs_rmse':>12}{'heldout_rmse':>14}"
+        f"{'od_rmse':>12}{'profile_rmse':>14}{'od_ident':>10}"
+    )
+    print(header)
+    print("-" * len(header))
+    for name, row in sorted(last.items(), key=lambda kv: _rank_key(kv[1])):
+        print(
+            f"{name:<16}{row['obs_count_rmse']:>12.4e}"
+            f"{row['heldout_count_rmse']:>14.4e}{row['od_rmse']:>12.4e}"
+            f"{row['profile_rmse']:>14.4e}{int(row['od_identifiable']):>10}"
+        )
+    print(
+        "\nT2 within-day dynamic task: ranked by heldout_count_rmse (out-of-sample "
+        "count fit); OD/profile columns are descriptive"
+        + ("" if ident["linear_identifiable"] else " (od_identifiable=0 here)")
+        + " (ADR-023)."
     )
     if args.out:
         print(f"\nWrote CSV + manifest to {args.out}/")

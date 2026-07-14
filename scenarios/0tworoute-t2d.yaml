@@ -1,0 +1,25 @@
+# T2 within-day DYNAMIC estimation on the two-route network (pure UE, sue_theta
+# dropped; ADR-023). Free-flow route choice takes the cheaper route B (1->4->2);
+# its second leg 4->2 sits a fractional slice downstream (tau=1, slice_length=2 ->
+# lags 0 and 1 at 0.5 each), so a slice is observed across two intervals. The
+# simultaneous GLS uses both to revise the slice; the sequential GLS freezes it
+# from the earliest interval only, so od-dynamic-sim recovers a lower od_rmse than
+# od-dynamic-seq -- the paper's information-loss claim, on a small identifiable
+# anchor. Single OD pair.
+scenario: tworoute
+source: builtin
+family: builtin-tworoute
+tasks: [t2_dynamic_estimation]
+estimation:
+  data_level: dynamic_link_counts
+  map: frozen_freeflow_v1
+  n_slices: 3            # H departure slices
+  slice_length: 2.0      # Delta; tau_{4->2}=1 -> fractional lag (0.5 / 0.5)
+  sensors: {kind: explicit, links: [3]}       # 4->2 (fractional lag), route B
+  heldout: {kind: explicit, links: [2]}       # 1->4 (disjoint), the ranking column
+  n_days: 12
+  noise: poisson
+  prior: {kind: stale, cv: 0.30}
+  identifiability: reported
+budgets:
+  sp_calls: 2000

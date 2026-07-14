@@ -242,7 +242,9 @@ TABenchmark/
 │   │   │                  # _paths.py, _stoch.py (Dial map), _probit.py (MC map)
 │   │   └── adapters/      # callable_adapter.py (planned: subprocess.py, docker.py)
 │   ├── observe/           # data levels + identifiability checks
-│   ├── estimation/        # T2 OD-estimation track (base, entropy/gls/spiess/spsa)
+│   ├── estimation/        # T2 OD-estimation track (base, entropy/gls/spiess/spsa,
+│   │                      # yang1992/dn_kalman; within-day dynamic: dynamic_base.py,
+│   │                      # _dynamic_map.py, cascetta1993.py — od-dynamic-sim/seq, ADR-023)
 │   ├── dnl/               # Phase-2 dynamic-network-loading foundation (ADR-010): grid.py,
 │   │                      # fd.py (fundamental diagram), demand.py, scenario.py (DynamicScenario
 │   │                      # + domain-separated hash), link.py + node.py (S/R interfaces),
@@ -266,7 +268,9 @@ TABenchmark/
 │   │                      # Ziliaskopoulos (2000) LP SO-DTA on CTM cells (ADR-021:
 │   │                      # cells.py — CellSODTAScenario w/ finite storage/spillback,
 │   │                      # cell LP + CellTrajectory w/ duals), builtin.py
-│   ├── metrics/           # gaps.py, flows.py, so.py, estimation.py, dnl_gaps.py (DNL P1
+│   ├── metrics/           # gaps.py, flows.py, so.py, estimation.py,
+│   │                      # estimation_dynamic.py (bfw-free exact within-day certifier,
+│   │                      # ADR-023), dnl_gaps.py (DNL P1
 │   │                      # certificates C0–C8, ADR-010), transit_gaps.py (TransitEvaluator,
 │   │                      # ADR-014), bottleneck_gaps.py (BottleneckEvaluator, ADR-019),
 │   │                      # dta_gaps.py (SODTAEvaluator ADR-020 + CellSODTAEvaluator

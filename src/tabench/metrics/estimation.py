@@ -166,7 +166,10 @@ class ODCertifier:
             )
         if not np.all(np.isfinite(q)):
             return self._censored()
-        scale = max(1.0, float(np.abs(q).max()))
+        # off-diagonal scale only: a huge intrazonal (assignment-ignored) cell
+        # must not inflate the tolerance under which a genuinely negative
+        # inter-zonal cell escapes censoring (adr-023 review parity fix)
+        scale = max(1.0, float(np.abs(q[self._off]).max(initial=0.0)))
         if q.min() < -_CLIP_TOL * scale:
             return self._censored()
         q = np.maximum(q, 0.0)
