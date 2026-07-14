@@ -253,7 +253,8 @@ TABenchmark/
 │   │                      # ltm.py (Yperman LTM LinkModel, ADR-016),
 │   │                      # node.py TampereNode (generic merge/diverge, ADR-017),
 │   │                      # godunov.py + fd.GreenshieldsFD (general-FD Godunov, ADR-018),
-│   │                      # builtin.py — shared by ctm/ltm/newell/godunov
+│   │                      # builtin.py — shared by ctm/ltm/godunov (newell/ is a
+│   │                      # separate state-estimation module, ADR-024)
 │   ├── transit/           # Transit optimal strategies (ADR-014): network.py (TransitNetwork
 │   │                      # directed multigraph + TransitScenario, domain-separated hash),
 │   │                      # strategy.py (Spiess & Florian 1989 two-pass solver), builtin.py
@@ -262,6 +263,12 @@ TABenchmark/
 │   │                      # BottleneckSchedule) and Friesz et al. (1993) SRDC dynamic user
 │   │                      # equilibrium (ADR-022: due.py — DUEScenario on parallel Vickrey
 │   │                      # routes, closed form + emitted DUEProfile), builtin.py
+│   ├── newell/            # Three-detector interior reconstruction — the first
+│   │                      # traffic-state-estimation task (ADR-024): scenario.py
+│   │                      # (ThreeDetectorScenario, domain-separated hash + truth
+│   │                      # recipe regenerated via LTM), observe.py (seeded detector
+│   │                      # projection), solve.py (newell-min / newell-min-isotonic
+│   │                      # + emitted ThreeDetectorField), builtin.py
 │   ├── dta/               # Analytical DTA: Merchant & Nemhauser (1978) exit-function
 │   │                      # SO-DTA (ADR-020: scenario.py, solve.py — canonical
 │   │                      # Carey-relaxed LP + emitted DTATrajectory w/ duals) and
@@ -274,7 +281,8 @@ TABenchmark/
 │   │                      # certificates C0–C8, ADR-010), transit_gaps.py (TransitEvaluator,
 │   │                      # ADR-014), bottleneck_gaps.py (BottleneckEvaluator, ADR-019),
 │   │                      # dta_gaps.py (SODTAEvaluator ADR-020 + CellSODTAEvaluator
-│   │                      # ADR-021), due_gaps.py (DUEEvaluator, ADR-022)
+│   │                      # ADR-021), due_gaps.py (DUEEvaluator, ADR-022),
+│   │                      # newell_gaps.py (ThreeDetectorEvaluator, ADR-024)
 │   │                      # (planned: distributional.py)
 │   ├── experiments/       # runner.py incl. manifests, bootstrap.py (planned: profiles.py)
 │   └── cli.py             # tabench fetch | list | run (planned: validate)

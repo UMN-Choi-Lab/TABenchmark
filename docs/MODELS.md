@@ -45,7 +45,7 @@ graph TD
   n_spiessgradient8815(["Spiess 1990"]):::c10
   n_spallmultivariate5410(["Spall 1992"]):::c10
   n_yangestimation3439(["Yang 1992"]):::c10
-  n_newellsimplified1633["Newell 1993"]:::c7
+  n_newellsimplified1633(["Newell 1993"]):::c7
   n_frieszvariational9239(["Friesz 1993"]):::c8
   n_cascettadynamic7177(["Cascetta 1993"]):::c10
   n_jayakrishnanfaster1323(["Jayakrishnan 1994"]):::c2
@@ -635,15 +635,15 @@ Extends Smith's (1984) deterministic route-swap dynamical system and Lyapunov fu
 
 ### Newell (1993) — A simplified theory of kinematic waves in highway traffic, part I: General theory
 
-_roadmap_ · dynamic network loading (DNL) — link-model theory, not an equilibrium principle · `[newell1993simplified]`
+`newell-3det` · **shipped** · dynamic network loading (DNL) — link-model theory, not an equilibrium principle · `[newell1993simplified]`
 
 A cumulative-count (N-curve) reformulation of the LWR kinematic-wave model that, under a triangular fundamental diagram, gives the traffic state at any point as the minimum of a free-flow trace and a backward-wave trace — no PDE solve.
 
-**What it does differently.** Instead of solving the LWR density-field PDE, Newell works in cumulative-vehicle-count coordinates N(x,t) and shows that with a triangular FD the solution is exactly the minimum of an uncongested (slope +u_f) trace and a congested (slope -w) trace of the cumulative curve. This exact, PDE-free 'minimum principle' becomes the computational engine later operationalized as the Link Transmission Model.
+**What it does differently.** Instead of solving the LWR density-field PDE, Newell works in cumulative-vehicle-count coordinates N(x,t) and shows that with a triangular FD the interior state is exactly the minimum of an uncongested (+u_f) trace and a congested (-w) trace of the boundary cumulative curves. Newell's LOADING content (the min at the link ENDS) already ships as ltm (adr-016, Yperman 2007); newell-3det ships the unshipped INTERIOR content as the benchmark's first traffic-STATE-estimation task: given noisy/partial boundary detector curves, reconstruct the interior field, scored against the harness-regenerated closed-form min on noisy levels (the clean level is an oracle row, never ranked).
 
 **Formulation.** `N(x,t) = min{ N(x_U,t_U),  N(x_C,t_C) + k_j (x_C - x) }, with the uncongested trace propagating at +u_f and the congested trace at -w on a triangular FD Q(k)=min{u_f k, w(k_j-k)}.`
 
-**Validation.** Part I is a general-theory paper with no benchmark-network numerics to reproduce. Analytic anchor: on a single link the cumulative-curve construction must reproduce the exact LWR shockwave solution (shock speed u_AB=(q_A-q_B)/(k_A-k_B)); cross-check against CTM in the fine-grid limit.
+**Validation.** Part I is a general-theory paper with no benchmark-network numerics and no estimation content; the noisy-task framing is the repo's own P3 convention. Analytic anchors (adr-024): free-flow exactness; an asymmetric interior Rankine-Hugoniot shock whose min-switch is the hand-computed crossing (x=2 at t=10, density k_B=kappa-q_B/w=2.5); LTM==CTM byte-for-byte on the aligned symmetric bottleneck (cross-model truth); a seeded noisy card where isotonic strictly beats the naive baseline; and a masked-upstream observability edge where the congested branch alone pins the interior exactly where active.
 
 ### Daganzo (1994) — The cell transmission model: A dynamic representation of highway traffic consistent with the hydrodynamic theory
 

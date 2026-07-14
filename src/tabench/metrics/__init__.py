@@ -8,6 +8,7 @@ from .estimation import CERTIFICATE_DEFAULTS, ODCertifier
 from .estimation_dynamic import DynamicODCertifier
 from .flows import nrmse, rmse
 from .gaps import Evaluator, node_balance_residual
+from .newell_gaps import ThreeDetectorEvaluator
 from .so import marginal_cost_tolls, marginal_costs, price_of_anarchy, tolled_network
 from .transit_gaps import TransitEvaluator
 
@@ -21,6 +22,7 @@ __all__ = [
     "SODTAEvaluator",
     "CellSODTAEvaluator",
     "DUEEvaluator",
+    "ThreeDetectorEvaluator",
     "node_balance_residual",
     "marginal_costs",
     "price_of_anarchy",
