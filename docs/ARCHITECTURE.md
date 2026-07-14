@@ -255,9 +255,11 @@ TABenchmark/
 │   ├── transit/           # Transit optimal strategies (ADR-014): network.py (TransitNetwork
 │   │                      # directed multigraph + TransitScenario, domain-separated hash),
 │   │                      # strategy.py (Spiess & Florian 1989 two-pass solver), builtin.py
-│   ├── bottleneck/        # Vickrey (1969) departure-time equilibrium (ADR-019): scenario.py
-│   │                      # (BottleneckScenario, domain-separated hash), solve.py (closed-form
-│   │                      # UE/SO + emitted BottleneckSchedule), builtin.py
+│   ├── bottleneck/        # Departure-time equilibria: Vickrey (1969) single bottleneck
+│   │                      # (ADR-019: scenario.py, solve.py — closed-form UE/SO + emitted
+│   │                      # BottleneckSchedule) and Friesz et al. (1993) SRDC dynamic user
+│   │                      # equilibrium (ADR-022: due.py — DUEScenario on parallel Vickrey
+│   │                      # routes, closed form + emitted DUEProfile), builtin.py
 │   ├── dta/               # Analytical DTA: Merchant & Nemhauser (1978) exit-function
 │   │                      # SO-DTA (ADR-020: scenario.py, solve.py — canonical
 │   │                      # Carey-relaxed LP + emitted DTATrajectory w/ duals) and
@@ -268,7 +270,7 @@ TABenchmark/
 │   │                      # certificates C0–C8, ADR-010), transit_gaps.py (TransitEvaluator,
 │   │                      # ADR-014), bottleneck_gaps.py (BottleneckEvaluator, ADR-019),
 │   │                      # dta_gaps.py (SODTAEvaluator ADR-020 + CellSODTAEvaluator
-│   │                      # ADR-021)
+│   │                      # ADR-021), due_gaps.py (DUEEvaluator, ADR-022)
 │   │                      # (planned: distributional.py)
 │   ├── experiments/       # runner.py incl. manifests, bootstrap.py (planned: profiles.py)
 │   └── cli.py             # tabench fetch | list | run (planned: validate)

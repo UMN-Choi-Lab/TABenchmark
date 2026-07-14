@@ -811,8 +811,8 @@
   "equilibrium_principle": "dynamic-UE (DUE) stated as a variational inequality / Nash game over path-departure flows",
   "math_sketch": "Find H* in feasible set Omega s.t. <Psi(H*), H-H*> >= 0 for all H in Omega, where Psi is the effective unit path cost (actual dynamic travel time from network loading, plus schedule delay) as an operator on path-departure flows H. Equivalent to dynamic Wardrop: every used path-departure carries equal, minimal generalized cost. Solved as a fixed point H in B(N(H)) (loading N, behavior B).",
   "innovation": "Moves analytical DTA from optimal-control / system-optimal formulations (Merchant-Nemhauser, Friesz-Luque-Tobin-Wie 1989) to a VARIATIONAL-INEQUALITY formulation of USER equilibrium, the dynamic analogue of the static Smith/Dafermos VI. Crucially the VI does not require the dynamic cost operator to be integrable, so it can represent asymmetric, non-integrable time-varying costs for which no equivalent optimization program exists, and it formalizes simultaneous route-and-departure-time DUE. Provides the VI-plus-DNL-fixed-point template that essentially all later analytical DUE work follows.",
-  "shipped": false,
-  "tabench_name": "",
+  "shipped": true,
+  "tabench_name": "vi-due",
   "evolved_from": [
    "friesz1989dynamic",
    "merchant1978model"

@@ -46,7 +46,7 @@ graph TD
   n_spallmultivariate5410(["Spall 1992"]):::c10
   n_yangestimation3439(["Yang 1992"]):::c10
   n_newellsimplified1633["Newell 1993"]:::c7
-  n_frieszvariational9239["Friesz 1993"]:::c8
+  n_frieszvariational9239(["Friesz 1993"]):::c8
   n_cascettadynamic7177["Cascetta 1993"]:::c10
   n_jayakrishnanfaster1323(["Jayakrishnan 1994"]):::c2
   n_frieszdaytoday4558(["Friesz 1994"]):::c6
@@ -745,7 +745,7 @@ The first network dynamic traffic assignment model: a discrete-time, single-dest
 
 ### Friesz et al. (1993) — A Variational Inequality Formulation of the Dynamic Network User Equilibrium Problem
 
-_roadmap_ · dynamic-UE (DUE) stated as a variational inequality / Nash game over path-departure flows · `[friesz1993variational]`
+`vi-due` · **shipped** · dynamic-UE (DUE) stated as a variational inequality / Nash game over path-departure flows · `[friesz1993variational]`
 
 Recasts continuous-time dynamic USER equilibrium (route, and optionally departure time) as an infinite-dimensional variational inequality, unifying dynamic route-choice and departure-time choice under one equilibrium operator.
 
