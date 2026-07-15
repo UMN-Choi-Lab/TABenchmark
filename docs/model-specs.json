@@ -894,10 +894,10 @@
       "rahman2023data",
       "liu2023end"
     ],
-    "shipped": false,
-    "tabench_name": "",
+    "shipped": true,
+    "tabench_name": "het-gnn",
     "difficulty": "needs-external-dep",
-    "validation": "Phase 3 (adds torch). P1 gap on TNTP networks disjoint from training \u2014 the cross-topology transfer claim is exactly what the fairness gate + disjoint evaluation measure.",
+    "validation": "Phase 3 (torch, optional extra). Shipped as a LEAN VARIANT (flagged like implicit-ue-nn / dtd-stochastic; the TR-C primary is paywalled/unread, formulation cross-verified with zero discrepancies from arXiv:2310.13193v3 + the NSF PAR accepted manuscript, both read in full -- adr-026): hand-rolled heterogeneous message passing (V/R-Encoder segment-softmax attention over real + virtual OD edges, plain-torch scatter, no torch-geometric) with size-agnostic node-kernel features [production, attraction, in/out-degree] replacing the paper's non-equivariant |V|+2 OD-row featurization, an edge-MLP flow/capacity-ratio head, and the paper's composite loss (w_a=1, w_f=0.005, w_c=0.05) trained by plain backprop on the synthetic-net family + Eq-15 demand-rescaling augmentations against bfw labels. Two harness-certified checkpoints: (i) the paper-faithful RAW emission (sp_calls=0) is CENSORED feasible=0 -- its conservation loss L_c IS the L1 form of the harness node_balance_residual, 3-5 orders above tolerance (act three of ADR-006: soft conservation is not a constraint); (ii) a route-based feasible DECODE (a flagged REPO EXTENSION, not in the paper) projecting the raw flows onto the per-OD scaled-simplex product over implicit-ue's column-generated routes, earning a real certified gap. Anchors: A2 raw-censored + decoded-feasible, A4 permutation equivariance 1e-8 (the paper's featurization fails at 21.5), decode-as-projection + no-limit-cycle, in-family loss reduction + conservation ablation. Honest held-out: implicit-ue-nn's learned-cost fixed point certifies a better gap than het-gnn's regression+projection at matched route sets, and a converged solver beats both (the identifiability caveat, scoped in-family).",
     "_family": "ml-based-ta"
   },
   {

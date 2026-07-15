@@ -239,6 +239,7 @@ TABenchmark/
 │   │   │                  # sc_tap.py (Larsson-Patriksson 1995 side-constrained UE),
 │   │   │                  # learned.py (first learned/black-box surrogate),
 │   │   │                  # implicit_ue.py (Liu et al. 2023 implicit-NN UE; first torch model, optional [torch] extra),
+│   │   │                  # het_gnn.py (Liu & Meidani 2024 heterogeneous-GNN UE; second torch model, same [torch] extra),
 │   │   │                  # sue_logit.py, sue_probit.py,
 │   │   │                  # _paths.py, _stoch.py (Dial map), _probit.py (MC map)
 │   │   └── adapters/      # callable_adapter.py (planned: subprocess.py, docker.py)
@@ -393,7 +394,12 @@ Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 246 refe
   column-generated route sets), so it clears the audit the ridge is censored by yet still
   certifies a gap a converged solver beats (shipped: `implicit-ue-nn`, paradigm `learned`,
   [ADR-025](design/adr-025-implicit-ue-nn.md); Liu et al. 2023, a lean variant — feasibility
-  is architectural, equilibrium quality is not). Still open: a *scored* route-flow proportionality certificate (ADR-004
+  is architectural, equilibrium quality is not), and a second **torch** model on the same
+  extra — a heterogeneous GNN whose conservation is only a *soft* loss, so its paper-faithful
+  raw emission is censored and a flagged repo-extension route-decode recovers feasibility
+  (shipped: `het-gnn`, paradigm `learned`, [ADR-026](design/adr-026-het-gnn.md); Liu & Meidani
+  2024, a lean variant — the third act of the feasibility-mechanism gradient: no conservation →
+  soft conservation + decode → conservation by construction). Still open: a *scored* route-flow proportionality certificate (ADR-004
   proposes it; the diagnostic ships now);
   distribution-emitting T2 estimators (Hazelton-style samplers) and
   **computational-graph estimators** — assignment/estimation expressed as a layered

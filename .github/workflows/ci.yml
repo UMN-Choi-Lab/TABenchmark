@@ -41,10 +41,10 @@ jobs:
           # Data failures must fail CI, never silently skip (tests/conftest.py).
           TABENCH_REQUIRE_DATA: "1"
 
-  # Optional torch models (implicit-ue-nn), py3.12 only. The torch-free matrix
-  # above is the live regression that `import tabench` works without torch, so
-  # this job installs the CPU-only torch build and runs ONLY the torch test file
-  # (the 731-test numpy suite is already covered twice by the matrix).
+  # Optional torch models (implicit-ue-nn, het-gnn), py3.12 only. The torch-free
+  # matrix above is the live regression that `import tabench` works without torch,
+  # so this job installs the CPU-only torch build and runs ONLY the torch test
+  # files (the 731-test numpy suite is already covered twice by the matrix).
   torch:
     runs-on: ubuntu-latest
     steps:
@@ -76,6 +76,9 @@ jobs:
           from tabench.data.fetcher import fetch;
           [fetch(s) for s in REGISTRY.values()]"
       - name: Test (torch models only)
-        run: pytest tests/test_implicit_ue.py -q -ra
+        # Explicit two-file list, no glob: het-gnn is the last Phase-3 torch
+        # model, so the set is closed — a marker/subdir would churn a shipped
+        # file's path for zero future benefit (adr-026).
+        run: pytest tests/test_implicit_ue.py tests/test_het_gnn.py -q -ra
         env:
           TABENCH_REQUIRE_DATA: "1"

@@ -26,7 +26,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "ruff>=0.4"]
-# Optional: the learned torch models (implicit-ue-nn). Kept out of the core so
+# Optional: the learned torch models (implicit-ue-nn, het-gnn). Kept out of the core so
 # the benchmark stays numpy/scipy-only (adr-006/adr-025). No upper pin. Note pip
 # extras cannot pin an index, so `pip install tabench[torch]` pulls the default
 # (CUDA) build on Linux; for CPU-only use, install torch from the CPU wheel index

@@ -202,7 +202,7 @@
 <text x="2294" y="1636" text-anchor="middle" font-size="9.5" fill="#000">Liu 2023</text>
 <rect x="2354" y="1624" width="104" height="17" rx="4" fill="#d6f0ff" stroke="#333"/>
 <text x="2406" y="1636" text-anchor="middle" font-size="9.5" fill="#000">Rahman 2023</text>
-<rect x="2242" y="1646" width="104" height="17" rx="4" fill="#d6f0ff" stroke="#333" stroke-dasharray="3,2"/>
+<rect x="2242" y="1646" width="104" height="17" rx="4" fill="#d6f0ff" stroke="#333"/>
 <text x="2294" y="1658" text-anchor="middle" font-size="9.5" fill="#000">Liu 2024</text>
 <rect x="2354" y="1646" width="104" height="17" rx="4" fill="#d6f0ff" stroke="#333" stroke-dasharray="3,2"/>
 <text x="2406" y="1658" text-anchor="middle" font-size="9.5" fill="#000">Xu 2024</text>

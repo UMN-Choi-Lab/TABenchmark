@@ -26,6 +26,7 @@ from .msa import MSAModel
 # simply not registered, so ``MODEL_REGISTRY``/``tabench list`` lack it and the
 # register_model invariant (every registered model is instantiable) is preserved.
 try:
+    from .het_gnn import HetGNNModel  # noqa: F401  (registered + conditional __all__)
     from .implicit_ue import ImplicitUENNModel  # noqa: F401  (registered + conditional __all__)
 
     _HAS_TORCH = True
@@ -80,3 +81,4 @@ __all__ = [
 # present, so ``from tabench.models import *`` on a core install never fails.
 if _HAS_TORCH:
     __all__.append("ImplicitUENNModel")
+    __all__.append("HetGNNModel")
