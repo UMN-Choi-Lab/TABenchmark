@@ -238,6 +238,7 @@ TABenchmark/
 │   │   │                  # br_ue.py (Mahmassani-Chang 1987 boundedly-rational UE),
 │   │   │                  # sc_tap.py (Larsson-Patriksson 1995 side-constrained UE),
 │   │   │                  # learned.py (first learned/black-box surrogate),
+│   │   │                  # implicit_ue.py (Liu et al. 2023 implicit-NN UE; first torch model, optional [torch] extra),
 │   │   │                  # sue_logit.py, sue_probit.py,
 │   │   │                  # _paths.py, _stoch.py (Dial map), _probit.py (MC map)
 │   │   └── adapters/      # callable_adapter.py (planned: subprocess.py, docker.py)
@@ -387,7 +388,12 @@ Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 246 refe
   set by `trained_on` (shipped: `learned-surrogate`, paradigm `learned`,
   [ADR-006](design/adr-006-learned-model-certification.md); Rahman & Hasan 2023 line, with
   the Xu et al. 2024 dataset a future cross-domain axis — link-flow accuracy is shown *not*
-  to imply certification). Still open: a *scored* route-flow proportionality certificate (ADR-004
+  to imply certification), and the first **torch** model behind the optional `[torch]` extra —
+  an implicit-NN UE whose output is demand-feasible *by construction* (v = Δᵀh over
+  column-generated route sets), so it clears the audit the ridge is censored by yet still
+  certifies a gap a converged solver beats (shipped: `implicit-ue-nn`, paradigm `learned`,
+  [ADR-025](design/adr-025-implicit-ue-nn.md); Liu et al. 2023, a lean variant — feasibility
+  is architectural, equilibrium quality is not). Still open: a *scored* route-flow proportionality certificate (ADR-004
   proposes it; the diagnostic ships now);
   distribution-emitting T2 estimators (Hazelton-style samplers) and
   **computational-graph estimators** — assignment/estimation expressed as a layered

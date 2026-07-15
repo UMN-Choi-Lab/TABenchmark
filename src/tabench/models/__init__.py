@@ -18,6 +18,21 @@ from .frank_wolfe import BiconjugateFrankWolfeModel, ConjugateFrankWolfeModel, F
 from .gradient_projection import GradientProjectionModel
 from .learned import LearnedSurrogateModel
 from .msa import MSAModel
+
+# Torch models are an OPTIONAL extra (``pip install tabench[torch]``): the
+# numpy/scipy core must import without torch. Guard the import and swallow ONLY a
+# missing-torch failure (``exc.name == 'torch'``) — any other ImportError is a
+# real bug in the module and must propagate. When torch is absent the model is
+# simply not registered, so ``MODEL_REGISTRY``/``tabench list`` lack it and the
+# register_model invariant (every registered model is instantiable) is preserved.
+try:
+    from .implicit_ue import ImplicitUENNModel  # noqa: F401  (registered + conditional __all__)
+
+    _HAS_TORCH = True
+except ModuleNotFoundError as exc:  # pragma: no cover - exercised by the torch-free CI legs
+    if exc.name != "torch":
+        raise
+    _HAS_TORCH = False
 from .multiclass import MulticlassModel
 from .oba import OriginBasedModel
 from .sc_tap import SideConstrainedModel
@@ -60,3 +75,8 @@ __all__ = [
     "AsymmetricVIModel",
     "marginal_network",
 ]
+
+# Append the torch model to the public API only when its optional dependency is
+# present, so ``from tabench.models import *`` on a core install never fails.
+if _HAS_TORCH:
+    __all__.append("ImplicitUENNModel")

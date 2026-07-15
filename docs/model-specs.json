@@ -856,10 +856,10 @@
       "beckmann1956studies",
       "wardrop1952some"
     ],
-    "shipped": false,
-    "tabench_name": "",
+    "shipped": true,
+    "tabench_name": "implicit-ue-nn",
     "difficulty": "needs-external-dep",
-    "validation": "Phase 3 (adds torch). Certified identically by P1: the harness recomputes the gap of the emitted flows; because it enforces the fixed point it should \u2014 unlike the ridge surrogate \u2014 actually clear the feasibility audit.",
+    "validation": "Phase 3 (torch, optional extra). Shipped as a LEAN VARIANT (flagged like dtd-stochastic's filter variant; the TR-C primary is paywalled/unread, formulation recovered from the authors' open hEART 2024 paper + two posters \u2014 adr-025): a logit route-choice fixed-point layer over PathEngine column-generated route sets with a monotone MLP cost head, trained by an exact IMD/adjoint hypergradient. Certified identically by P1 \u2014 and unlike the ridge surrogate it clears the demand-feasibility audit BY CONSTRUCTION (v = Delta^T h, each OD's route flows summing to demand). Anchors: A1 Braess identity (zeroed head -> (4,2,2,2,4)/route time 92/gap ~0), A2 IMD hypergradient vs central FD < 1e-5, A4 feasible=1 at random theta. Honest held-out finding (act two of adr-006): feasibility is architectural but equilibrium quality is not \u2014 bfw certifies a better gap at matched budget, and training on the synthetic family reduces in-family flow error yet does not improve the held-out certified gap over plain logit (the identifiability caveat).",
     "_family": "ml-based-ta"
   },
   {

@@ -69,7 +69,7 @@ graph TD
   n_mitradjievastiff2393(["Mitradjieva 2013"]):::c1
   n_smithrouteswapping5343(["Smith 2016"]):::c6
   n_stablertransportation4212["Stabler 2016"]:::c10
-  n_liuend1327["Liu 2023"]:::c9
+  n_liuend1327(["Liu 2023"]):::c9
   n_rahmandata5640(["Rahman 2023"]):::c9
   n_eckmansimopt7144["Eckman 2023"]:::c10
   n_liuend3254["Liu 2024"]:::c9
@@ -775,7 +775,7 @@ Formulates single-destination system-optimal DTA as a single linear program by e
 
 ### Liu et al. (2023) — End-to-end learning of user equilibrium with implicit neural networks
 
-_roadmap_ · UE enforced as an implicit-layer fixed point (differentiable) · `[liu2023end]`
+`implicit-ue-nn` · **shipped** · UE enforced as an implicit-layer fixed point (differentiable) · `[liu2023end]`
 
 Embeds the equilibrium fixed point as an implicit (deep-equilibrium) layer, so a network is trained end-to-end to output UE flows while differentiating through the equilibrium condition itself.
 
@@ -783,7 +783,7 @@ Embeds the equilibrium fixed point as an implicit (deep-equilibrium) layer, so a
 
 **Formulation.** `v* = f_theta(v*, demand) solved as a fixed point; gradients via the implicit function theorem (no unrolling), so the equilibrium constraint is honored at inference, not just in the loss.`
 
-**Validation.** Phase 3 (adds torch). Certified identically by P1: the harness recomputes the gap of the emitted flows; because it enforces the fixed point it should — unlike the ridge surrogate — actually clear the feasibility audit.
+**Validation.** Phase 3 (torch, optional extra). Shipped as a LEAN VARIANT (flagged like dtd-stochastic's filter variant; the TR-C primary is paywalled/unread, formulation recovered from the authors' open hEART 2024 paper + two posters — adr-025): a logit route-choice fixed-point layer over PathEngine column-generated route sets with a monotone MLP cost head, trained by an exact IMD/adjoint hypergradient. Certified identically by P1 — and unlike the ridge surrogate it clears the demand-feasibility audit BY CONSTRUCTION (v = Delta^T h, each OD's route flows summing to demand). Anchors: A1 Braess identity (zeroed head -> (4,2,2,2,4)/route time 92/gap ~0), A2 IMD hypergradient vs central FD < 1e-5, A4 feasible=1 at random theta. Honest held-out finding (act two of adr-006): feasibility is architectural but equilibrium quality is not — bfw certifies a better gap at matched budget, and training on the synthetic family reduces in-family flow error yet does not improve the held-out certified gap over plain logit (the identifiability caveat).
 
 *Builds on:* Rahman & Hasan 2023, Beckmann, McGuire & Winsten 1956, Wardrop 1952.
 

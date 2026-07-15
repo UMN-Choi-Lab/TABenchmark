@@ -40,3 +40,42 @@ jobs:
         env:
           # Data failures must fail CI, never silently skip (tests/conftest.py).
           TABENCH_REQUIRE_DATA: "1"
+
+  # Optional torch models (implicit-ue-nn), py3.12 only. The torch-free matrix
+  # above is the live regression that `import tabench` works without torch, so
+  # this job installs the CPU-only torch build and runs ONLY the torch test file
+  # (the 731-test numpy suite is already covered twice by the matrix).
+  torch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Cache pip (torch wheel is ~200 MB — not covered by the data cache)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-torch-${{ hashFiles('pyproject.toml') }}
+          restore-keys: pip-torch-
+      - name: Cache benchmark data
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/tabench
+          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py') }}
+          restore-keys: tabench-data-
+      - name: Install CPU-only torch
+        # The +cpu local version satisfies torch>=2.4, so the editable install
+        # below will not re-resolve it to the multi-GB CUDA wheel.
+        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Install
+        run: pip install -e ".[dev,torch]"
+      - name: Fetch benchmark data
+        run: >
+          python -c "from tabench.data.registry import REGISTRY;
+          from tabench.data.fetcher import fetch;
+          [fetch(s) for s in REGISTRY.values()]"
+      - name: Test (torch models only)
+        run: pytest tests/test_implicit_ue.py -q -ra
+        env:
+          TABENCH_REQUIRE_DATA: "1"
