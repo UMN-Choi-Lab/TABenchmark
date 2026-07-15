@@ -328,10 +328,15 @@ macroreplicates over training seeds for distributional scoring. The leaderboard
 legitimately shows "gap 1e-14 in 200 SP-call-equivalents" next to "gap 3e-2 in 1
 evaluation" — that contrast *is* the scientific output.
 
-**External engines — SUMO + DTALite shipped, MATSim planned:** the pattern is write
+**External engines — SUMO + DTALite shipped; the MATSim/DynaMIT/DYNASMART adapters
+deferred on a measured record
+([ADR-030](design/adr-030-external-dta-simulators-deferred.md)):** the pattern is write
 inputs, shell out (with an explicit seed where the engine takes one), parse outputs —
 same ABC, same trace, same certification where static costs permit; otherwise scored on
-the observational track.
+the observational track (which for external dynamic engines does not exist yet — MATSim
+runs headless on this box but its queue model has no static latency function, so the
+mandatory cost-matched anchor is impossible in kind until that certificate ADR ships;
+DynaMIT has no public artifact; DYNASMART is license-blocked).
 The first is `sumo-marouter` (SUMO's macroscopic `marouter`, Lopez et al. 2018,
 [ADR-027](design/adr-027-sumo-marouter.md)): the `eclipse-sumo` wheel ships the
 binaries inside the package (addressed via `sumo.SUMO_HOME`), so it is a registered,
