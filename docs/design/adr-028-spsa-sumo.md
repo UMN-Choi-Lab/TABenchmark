@@ -256,7 +256,7 @@ its own regression.
 
 Three independent lenses (soundness, formulation, numerics), each executing
 Python/pytest/marouter; every finding CONFIRMED by a runnable repro and fixed
-with a per-finding regression (streak: 18/18 sprints with at least one material
+with a per-finding regression (streak: 17/17 sprints with at least one material
 defect; 13 spsa-sumo tests after the fixes, from 12).
 
 **MAJOR (all three lenses converged): the first draft's evaluation-time-only
