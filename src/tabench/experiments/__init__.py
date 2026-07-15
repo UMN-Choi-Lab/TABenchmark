@@ -1,6 +1,23 @@
 """Experiment layer: grid runner with certified scoring and manifests."""
 
-from .bootstrap import BootstrapCI, bootstrap_ci
+from .bootstrap import BootstrapCI, bootstrap_ci, bootstrap_curve_band
+from .profiles import (
+    Run,
+    StepCurve,
+    bootstrap_progress_band,
+    cdf_solvability,
+    data_profile,
+    diff_profile,
+    load_run,
+    mean_of_curves,
+    progress_curves,
+    quantile_of_curves,
+    quantile_solvability,
+    read_profiles,
+    run_provenance,
+    solve_times,
+    write_profiles,
+)
 from .runner import (
     ExperimentResult,
     dynamic_identifiability_report,
@@ -19,4 +36,20 @@ __all__ = [
     "dynamic_identifiability_report",
     "BootstrapCI",
     "bootstrap_ci",
+    "bootstrap_curve_band",
+    "StepCurve",
+    "Run",
+    "load_run",
+    "progress_curves",
+    "solve_times",
+    "cdf_solvability",
+    "quantile_solvability",
+    "diff_profile",
+    "data_profile",
+    "mean_of_curves",
+    "quantile_of_curves",
+    "bootstrap_progress_band",
+    "write_profiles",
+    "read_profiles",
+    "run_provenance",
 ]

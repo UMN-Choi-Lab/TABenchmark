@@ -111,7 +111,10 @@ engine images).
 Models that cannot certify equilibrium are **first-class, not excluded**: they appear
 with externally computed gap-at-budget where feasible-flow output permits, as censored
 entries in solvability profiles, and in a separate "no certificate" leaderboard column.
-No imputed zeros; no single ranking across tracks.
+No imputed zeros; no single ranking across tracks. The progress curves, α-solve-time
+solvability profiles, Moré–Wild data profiles, and functional bootstrap bands are shipped
+as `tabench.experiments.profiles` (pure post-hoc arithmetic over the certified rows, with
+censored entries kept in every solvability denominator; [ADR-032](design/adr-032-simopt-profiles.md)).
 
 ### P6 — Budgets count work, not hardware
 Primary budget coordinates are hardware-free: iterations, shortest-path calls, scenario
@@ -302,7 +305,7 @@ TABenchmark/
 │   │                      # tdta_gaps.py (TDTAEvaluator — TD-UE route-swap residual +
 │   │                      # TD-SO LP-bound gap, ADR-031)
 │   │                      # (planned: distributional.py)
-│   ├── experiments/       # runner.py incl. manifests, bootstrap.py (planned: profiles.py)
+│   ├── experiments/       # runner.py incl. manifests, bootstrap.py, profiles.py (adr-032)
 │   └── cli.py             # tabench fetch | list | run (planned: validate)
 ├── scenarios/             # declarative YAML scenario cards (ladder: 0braess, 1siouxfalls, …)
 ├── demos/                 # demo_quickstart.py (planned ladder: scenario/model/experiment)
@@ -387,9 +390,10 @@ Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 246 refe
 - **v0.x (this release):** conjugate/bi-conjugate FW (shipped); Dial's STOCH and logit
   SUE via MSA with the fixed-point certificate (shipped, docs/design/adr-001); Anaheim,
   Barcelona, Winnipeg scenario rungs with best-known oracles (shipped); convergence
-  target protocol per Boyce et al. 2004 (shipped). Still open in v0.x: gradient
-  projection (path-based), progress-curve/solvability-profile plotting, `tabench
-  validate` conformance suite, entry-point plugin registry.
+  target protocol per Boyce et al. 2004 (shipped); SimOpt-style progress curves and
+  solvability/data profiles (shipped: `experiments.profiles`, docs/design/adr-032). Still
+  open in v0.x: gradient projection (path-based), `tabench validate` conformance suite,
+  entry-point plugin registry.
 - **v1 (in progress):** path-based gradient projection (shipped: `gp`, the first
   solver reaching certified gaps below 1e-8 within ~100 iterations — a regime the
   FW family needs thousands to cross); Dial's Algorithm B bush solver (shipped:
