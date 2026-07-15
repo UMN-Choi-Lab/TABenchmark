@@ -283,6 +283,14 @@ TABenchmark/
 │   │                      # Ziliaskopoulos (2000) LP SO-DTA on CTM cells (ADR-021:
 │   │                      # cells.py — CellSODTAScenario w/ finite storage/spillback,
 │   │                      # cell LP + CellTrajectory w/ duals), builtin.py
+│   ├── tdta/              # Time-dependent SO/UE route choice — Peeta & Mahmassani
+│   │                      # (1995), the first iterative simulation-based TD route
+│   │                      # equilibrium (ADR-031): scenario.py (TDTAScenario — enumerated
+│   │                      # per-OD path set + kernel, interior-diverge-free, domain-
+│   │                      # separated hash + SO cell-LP derivation), loader.py (per-path
+│   │                      # first-link injection over the dnl S/R loop + grid extension),
+│   │                      # artifact.py (TDPathFlows, decisions only), solve.py (MSA
+│   │                      # reference solvers, non-certified), builtin.py
 │   ├── metrics/           # gaps.py, flows.py, so.py, estimation.py,
 │   │                      # estimation_dynamic.py (bfw-free exact within-day certifier,
 │   │                      # ADR-023), dnl_gaps.py (DNL P1
@@ -290,7 +298,9 @@ TABenchmark/
 │   │                      # ADR-014), bottleneck_gaps.py (BottleneckEvaluator, ADR-019),
 │   │                      # dta_gaps.py (SODTAEvaluator ADR-020 + CellSODTAEvaluator
 │   │                      # ADR-021), due_gaps.py (DUEEvaluator, ADR-022),
-│   │                      # newell_gaps.py (ThreeDetectorEvaluator, ADR-024)
+│   │                      # newell_gaps.py (ThreeDetectorEvaluator, ADR-024),
+│   │                      # tdta_gaps.py (TDTAEvaluator — TD-UE route-swap residual +
+│   │                      # TD-SO LP-bound gap, ADR-031)
 │   │                      # (planned: distributional.py)
 │   ├── experiments/       # runner.py incl. manifests, bootstrap.py (planned: profiles.py)
 │   └── cli.py             # tabench fetch | list | run (planned: validate)

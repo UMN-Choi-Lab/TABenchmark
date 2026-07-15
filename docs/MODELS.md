@@ -54,6 +54,7 @@ graph TD
   n_larssonaugmented3883(["Larsson 1995"]):::c5
   n_cantarelladynamic9699(["Cantarella 1995"]):::c6
   n_daganzocell6348["Daganzo 1995"]:::c7
+  n_peetasystem645(["Peeta 1995"]):::c8
   n_lebacquegodunov3835(["Lebacque 1996"]):::c7
   n_yangprinciple7580(["Yang 1998"]):::c4
   n_ziliaskopouloslinear4836(["Ziliaskopoulos 2000"]):::c8
@@ -134,6 +135,9 @@ graph TD
   n_merchantmodel1560 --> n_frieszvariational9239
   n_merchantmodel1560 --> n_ziliaskopouloslinear4836
   n_daganzocell7244 --> n_ziliaskopouloslinear4836
+  n_merchantmodel1560 --> n_peetasystem645
+  n_frieszvariational9239 --> n_peetasystem645
+  n_daganzocell7244 --> n_peetasystem645
   n_rahmandata5640 --> n_liuend1327
   n_beckmannstudies2645 --> n_liuend1327
   n_wardropsome7476 --> n_liuend1327
@@ -762,6 +766,20 @@ Recasts continuous-time dynamic USER equilibrium (route, and optionally departur
 **Validation.** The 1993 paper is existence/formulation-focused. DUE can fail to exist, be non-unique, and be non-monotone because the loading operator N is generally discontinuous under spillback (tna_ch11; zhu2000existence), so there is no clean global fixed point in general. The original reports essentially no reproducible large-network numerics; validation would use small analytic instances plus a gap/AEC measure cross-checked against a dynamic-network-loading oracle.
 
 *Builds on:* Merchant & Nemhauser 1978.
+
+### Peeta & Mahmassani (1995) — System optimal and user equilibrium time-dependent traffic assignment in congested networks
+
+`pm-td-ue / pm-td-so` · **shipped** · time-dependent UE and SO (route choice, fixed departure times), experienced travel times, general multi-origin/multi-destination network, simulator-in-the-loop MSA · `[peeta1995system]`
+
+The methodology paper of simulation-based dynamic traffic assignment: time-dependent system-optimal AND user-equilibrium route choice, solved by method-of-successive-averages iterations around a mesoscopic traffic simulator with fixed departure times.
+
+**What it does differently.** The first ITERATIVE, simulation-based time-dependent route-choice equilibrium: a mesoscopic simulator IN THE LOOP defines the (analytically intractable) network-loading map, MSA over time-dependent path assignments converges toward experienced-time TD-UE, and an SO twin in the SAME machinery assigns to least time-dependent-MARGINAL paths -- differing only in the path cost fed to the TDSP (average vs marginal time). Unlike the exit-function/LP SO-DTA of Merchant-Nemhauser and Ziliaskopoulos (single-destination, holding-legal, LP-certifiable), it is multi-origin/multi-destination, path-based, holding-precluded and FIFO-enforced by the simulator, with no optimality certificate -- the DYNASMART-P planning methodology and the template for the simulation-DTA school.
+
+**Formulation.** `Decision r_ijk^tau = vehicles departing (i->j, interval tau) on path k. TD-UE (Wardrop, EXPERIENCED times): r_ijk^tau (T_ijk^tau - theta_ij^tau*) = 0, T - theta* >= 0 per (i,j,tau). TD-SO: min sum r_ijk^tau T_ijk^tau; optimality equalizes the time-dependent path MARGINAL time ~T = T + sum r dT/dr (local link marginal t_ta = T_ta + x_ta dT_ta/dx_ta). Both solved by MSA r^{l+1} = r^l + (1/(l+1))(y^l - r^l), AON on least-experienced (UE) / least-marginal (SO) time-dependent shortest paths; the loading map F (delta = F(r)) is a traffic simulator with no analytical form (nonconvex).`
+
+**Validation.** SHIPPED as `pm-td-ue`/`pm-td-so` (parallel `tdta/` module, adr-031), the first iterative simulation-based TD route equilibrium in the benchmark -- a white-box reimplementation (the FHWA/McTrans-licensed DYNASMART binary is adapter-deferred, adr-030) that instantiates the paper's architecture (simulation defines the loading map F) on the repo's OWN CTM/LTM + TampereNode loading. Artifact TDPathFlows carries the decision variable ONLY (per-path, per-departure-interval flow); the harness reruns its own per-path loading and recomputes every score, so no emitted-curve consistency can be gamed (the C8 aggregate-observability class is designed out by an interior-diverge-free path set with private first links, making per-commodity experienced times exactly decidable). The TDTAEvaluator scores tdue_gap (the experienced-time route-swap residual: total experienced time vs the total if every traveler took their OD's cheapest path at their own departure time, by FIFO level composition -- 0 iff the discrete Wardrop conditions hold) and so_bound_gap ((TSTT - Z*)/Z* against the lp-so-dta LP optimum on the CTM-cell instance derived from the same grid, which provably lower-bounds every CTM loading). Fixed departure times give a two-scale demand-match gate closing all timing gaming; the reference minimum scans EVERY declared path so the cheap route cannot be hidden. Anchors, all machine-verified and derived from scratch (the paper's 50-node DYNASMART numerics are engine-bound and irreproducible -- node OD matrix/seeds/parameter file unpublished): a single-path corridor whose loaded TSTT equals the ADR-021 zil_corridor LP optimum 33 EXACTLY (the derived cell scenario is byte-identical); a symmetric two-route diamond whose exact TD-UE (50/50) certifies tdue_gap=0 with the all-on-one control at hand gap 0.75 (the hidden-cheap-path family); an SO!=UE wedge (the paper's headline made executable) where the SO split attains the LP bound (so_bound_gap=0, TSTT 23) and is strictly below the UE TSTT (24); a merge exercising per-commodity attribution; ltm==ctm agreement on the diamond and the aggregate loader passing the shipped dnl_gaps C0-C8 as a free oracle. The MSA solvers (experienced-time UE, marginal-cost SO via the 3-point quadratic dT/dx fit) are NON-certified research code -- the certifier, not the solver's claim, is the arbiter, and the stopping rule is the certified best iterate (disclosed deviation from the paper's N(eps)<=Omega stability count). Single user class, fixed departure times, NOT rolling horizon (the paper reserves that for its TR-C sibling). Hardened by a three-lens adversarial review (4 MAJORs incl. a forgeable so_bound_gap undercut via sub-budget over-emission, a sink-only clearing-pad false censor found by all three lenses, a global gate scale letting a tiny OD shift departures beside a huge one, and a model-flattering under-reported tdue_gap_max -- all fixed + regression-pinned, 38 tests; every anchor value survived independent re-derivation and the FIFO composition matched an independent event-level simulator). Additive parallel module; golden Braess hash byte-untouched.
+
+*Builds on:* Merchant & Nemhauser 1978, Friesz et al. 1993, Daganzo 1994.
 
 ### Ziliaskopoulos (2000) — A Linear Programming Model for the Single Destination System Optimum Dynamic Traffic Assignment Problem
 

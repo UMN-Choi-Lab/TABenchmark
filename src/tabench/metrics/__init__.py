@@ -10,6 +10,7 @@ from .flows import nrmse, rmse
 from .gaps import Evaluator, node_balance_residual
 from .newell_gaps import ThreeDetectorEvaluator
 from .so import marginal_cost_tolls, marginal_costs, price_of_anarchy, tolled_network
+from .tdta_gaps import TDTAEvaluator
 from .transit_gaps import TransitEvaluator
 
 __all__ = [
@@ -22,6 +23,7 @@ __all__ = [
     "SODTAEvaluator",
     "CellSODTAEvaluator",
     "DUEEvaluator",
+    "TDTAEvaluator",
     "ThreeDetectorEvaluator",
     "node_balance_residual",
     "marginal_costs",

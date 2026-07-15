@@ -23,7 +23,7 @@ digraph TA_evolution {
   { rank=same; "spall1992multivariate" "yang1992estimation" }
   { rank=same; "newell1993simplified" "friesz1993variational" "cascetta1993dynamic" }
   { rank=same; "jayakrishnan1994faster" "friesz1994daytoday" "daganzo1994cell" }
-  { rank=same; "larsson1995augmented" "cantarella1995dynamic" "daganzo1995cell" }
+  { rank=same; "larsson1995augmented" "cantarella1995dynamic" "daganzo1995cell" "peeta1995system" }
   { rank=same; "lebacque1996godunov" }
   { rank=same; "yang1998principle" }
   { rank=same; "ziliaskopoulos2000linear" }
@@ -83,6 +83,7 @@ digraph TA_evolution {
   "merchant1978model" [label="Merchant 1978\nmerchant-nemhauser",fillcolor="#f0d6e6",style="rounded,filled"];
   "friesz1993variational" [label="Friesz 1993\nvi-due",fillcolor="#f0d6e6",style="rounded,filled"];
   "ziliaskopoulos2000linear" [label="Ziliaskopoulos 2000\nlp-so-dta",fillcolor="#f0d6e6",style="rounded,filled"];
+  "peeta1995system" [label="Peeta 1995\npm-td-ue / pm-td-so",fillcolor="#f0d6e6",style="rounded,filled"];
   "liu2023end" [label="Liu 2023\nimplicit-ue-nn",fillcolor="#d6f0ff",style="rounded,filled"];
   "rahman2023data" [label="Rahman 2023\nlearned-surrogate",fillcolor="#d6f0ff",style="rounded,filled"];
   "liu2024end" [label="Liu 2024\nhet-gnn",fillcolor="#d6f0ff",style="rounded,filled"];
@@ -157,6 +158,9 @@ digraph TA_evolution {
   "merchant1978model" -> "friesz1993variational";
   "merchant1978model" -> "ziliaskopoulos2000linear";
   "daganzo1994cell" -> "ziliaskopoulos2000linear";
+  "merchant1978model" -> "peeta1995system";
+  "friesz1993variational" -> "peeta1995system";
+  "daganzo1994cell" -> "peeta1995system";
   "rahman2023data" -> "liu2023end";
   "beckmann1956studies" -> "liu2023end";
   "wardrop1952some" -> "liu2023end";
