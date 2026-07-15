@@ -114,6 +114,8 @@
 <path d="M2544,1639 C2544,1654.0 2544,1654.0 2544,1669" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
 <path d="M2544,1287 C2544,1478.0 2544,1478.0 2544,1669" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
 <path d="M794,495 C794,1005.0 2544,1005.0 2544,1515" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M294,583 C294,1005.0 2544,1005.0 2544,1427" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
+<path d="M2544,1529 C2544,1478.0 2544,1478.0 2544,1427" fill="none" stroke="#bbb" stroke-width="1" marker-end="url(#a)" opacity="0.7"/>
 <rect x="-8" y="62" width="104" height="17" rx="4" fill="#e8e8e8" stroke="#333" stroke-dasharray="3,2"/>
 <text x="44" y="74" text-anchor="middle" font-size="9.5" fill="#000">Wardrop 1952</text>
 <rect x="-8" y="326" width="104" height="17" rx="4" fill="#e8e8e8" stroke="#333"/>
@@ -232,4 +234,6 @@
 <text x="2544" y="1680" text-anchor="middle" font-size="9.5" fill="#000">Ryu 2025</text>
 <rect x="2492" y="1514" width="104" height="17" rx="4" fill="#eeeed6" stroke="#333"/>
 <text x="2544" y="1526" text-anchor="middle" font-size="9.5" fill="#000">Lopez 2018</text>
+<rect x="2492" y="1426" width="104" height="17" rx="4" fill="#eeeed6" stroke="#333"/>
+<text x="2544" y="1438" text-anchor="middle" font-size="9.5" fill="#000">Zhou 2014</text>
 </svg>

@@ -129,3 +129,43 @@ jobs:
         run: pytest tests/test_sumo_marouter.py tests/test_spsa_sumo.py -q -ra
         env:
           TABENCH_REQUIRE_DATA: "1"
+
+  # Optional DTALite static-assignment adapter (dtalite-tap), py3.12 only. The
+  # dtalite-free matrix above is the live regression that `import tabench` works without
+  # the wheel, so this job installs the DTALite wheel and runs ONLY the dtalite test
+  # file. Kept separate from the sumo/torch jobs (adr-029) so a break in any one
+  # dependency cannot kill the others' signal. NO pip-cache step: the wheel is ~1.3 MB
+  # with no dependencies, so the cache restore/save overhead exceeds the download.
+  dtalite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Cache benchmark data
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/tabench
+          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py') }}
+          restore-keys: tabench-data-
+      - name: Install pinned DTALite
+        # Pin the version in the WORKFLOW (not the pyproject floor): the FW/VDF behavior
+        # is a bundled `.so` that can change upstream, so the convergence-floor anchors
+        # are pinned to 0.8.1. Installed first so the editable install below does not
+        # re-resolve it.
+        run: pip install DTALite==0.8.1
+      - name: Install
+        run: pip install -e ".[dev,dtalite]"
+      - name: Fetch benchmark data
+        run: >
+          python -c "from tabench.data.registry import REGISTRY;
+          from tabench.data.fetcher import fetch;
+          [fetch(s) for s in REGISTRY.values()]"
+      - name: Test (dtalite adapter only)
+        # Explicit single-file list (the torch/sumo-job precedent): the dtalite
+        # dependency's test surface is the static-assignment adapter (adr-029); the
+        # numpy suite is covered by the dtalite-free matrix legs.
+        run: pytest tests/test_dtalite.py -q -ra
+        env:
+          TABENCH_REQUIRE_DATA: "1"

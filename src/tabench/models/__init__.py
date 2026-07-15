@@ -14,6 +14,20 @@ except ModuleNotFoundError as exc:  # pragma: no cover - exercised by the sumo-f
     if exc.name != "sumo":
         raise
     _HAS_SUMO = False
+
+# The DTALite static-assignment adapter is an OPTIONAL extra
+# (``pip install tabench[dtalite]``); registered (and importable here) only when the
+# ``DTALite`` wheel is present. Importing ``.adapters`` above already ran its guarded
+# registration, so this block only re-exports the class when available (the sumo
+# precedent). Swallow ONLY a missing-``DTALite`` failure (exact case: ``DTALite``).
+try:
+    from .adapters.dtalite_tap import DTALiteTapModel  # noqa: F401
+
+    _HAS_DTALITE = True
+except ModuleNotFoundError as exc:  # pragma: no cover - exercised by the dtalite-free legs
+    if exc.name != "DTALite":
+        raise
+    _HAS_DTALITE = False
 from .algb import AlgorithmBModel
 from .aon import AllOrNothingModel
 from .base import MODEL_REGISTRY, TrafficAssignmentModel, register_model
@@ -100,3 +114,7 @@ if _HAS_TORCH:
 # present, so ``from tabench.models import *`` on a core install never fails.
 if _HAS_SUMO:
     __all__.append("SumoMarouterModel")
+
+# Likewise the DTALite adapter, behind the optional ``[dtalite]`` extra.
+if _HAS_DTALITE:
+    __all__.append("DTALiteTapModel")
