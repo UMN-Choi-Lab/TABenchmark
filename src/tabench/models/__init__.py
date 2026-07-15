@@ -1,6 +1,19 @@
 """Benchmark models: white-box solvers and black-box adapters."""
 
 from .adapters import CallableModel
+
+# The SUMO marouter adapter is an OPTIONAL extra (``pip install tabench[sumo]``);
+# it is registered (and importable here) only when the ``eclipse-sumo`` wheel is
+# present. Importing ``.adapters`` above already ran its guarded registration, so
+# this block only re-exports the class when available (mirrors the torch models).
+try:
+    from .adapters.sumo_marouter import SumoMarouterModel  # noqa: F401
+
+    _HAS_SUMO = True
+except ModuleNotFoundError as exc:  # pragma: no cover - exercised by the sumo-free legs
+    if exc.name != "sumo":
+        raise
+    _HAS_SUMO = False
 from .algb import AlgorithmBModel
 from .aon import AllOrNothingModel
 from .base import MODEL_REGISTRY, TrafficAssignmentModel, register_model
@@ -82,3 +95,8 @@ __all__ = [
 if _HAS_TORCH:
     __all__.append("ImplicitUENNModel")
     __all__.append("HetGNNModel")
+
+# Append the SUMO adapter to the public API only when its optional dependency is
+# present, so ``from tabench.models import *`` on a core install never fails.
+if _HAS_SUMO:
+    __all__.append("SumoMarouterModel")

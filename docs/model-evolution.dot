@@ -35,6 +35,7 @@ digraph TA_evolution {
   { rank=same; "tampere2011generic" }
   { rank=same; "mitradjieva2013stiff" }
   { rank=same; "smith2016routeswapping" "stabler2016transportation" }
+  { rank=same; "lopez2018microscopic" }
   { rank=same; "liu2023end" "rahman2023data" "eckman2023simopt" }
   { rank=same; "liu2024end" "xu2024unified" }
   { rank=same; "ryu2025bo4mob" }
@@ -96,6 +97,7 @@ digraph TA_evolution {
   "stabler2016transportation" [label="Stabler 2016\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
   "eckman2023simopt" [label="Eckman 2023\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
   "ryu2025bo4mob" [label="Ryu 2025\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
+  "lopez2018microscopic" [label="Lopez 2018\nsumo-marouter",fillcolor="#eeeed6",style="rounded,filled"];
   "beckmann1956studies" -> "dafermos1972traffic";
   "wardrop1952some" -> "smith1979existence";
   "beckmann1956studies" -> "smith1979existence";
@@ -171,4 +173,5 @@ digraph TA_evolution {
   "cascetta1993dynamic" -> "balakrishna2007offline";
   "eckman2023simopt" -> "ryu2025bo4mob";
   "balakrishna2007offline" -> "ryu2025bo4mob";
+  "dial1971probabilistic" -> "lopez2018microscopic";
 }

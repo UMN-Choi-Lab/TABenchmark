@@ -242,7 +242,9 @@ TABenchmark/
 │   │   │                  # het_gnn.py (Liu & Meidani 2024 heterogeneous-GNN UE; second torch model, same [torch] extra),
 │   │   │                  # sue_logit.py, sue_probit.py,
 │   │   │                  # _paths.py, _stoch.py (Dial map), _probit.py (MC map)
-│   │   └── adapters/      # callable_adapter.py (planned: subprocess.py, docker.py)
+│   │   └── adapters/      # callable_adapter.py; sumo_marouter.py + _sumo_io.py
+│   │   │                  #   (SUMO marouter external simulator, first Phase-4 adapter,
+│   │   │                  #   optional [sumo] extra; adr-027)
 │   ├── observe/           # data levels + identifiability checks
 │   ├── estimation/        # T2 OD-estimation track (base, entropy/gls/spiess/spsa,
 │   │                      # yang1992/dn_kalman; within-day dynamic: dynamic_base.py,
@@ -322,9 +324,17 @@ macroreplicates over training seeds for distributional scoring. The leaderboard
 legitimately shows "gap 1e-14 in 200 SP-call-equivalents" next to "gap 3e-2 in 1
 evaluation" — that contrast *is* the scientific output.
 
-**External engines (DTALite, MATSim, SUMO), planned for v2:** `SubprocessAdapter` —
-write inputs, shell out with explicit seed, parse outputs — same ABC, same trace, same
+**External engines — SUMO shipped, DTALite/MATSim planned:** the pattern is write
+inputs, shell out with an explicit seed, parse outputs — same ABC, same trace, same
 certification where static costs permit; otherwise scored on the observational track.
+The first is `sumo-marouter` (SUMO's macroscopic `marouter`, Lopez et al. 2018,
+[ADR-027](design/adr-027-sumo-marouter.md)): the `eclipse-sumo` wheel ships the
+binaries inside the package (addressed via `sumo.SUMO_HOME`), so it is a registered,
+CI-validated model behind the optional `[sumo]` extra — no `DockerAdapter` needed.
+Because marouter's cost law is a *hardcoded* linear-in-flow class function (not a user
+BPR), a `power=1` scenario is compiled to a SUMO network matching the BPR to machine
+precision on representable links, with two documented representability floors; the
+certified gap under the *declared* costs is the honest simulator-to-benchmark model gap.
 
 ---
 

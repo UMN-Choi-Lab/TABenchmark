@@ -82,3 +82,46 @@ jobs:
         run: pytest tests/test_implicit_ue.py tests/test_het_gnn.py -q -ra
         env:
           TABENCH_REQUIRE_DATA: "1"
+
+  # Optional SUMO adapter (sumo-marouter), py3.12 only. The sumo-free matrix
+  # above is the live regression that `import tabench` works without the wheel,
+  # so this job installs the eclipse-sumo wheel and runs ONLY the sumo test file.
+  # Kept separate from the torch job so a break in either dependency's ~150 MB
+  # download cannot kill the other's signal (adr-027).
+  sumo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Cache pip (eclipse-sumo wheel is ~150 MB — not covered by the data cache)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-sumo-${{ hashFiles('pyproject.toml') }}
+          restore-keys: pip-sumo-
+      - name: Cache benchmark data
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/tabench
+          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py') }}
+          restore-keys: tabench-data-
+      - name: Install pinned eclipse-sumo
+        # Pin the version in the WORKFLOW (not the pyproject floor): marouter's
+        # vdf/capacity tables are hardcoded upstream, so the mapping-floor anchors
+        # are pinned to 1.27.1. sumo-data is pinned too (it ships the $SUMO_HOME
+        # XSDs/typemaps and only floats behind eclipse-sumo otherwise). Installed
+        # first so the editable install below does not re-resolve them.
+        run: pip install eclipse-sumo==1.27.1 sumo-data==1.27.1
+      - name: Install
+        run: pip install -e ".[dev,sumo]"
+      - name: Fetch benchmark data
+        run: >
+          python -c "from tabench.data.registry import REGISTRY;
+          from tabench.data.fetcher import fetch;
+          [fetch(s) for s in REGISTRY.values()]"
+      - name: Test (sumo adapter only)
+        run: pytest tests/test_sumo_marouter.py -q -ra
+        env:
+          TABENCH_REQUIRE_DATA: "1"

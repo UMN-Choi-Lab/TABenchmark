@@ -32,6 +32,14 @@ dev = ["pytest>=7.0", "ruff>=0.4"]
 # (CUDA) build on Linux; for CPU-only use, install torch from the CPU wheel index
 # first: `pip install torch --index-url https://download.pytorch.org/whl/cpu`.
 torch = ["torch>=2.4"]
+# Optional: the SUMO external-simulator adapter (sumo-marouter). Kept out of the
+# core so the benchmark stays numpy/scipy-only (adr-027). The wheel ships the
+# marouter/netconvert binaries inside the package (addressed via sumo.SUMO_HOME).
+# Floor only, NOT a hard pin: a `==` in library metadata conflicts with user
+# environments. The het-gnn unpinned-dep lesson is solved in the CI WORKFLOW
+# (which installs eclipse-sumo==1.27.1 to keep the hardcoded-vdf anchor stable),
+# not here in the metadata.
+sumo = ["eclipse-sumo>=1.27"]
 
 [project.scripts]
 tabench = "tabench.cli:main"

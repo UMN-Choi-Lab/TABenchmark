@@ -69,6 +69,7 @@ graph TD
   n_mitradjievastiff2393(["Mitradjieva 2013"]):::c1
   n_smithrouteswapping5343(["Smith 2016"]):::c6
   n_stablertransportation4212["Stabler 2016"]:::c10
+  n_lopezmicroscopic2236(["Lopez 2018"]):::c10
   n_liuend1327(["Liu 2023"]):::c9
   n_rahmandata5640(["Rahman 2023"]):::c9
   n_eckmansimopt7144["Eckman 2023"]:::c10
@@ -150,6 +151,7 @@ graph TD
   n_cascettadynamic7177 --> n_balakrishnaoffline5342
   n_eckmansimopt7144 --> n_ryubomob4703
   n_balakrishnaoffline5342 --> n_ryubomob4703
+  n_dialprobabilistic5178 --> n_lopezmicroscopic2236
   classDef c0 fill:#e8e8e8,stroke:#333,color:#000;
   classDef c1 fill:#d6e4ff,stroke:#333,color:#000;
   classDef c2 fill:#c9f0d0,stroke:#333,color:#000;
@@ -946,6 +948,20 @@ The standard open GitHub repository of benchmark road networks (Sioux Falls, Ana
 **Formulation.** `N/A -- data artifact: {node/link topology, BPR link cost parameters, OD demand table, best-known link flows and objective} in TNTP flat-file format.`
 
 **Validation.** Data, not a method; its 'validation' is that it publishes best-known solutions that serve as the analytic/best-known-flow oracle other solvers (including tabench T1 baselines) are certified against.
+
+### Lopez, Behrisch, Bieker-Walz et al. (2018) — Microscopic Traffic Simulation using SUMO
+
+`sumo-marouter` · **shipped** · Macroscopic stochastic user equilibrium (logit route choice) via the SUMO marouter tool -- large theta approximates deterministic UE · `[lopez2018microscopic]`
+
+The first external-simulator adapter: SUMO's macroscopic marouter assignment wrapped as a benchmark model, emitting per-edge stochastic-UE flows the harness certifies under the scenario's declared BPR costs.
+
+**What it does differently.** Turns a production traffic simulator into a certified benchmark row. marouter has NO user cost function: its vdf is hardcoded per road class (linear-in-flow, 'PTV-Validate / VISUM-Cologne' per the SUMO source), so a power==1 repo link is compiled to a SUMO edge (speed band, lane count, length) that matches the BPR to machine precision on representable links, with two documented representability floors -- a forced intercept eps=B*(cap/K)/s on zero-intercept links and a parasitic slope A*K*s/C on zero-slope links. The certified gap is the act-four 'simulator-to-benchmark model gap': an industrially converged assignment that is perfectly demand-feasible yet certifies a real, small gap under the declared costs.
+
+**Formulation.** `marouter default-class latency t(f)=t0*(1+K*f/C), t0=length/speed, (K,C) keyed on speed band & lanes; map t(v)=A+B*v via t0=A*tau, numLanes=A*K*s/(B*cap_per_lane); recover v=entered/s; harness recomputes RG/AEC under true BPR (P1).`
+
+**Validation.** SHIPPED as `sumo-marouter` (paradigm heuristic, the aon precedent; registered when the optional `eclipse-sumo` wheel is present, guarded-imported so the numpy/scipy core stays dependency-free; a fourth CI job pins eclipse-sumo==1.27.1 since the vdf tables are hardcoded upstream). The first Phase-4 EXTERNAL-SIMULATOR adapter (adr-027), verified by running SUMO 1.27.1: the wheel ships the marouter/netconvert binaries inside the package (addressed via sumo.SUMO_HOME ONLY -- never PATH/ambient SUMO_HOME, this box has a stale /opt/sumo-1.12 beside the 1.27.1 binaries). Converter (_sumo_io.py) writes .nod/.edg/.con/.taz XML + a $OR;D2 OD matrix and drives netconvert --precision 6 with an explicit connection file (geometry-based pruning silently collapsed Braess to one path); marouter runs SUE + logit (--logit.beta 0 --logit.gamma 0), route-choice RESTRICTED to logit (gawron/lohse emit all-zero flows the harness would censor), --weights.minor-penalty 0, --seed from the RngBundle + --routing-threads 1 (byte-determinism verified single-threaded only), --netload-output read at precision 9 (the 'entered' doubles, NEVER the integerized route file). Measured anchors, all certified by the P1 harness under the true BPR: Braess SUE theta=200 -> flows (3.998,2.002,1.996,2.002,3.998) vs oracle (4,2,2,2,4), relative_gap ~1.74e-4 = the analytic mapping floor (pilot 1.727e-4 at s=14000), node_balance ~7e-14; the MANDATORY cost-matched anchor -- marouter's internal traveltime equals the repo BPR at emitted flows on representable links to <=1e-6 (~2e-10), separating the mapping floor from solver error; asymmetric two-route UE-approx feasible=1 with relative_gap ~5.4e-4<1e-3 (theta CALIBRATED on this asymmetric anchor, never symmetric Braess whose UE is the equal logit split at any theta -- the theta-tuning trap), a converged bfw ordering orders better. Refused traps (measured, never laundered): --assignment-method UE silently falls back to SUE (ValueError); the DEFAULT incremental is non-equilibrium (RG ~0.07 on Braess, an honest worse-gap control, not censored); BPR power!=1 (Sioux Falls power-4) is UNREPRESENTABLE (ValueError naming power); sue_theta/elastic/combined/br/side-cap/link-interaction/multiclass refused by named field. Budget: iterations->--max-iterations, wall_seconds->subprocess timeout (a tiny budget RAISES RuntimeError, never a hang or a laundered feasible=0), an sp_calls-only budget raises (marouter exposes no Dijkstra count; iterations records the configured cap with a self_report disclosure that the executed count is unknown). Hardened by a three-lens adversarial review (CRITICAL + 5 MAJOR + MINORs, all fixed + regression-pinned): a compile READ-BACK reparses net.net.xml and verifies every lane's length/speed/numLanes matches the declared spec (catching netconvert's silent 0.1 m minimum-length clamp that would corrupt a zero-intercept eps-edge and score wrong flows with false mapping-floor provenance -- eps-edge lanes are also chosen to clear the clamp); the $OR;D2 OD window is SIZED from a worst-path bound with the trip count scaled by the window so the flow rate (and equilibrium) is window-invariant (a hardcoded 1 h window silently reverted over-window edges to free-flow, collapsing Braess to AON at demand>=360); tolls/generalized-cost fixed terms are refused (no marouter hook); the flow scale is rationalized with a bounded denominator and any link's lane count > _MAX_LANES is refused up front (generic decimal params otherwise hang netconvert); the wall_seconds deadline covers BOTH the compile and marouter phases; --max-iterations is floored at 1 and time_scale bounds narrowed to the validated envelope. 30 tests (importorskip sumo); golden Braess hash cf00f411... byte-identical; the 731-test numpy suite passes without the wheel. lopez2018 is a TOOL paper -- the citation anchors the SUMO suite; the row validates ADAPTER + marouter fidelity, NEVER the paper's numerics, and the vdf lineage is PTV-Validate/VISUM-Cologne, not the ITSC paper.
+
+*Builds on:* Dial 1971.
 
 ### Eckman, Henderson & Shashaani (2023) — SimOpt: A testbed for simulation-optimization experiments
 
