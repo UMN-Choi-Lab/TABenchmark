@@ -93,7 +93,7 @@ digraph TA_evolution {
   "yang1992estimation" [label="Yang 1992\nod-congested",fillcolor="#eeeed6",style="rounded,filled"];
   "cascetta1993dynamic" [label="Cascetta 1993\nod-dynamic",fillcolor="#eeeed6",style="rounded,filled"];
   "boyce2004convergence" [label="Boyce 2004\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
-  "balakrishna2007offline" [label="Balakrishna 2007\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
+  "balakrishna2007offline" [label="Balakrishna 2007\nspsa-sumo",fillcolor="#eeeed6",style="rounded,filled"];
   "stabler2016transportation" [label="Stabler 2016\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
   "eckman2023simopt" [label="Eckman 2023\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
   "ryu2025bo4mob" [label="Ryu 2025\n",fillcolor="#eeeed6",style="rounded,filled,dashed"];
@@ -171,6 +171,7 @@ digraph TA_evolution {
   "cascetta1984estimation" -> "cascetta1993dynamic";
   "spall1992multivariate" -> "balakrishna2007offline";
   "cascetta1993dynamic" -> "balakrishna2007offline";
+  "lopez2018microscopic" -> "balakrishna2007offline";
   "eckman2023simopt" -> "ryu2025bo4mob";
   "balakrishna2007offline" -> "ryu2025bo4mob";
   "dial1971probabilistic" -> "lopez2018microscopic";

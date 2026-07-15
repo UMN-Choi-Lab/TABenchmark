@@ -89,6 +89,28 @@ class SPSAEstimator(ODEstimator):
         )
         return flows[sensors]
 
+    def _sp_cost_per_eval(self) -> int:
+        """Shortest-path calls charged per oracle evaluation. A simulator-oracle
+        subclass whose engine exposes no SP count overrides this to 0 (it then
+        DISCLOSES sp_calls=0 rather than fabricating it), so the loop is reused
+        without duplicating it or over-reporting (adr-028)."""
+        return int(self.factor_values["k_inner"])
+
+    def _project(self, g: np.ndarray) -> np.ndarray:
+        """Project a demand candidate onto the feasible box BEFORE it is
+        evaluated and tracked. IDENTITY in the base estimator (returns ``g``
+        unchanged, byte-for-byte); a bounded subclass overrides it so the
+        EVALUATED point and the tracked/emitted best-iterate are the same array
+        (thesis Eqs. 3.5-3.6 step 5; P1 emitted==evaluated, adr-028)."""
+        return g
+
+    def _project_log(self, u: np.ndarray) -> np.ndarray:
+        """Project the log-demand iterate onto the (log) box AFTER the update.
+        IDENTITY in the base estimator; a bounded subclass overrides it (thesis
+        step 8) so the iterate cannot freeze outside the box on a flat corner
+        (both perturbations clamping to one boundary -> zero SP gradient)."""
+        return u
+
     def estimate(
         self, task: EstimationTask, budget: Budget, rng: RngBundle, trace: ODTrace
     ) -> ODResultBundle:
@@ -121,22 +143,22 @@ class SPSAEstimator(ODEstimator):
                 total += prior_weight * float(np.sum(((g - g_pr) / g_pr) ** 2))
             return total, fit
 
-        best_g = g_pr.copy()
+        best_g = self._project(g_pr.copy())
         best_loss, best_fit = loss(best_g)
-        sp_calls = int(self.factor_values["k_inner"])
+        sp_calls = self._sp_cost_per_eval()
         stride = max(1, iters // 15)
         for k in range(iters):
             a_k = a / (k + 1 + a_stab) ** 0.602
             c_k = c / (k + 1) ** 0.101
             delta = 2.0 * gen.integers(0, 2, size=u.size).astype(np.float64) - 1.0
-            g_plus = np.exp(u + c_k * delta)
-            g_minus = np.exp(u - c_k * delta)
+            g_plus = self._project(np.exp(u + c_k * delta))
+            g_minus = self._project(np.exp(u - c_k * delta))
             l_plus, f_plus = loss(g_plus)
             l_minus, f_minus = loss(g_minus)
-            sp_calls += 2 * int(self.factor_values["k_inner"])
+            sp_calls += 2 * self._sp_cost_per_eval()
             ghat = (l_plus - l_minus) / (2.0 * c_k) * delta
             step = np.clip(a_k * ghat, -clip, clip)
-            u = u - step
+            u = self._project_log(u - step)
             for cand, cand_loss, cand_fit in (
                 (g_plus, l_plus, f_plus),
                 (g_minus, l_minus, f_minus),

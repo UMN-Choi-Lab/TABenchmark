@@ -262,7 +262,13 @@ def test_wall_timeout_raises():
 
 
 # --- temp-dir hygiene (no leftovers, including on raise) ----------------------
-def test_tempdir_cleanup_including_on_raise():
+def test_tempdir_cleanup_including_on_raise(tmp_path, monkeypatch):
+    # Point tempfile at a PRIVATE dir so the glob below only ever sees THIS
+    # test's own adapter workdirs -- a concurrent tabench session churning its
+    # own tabench-sumo-* dirs on a shared /tmp otherwise lands inside the
+    # before/after window and false-fails this test (observed under parallel
+    # local runs; GitHub runners are single-tenant so CI was never affected).
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
     pattern = os.path.join(tempfile.gettempdir(), "tabench-sumo-*")
     before = set(glob.glob(pattern))
     _solve(braess_scenario())  # normal path

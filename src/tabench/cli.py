@@ -225,6 +225,12 @@ def _run_estimation(args: argparse.Namespace, card: dict, scenario) -> int:
     estimation = card.get("estimation") or {}
     budgets = card.get("budgets") or {}
     sp_calls = int(budgets.get("sp_calls", 2000))
+    # Simulator-in-the-loop estimators (spsa-sumo, adr-028) refuse an
+    # sp_calls-only budget (marouter exposes no SP count); pass through the
+    # card's iterations/wall_seconds when present so those rows are bounded.
+    # Absent -> None -> byte-identical Budget(sp_calls=...) for classical rows.
+    b_iters = int(budgets["iterations"]) if "iterations" in budgets else None
+    b_wall = float(budgets["wall_seconds"]) if "wall_seconds" in budgets else None
     macroreps = int(card.get("macroreps", estimation.get("macroreps", 1)))
     # ``--models`` defaults to None so a T2 card falls back to the estimator
     # default, while an *explicit* list is always taken literally (so e.g. an
@@ -237,7 +243,7 @@ def _run_estimation(args: argparse.Namespace, card: dict, scenario) -> int:
             print(f"Unknown estimator {name!r}; see `tabench list`", file=sys.stderr)
             return 2
         estimators.append(ESTIMATOR_REGISTRY[name]())
-    budget = Budget(sp_calls=sp_calls)
+    budget = Budget(sp_calls=sp_calls, iterations=b_iters, wall_seconds=b_wall)
     result = run_estimation_experiment(
         scenario, estimators, budget, seed=args.seed, macroreps=macroreps,
         out_dir=args.out, estimation=estimation,

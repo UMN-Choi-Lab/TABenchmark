@@ -44,6 +44,22 @@ from .entropy import VZWEntropyEstimator, vzw_balance
 from .gls import GLSEstimator, gls_solve
 from .spiess import SpiessEstimator, spiess_step
 from .spsa import SPSAEstimator
+
+# The SUMO-in-the-loop SPSA estimator (spsa-sumo, adr-028) needs the optional
+# ``eclipse-sumo`` wheel (``pip install tabench[sumo]``): the numpy/scipy core
+# must import without it. This is the FIRST guarded estimator -- byte-parallel to
+# the model guards (models/__init__.py) -- swallowing ONLY a missing-``sumo``
+# failure; any other ImportError is a real bug and must propagate. When ``sumo``
+# is absent the estimator's @register_estimator never runs, so
+# ``ESTIMATOR_REGISTRY``/``tabench list`` simply lack the name.
+try:
+    from .spsa_sumo import SumoSPSAEstimator  # noqa: F401
+
+    _HAS_SUMO = True
+except ModuleNotFoundError as exc:  # pragma: no cover - exercised by the sumo-free legs
+    if exc.name != "sumo":
+        raise
+    _HAS_SUMO = False
 from .yang1992 import Yang1992Estimator, yang_solve
 
 __all__ = [
@@ -86,3 +102,9 @@ __all__ = [
     "tensor_blocks",
     "MAP_RECIPE",
 ]
+
+# Append the SUMO-in-the-loop estimator to the public API only when its optional
+# dependency is present, so ``from tabench.estimation import *`` on a core
+# install never fails (mirrors the guarded model re-export).
+if _HAS_SUMO:
+    __all__.append("SumoSPSAEstimator")

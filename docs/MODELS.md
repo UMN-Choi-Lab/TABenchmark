@@ -62,7 +62,7 @@ graph TD
   n_boyceconvergence3048["Boyce 2004"]:::c10
   n_dialpath6641(["Dial 2006"]):::c2
   n_ypermanlink2548(["Yperman 2007"]):::c7
-  n_balakrishnaoffline5342["Balakrishna 2007"]:::c10
+  n_balakrishnaoffline5342(["Balakrishna 2007"]):::c10
   n_bargeratraffic2251(["Bar-Gera 2010"]):::c2
   n_helinkbased819(["He 2010"]):::c6
   n_tamperegeneric261(["Tampère 2011"]):::c7
@@ -149,6 +149,7 @@ graph TD
   n_cascettaestimation8745 --> n_cascettadynamic7177
   n_spallmultivariate5410 --> n_balakrishnaoffline5342
   n_cascettadynamic7177 --> n_balakrishnaoffline5342
+  n_lopezmicroscopic2236 --> n_balakrishnaoffline5342
   n_eckmansimopt7144 --> n_ryubomob4703
   n_balakrishnaoffline5342 --> n_ryubomob4703
   n_dialprobabilistic5178 --> n_lopezmicroscopic2236
@@ -925,7 +926,7 @@ A protocol/metric paper quantifying how tightly a traffic assignment must be con
 
 ### Balakrishna, Ben-Akiva & Koutsopoulos (2007) — Offline calibration of dynamic traffic assignment: Simultaneous demand-and-supply estimation
 
-_roadmap_ · offline DTA calibration (joint demand+supply, black-box simulation-optimization) · `[balakrishna2007offline]`
+`spsa-sumo` · **shipped** · offline DTA calibration (joint demand+supply, black-box simulation-optimization) · `[balakrishna2007offline]`
 
 Offline calibration of a DTA microsimulator that JOINTLY estimates OD demand and supply parameters (capacities, speed-density) against archived counts, treating the whole simulator as a black box optimized by SPSA.
 
@@ -933,9 +934,9 @@ Offline calibration of a DTA microsimulator that JOINTLY estimates OD demand and
 
 **Formulation.** `min_{d,beta>=0} RMSN(observed counts/speeds, DTA_sim(d, beta)) where beta = supply params (capacity, speed-density, etc.); jointly optimized over (d, beta) by SPSA using two simulator runs per iteration.`
 
-**Validation.** The TRR paper is a real-network case study reporting RMSN before/after calibration -- an improvement metric on a proprietary DTA simulator, NOT a reproducible analytic oracle; there is no closed-form ground truth. Would only be validatable relative (RMSN reduction) or against a controlled synthetic-truth simulator run. Needs an external dependency: a full DTA microsimulator (DynaMIT/DynusT-class), outside a numpy/scipy-only package.
+**Validation.** SHIPPED as `spsa-sumo` (adr-028, the FIRST guarded T2 estimator, optional [sumo] extra): a SumoSPSAEstimator(SPSAEstimator) whose inner assignment oracle is the shipped sumo-marouter adapter (adr-027) -- the black-box simulator-in-the-loop calibration loop made REAL and certified through the UNCHANGED pinned-bfw certifier (P1, zero task/runner/certifier changes). Scope is DEMAND-ONLY: the paper's JOINT demand+supply title contribution is honestly not shipped (it changes what truth is and needs a new task-family + certificate surface), and the 'DTA' of the title is the paper's setting (marouter is static -- the H=1 special case; counts only, not speeds). The TRR case study is an RMSN-reduction on a proprietary DTA simulator with no closed-form oracle, so validation is by PLANTED-TRUTH recovery through the real marouter loop: a pinned-seed clean-count anchor drives obs-count and demand RMSE ~5x below the stale prior (loose improves-on-prior bound, the BLAS lesson), certified od_feasible=1. marouter exposes no SP count -> sp_calls DISCLOSED as 0 (the fabricated-sp_calls trap) and an sp_calls-only budget refused; one wall deadline threads all 2I+1 inner solves (a mid-loop RuntimeError aborts -- crash discipline); the P1 self-vs-certified honesty diff is REFRAMED as the measured simulator-in-the-loop bias (~7e-4 clean / ~1e-3 poisson, the same ORDER as the adr-027 mapping floor, never a bound), not estimator dishonesty. Hardened by a three-lens adversarial review (a converged MAJOR, fixed + regression-pinned): the first draft's evaluation-time-only box clip broke P1 -- the parent loop tracked the RAW candidate while its loss was measured at the CLIPPED point, so a binding box emitted an out-of-box OD whose self-report described a different point, and the un-projected iterate froze on the box corner (ghat=0) -- fixed with the thesis's own two projections surfaced as parent-loop hooks (_project step 5 before loss + best-iterate tracking; _project_log step 8 on the iterate), identity in SPSAEstimator (parent-identity harness: zero drift), pinned by a box-BINDING regression that fails under a clip-removal mutation; the recovery anchor's poisson-noise fragility is disclosed and pinned by a negative-control test. 13 tests (importorskip sumo). Additive, golden Braess hash byte-identical.
 
-*Builds on:* Spall 1992, Cascetta, Inaudi & Marquis 1993.
+*Builds on:* Spall 1992, Cascetta, Inaudi & Marquis 1993, Lopez, Behrisch, Bieker-Walz et al. 2018.
 
 ### Stabler, Bar-Gera & Sall (2016) — Transportation Networks for Research (TNTP repository)
 

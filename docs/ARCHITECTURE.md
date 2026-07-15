@@ -247,7 +247,9 @@ TABenchmark/
 │   │   │                  #   optional [sumo] extra; adr-027)
 │   ├── observe/           # data levels + identifiability checks
 │   ├── estimation/        # T2 OD-estimation track (base, entropy/gls/spiess/spsa,
-│   │                      # yang1992/dn_kalman; within-day dynamic: dynamic_base.py,
+│   │                      # yang1992/dn_kalman; spsa_sumo.py — spsa-sumo, the first
+│   │                      # GUARDED estimator: SPSA in the marouter loop, optional [sumo]
+│   │                      # extra, adr-028; within-day dynamic: dynamic_base.py,
 │   │                      # _dynamic_map.py, cascetta1993.py — od-dynamic-sim/seq, ADR-023)
 │   ├── dnl/               # Phase-2 dynamic-network-loading foundation (ADR-010): grid.py,
 │   │                      # fd.py (fundamental diagram), demand.py, scenario.py (DynamicScenario
@@ -335,6 +337,12 @@ Because marouter's cost law is a *hardcoded* linear-in-flow class function (not 
 BPR), a `power=1` scenario is compiled to a SUMO network matching the BPR to machine
 precision on representable links, with two documented representability floors; the
 certified gap under the *declared* costs is the honest simulator-to-benchmark model gap.
+That same adapter is reused as the inner oracle of the first **guarded T2 estimator**,
+`spsa-sumo` ([ADR-028](design/adr-028-spsa-sumo.md)): Balakrishna et al.'s (2007) SPSA
+calibration run against the real `marouter` loop (demand-only) and certified through the
+UNCHANGED pinned-bfw certifier — a production simulator calibration loop is just another
+estimator row, so the T2 self-vs-certified honesty diff now measures the
+simulator-in-the-loop bias rather than estimator dishonesty.
 
 ---
 

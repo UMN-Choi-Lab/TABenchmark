@@ -121,7 +121,11 @@ jobs:
           python -c "from tabench.data.registry import REGISTRY;
           from tabench.data.fetcher import fetch;
           [fetch(s) for s in REGISTRY.values()]"
-      - name: Test (sumo adapter only)
-        run: pytest tests/test_sumo_marouter.py -q -ra
+      - name: Test (sumo adapter + spsa-sumo estimator only)
+        # Explicit two-file list (the torch-job precedent): the sumo dependency's
+        # test surface is the marouter adapter (adr-027) and the SPSA-in-the-loop
+        # estimator built on it (adr-028); the 731-test numpy suite is covered by
+        # the sumo-free matrix legs.
+        run: pytest tests/test_sumo_marouter.py tests/test_spsa_sumo.py -q -ra
         env:
           TABENCH_REQUIRE_DATA: "1"
