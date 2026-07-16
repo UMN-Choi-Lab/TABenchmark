@@ -171,6 +171,16 @@ first-class known-defect entry, its 3 unbuildable cities are named exclusions, a
 published flows are labelled a *loose* reference (own gap ~1e-3), never a best-known
 oracle — the honest tier separation P9 is built to keep.
 
+The **BO4Mob scenario family** (Ryu et al. 2025, adr-034) is the same P9 discipline applied
+to the lab's OWN NeurIPS-2025 benchmark of San Jose freeway OD-estimation instances (`data/bo4mob.py`,
+a separate commit-pinned per-file-SHA-256 registry never in the CI-prefetched `REGISTRY`):
+stage 1 ships data availability + a guarded mesoscopic-SUMO pipeline-liveness smoke, under a
+dual-benchmark honesty contract that hosts the instances as *scenarios/data only* — never as
+validation of TABench methods, and never claiming the paper's numbers (a measured SUMO
+1.12→1.27.1 `edgeData` drift makes them non-reproducible here). BO4Mob keys are NOT
+`load_scenario` scenarios (a meso net with no BPR network and no true OD is data, not a
+`Scenario`); `5fullRegion` (74 MB, ~11 h/eval) is metadata-only and refuses to fetch.
+
 ---
 
 ## 2. Object model

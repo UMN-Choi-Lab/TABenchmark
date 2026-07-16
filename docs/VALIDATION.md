@@ -38,6 +38,22 @@ reproducible link flows:
    residual being summation-order sensitive), and the repo's own `bfw` reaching a far tighter
    gap on the identical instance — cross-*implementation* agreement (Honolulu: rgap 1.07e-4 in
    400 iters, correlation 0.99992 to the published flows).
+5. **Pipeline-liveness only** (BO4Mob, Ryu et al. 2025, adr-034) — the **lowest** tier, and
+   deliberately **not an oracle at all**. BO4Mob is the lab's OWN NeurIPS-2025 benchmark, hosted
+   as *scenarios/data only* under the dual-benchmark honesty contract (never validation of
+   TABench methods). Stage 1 ships **no method scored on BO4Mob** and **no certificate**: the
+   only executable claim is that the mesoscopic-SUMO evaluation pipeline *runs* — a guarded
+   smoke test fetches the 1ramp bundle, runs od2trips + meso SUMO via the `eclipse-sumo` 1.27.1
+   wheel, and pins (LOOSE) that it emits per-edge counts with a **seed-stable** NRMSE in a wide
+   band (measured **2.4325** with the load-bearing `od_end_time` OD-window fill, byte-identical
+   across seeds 0/1/2). That NRMSE is engine-drift
+   *provenance*, **never** BO4Mob's published number: the shipped 1.27.1 wheel differs from the
+   paper's SUMO 1.12 (a measured `edgeData` schema drift — meso drops `nVehContrib`, but
+   BO4Mob's `arrived+left` convention still holds), so the *instances* transfer and the *values*
+   are not reproduced. What this tier does **not** buy, stated because it is the tempting error:
+   it is not an oracle, not a certified gap, and not a reproduction of the paper. The T2
+   estimation task with a pinned-engine held-out-date observational certificate is the named
+   stage-2 follow-up.
 
 ## Per-model validation
 

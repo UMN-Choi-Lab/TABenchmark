@@ -21,7 +21,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/tabench
-          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py', 'src/tabench/data/xu2024.py') }}
+          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py', 'src/tabench/data/xu2024.py', 'src/tabench/data/bo4mob.py') }}
           restore-keys: tabench-data-
       - name: Install
         run: pip install -e ".[dev]"
@@ -67,7 +67,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/tabench
-          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py', 'src/tabench/data/xu2024.py') }}
+          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py', 'src/tabench/data/xu2024.py', 'src/tabench/data/bo4mob.py') }}
           restore-keys: tabench-data-
       - name: Install CPU-only torch
         # The +cpu local version satisfies torch>=2.4, so the editable install
@@ -110,7 +110,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/tabench
-          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py', 'src/tabench/data/xu2024.py') }}
+          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py', 'src/tabench/data/xu2024.py', 'src/tabench/data/bo4mob.py') }}
           restore-keys: tabench-data-
       - name: Install pinned eclipse-sumo
         # Pin the version in the WORKFLOW (not the pyproject floor): marouter's
@@ -122,16 +122,23 @@ jobs:
       - name: Install
         run: pip install -e ".[dev,sumo]"
       - name: Fetch benchmark data
+        # Also prefetch the BO4Mob 1ramp single-evaluation bundle (~27 KB, adr-034),
+        # the only instance whose od2trips + mesoscopic-SUMO pipeline the smoke test
+        # runs. BO4MOB_REGISTRY is a SEPARATE registry (NOT in REGISTRY), so nothing
+        # else in the family is CI-fetched; the four small instances are on demand
+        # and 5fullRegion (74 MB, HPC-only) refuses to fetch.
         run: >
           python -c "from tabench.data.registry import REGISTRY;
           from tabench.data.fetcher import fetch;
-          [fetch(s) for s in REGISTRY.values()]"
-      - name: Test (sumo adapter + spsa-sumo estimator only)
-        # Explicit two-file list (the torch-job precedent): the sumo dependency's
-        # test surface is the marouter adapter (adr-027) and the SPSA-in-the-loop
-        # estimator built on it (adr-028); the 731-test numpy suite is covered by
-        # the sumo-free matrix legs.
-        run: pytest tests/test_sumo_marouter.py tests/test_spsa_sumo.py -q -ra
+          from tabench.data.bo4mob import BO4MOB_REGISTRY, BO4MOB_SMOKE, fetch_bo4mob;
+          [fetch(s) for s in REGISTRY.values()];
+          fetch_bo4mob(BO4MOB_REGISTRY[BO4MOB_SMOKE])"
+      - name: Test (sumo adapter + spsa-sumo estimator + bo4mob pipeline liveness)
+        # Explicit file list (the torch-job precedent): the sumo dependency's test
+        # surface is the marouter adapter (adr-027), the SPSA-in-the-loop estimator
+        # built on it (adr-028), and the BO4Mob mesoscopic-pipeline smoke test
+        # (adr-034); the numpy suite is covered by the sumo-free matrix legs.
+        run: pytest tests/test_sumo_marouter.py tests/test_spsa_sumo.py tests/test_bo4mob.py -q -ra
         env:
           TABENCH_REQUIRE_DATA: "1"
 
@@ -152,7 +159,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/tabench
-          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py', 'src/tabench/data/xu2024.py') }}
+          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py', 'src/tabench/data/xu2024.py', 'src/tabench/data/bo4mob.py') }}
           restore-keys: tabench-data-
       - name: Install pinned DTALite
         # Pin the version in the WORKFLOW (not the pyproject floor): the FW/VDF behavior

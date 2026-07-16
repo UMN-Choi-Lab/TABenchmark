@@ -111,6 +111,47 @@ SHIPPED = {
     "gartner1980optimal": ("v1", "excess-demand augmented-network transformation the fw-elastic solver implements (ADR-005)"),
     "sheffi1985urban": ("v1", "elastic-demand objective + excess-demand certificate anchor (ADR-005)"),
     "rahman2023data": ("v1", "learned-model wrapper + a ridge reference surrogate (not the GCN itself) certified by P1 (learned-surrogate, ADR-006)"),
+    # Static extensions (ADR-007..014).
+    "evans1976derivation": ("v1", "combined distribution+assignment (evans, ADR-007)"),
+    "mahmassani1987on": ("v1", "boundedly-rational band UE (br-ue, ADR-008)"),
+    "larsson1995augmented": ("v1", "side-constrained capacitated UE (sc-tap, ADR-009)"),
+    "dafermos1980traffic": ("v1", "asymmetric-VI non-separable-cost equilibrium (vi-asym, ADR-011)"),
+    "dafermos1972traffic": ("v1", "multiclass user equilibrium (multiclass, ADR-013)"),
+    "spiess1989optimal": ("v1", "transit optimal-strategy model (transit-strategy, ADR-014)"),
+    # Path/bush-based.
+    "bargera2002origin": ("v1", "origin-based assignment solver (oba)"),
+    # ML-based traffic assignment (torch extra).
+    "liu2023end": ("v1", "implicit-NN UE (implicit-ue-nn, torch, ADR-025)"),
+    "liu2024end": ("v1", "heterogeneous GNN (het-gnn, torch, ADR-026)"),
+    # Analytical DTA (ADR-019..024, 031).
+    "vickrey1969congestion": ("v2", "Vickrey point-queue bottleneck (vickrey, ADR-019)"),
+    "merchant1978model": ("v2", "Merchant-Nemhauser SO-DTA (merchant-nemhauser, ADR-020)"),
+    "ziliaskopoulos2000linear": ("v2", "LP system-optimal DTA (lp-so-dta, ADR-021)"),
+    "friesz1993variational": ("v2", "VI dynamic user equilibrium (vi-due, ADR-022)"),
+    "newell1993simplified": ("v2", "Newell three-detector state estimation (newell-3det, ADR-024)"),
+    "peeta1995system": ("v2", "Peeta-Mahmassani time-dependent SO/UE (pm-td-ue, ADR-031)"),
+    # Dynamic network loading (ADR-015..018).
+    "daganzo1994cell": ("v2", "cell transmission model (ctm, ADR-015)"),
+    "yperman2007link": ("v2", "link transmission model (ltm, ADR-016)"),
+    "tampere2011generic": ("v2", "generic first-order node model (node-model, ADR-017)"),
+    "lebacque1996godunov": ("v2", "Godunov LWR link model (godunov, ADR-018)"),
+    # Day-to-day dynamics and learning processes.
+    "horowitz1984stability": ("v2", "Horowitz cost-smoothing day-to-day SUE (dtd-horowitz)"),
+    "smith1984stability": ("v2", "day-to-day route-swap dynamics (dtd-swap)"),
+    "cascetta1989stochastic": ("v2", "Cascetta finite-population stochastic day-to-day process (dtd-stochastic)"),
+    "friesz1994daytoday": ("v2", "Friesz day-to-day dynamical system (dtd-friesz)"),
+    "cantarella1995dynamic": ("v2", "Cantarella-Cascetta unifying day-to-day process (dtd-unifying)"),
+    "he2010linkbased": ("v2", "link-based day-to-day dynamics (dtd-link)"),
+    "smith2016routeswapping": ("v2", "route-swap logit-SUE day-to-day variant (dtd-swap-sue)"),
+    # Data, OD estimation, calibration, and benchmarking.
+    "yang1992estimation": ("v1", "bilevel congested-network OD estimator (od-congested)"),
+    "cascetta1993dynamic": ("v2", "within-day dynamic OD estimators (od-dynamic-sim/seq, ADR-023)"),
+    "balakrishna2007offline": ("v0.2", "SPSA calibration in the marouter loop (spsa-sumo, ADR-028)"),
+    "lopez2018microscopic": ("v0.2", "SUMO marouter external-simulator adapter (sumo-marouter, ADR-027)"),
+    "zhou2014dtalite": ("v0.2", "DTALite static-assignment adapter (dtalite-tap, ADR-029)"),
+    "eckman2023simopt": ("v1", "SimOpt solvability/data profiles (experiments.profiles, ADR-032)"),
+    "xu2024unified": ("v0.x", "Xu et al. 20-US-city cross-domain dataset (xu2024, ADR-033)"),
+    "ryu2025bo4mob": ("v0.2", "BO4Mob scenario family — stage 1: data + pipeline liveness (ADR-034)"),
 }
 
 
@@ -240,8 +281,12 @@ def write_roadmap_md(refs: list[dict]) -> None:
     lines += [
         "",
         "---",
-        "*Generated from the verified canon `references.json` by",
-        "`tools/generate_references.py`; regenerate rather than hand-edit.*",
+        "*The tier-1 rows are HAND-MAINTAINED: each is flipped to `[x]` with its",
+        "shipped annotation when its method ships. `tools/generate_references.py`",
+        "regenerates this skeleton from the verified canon `references.json` and carries",
+        "the `SHIPPED` dict forward — every shipped bibkey MUST stay in `SHIPPED`, or a",
+        "regen would uncheck its row. Use the generator to add NEW canon entries; do not",
+        "let it overwrite the hand-written shipped prose.*",
         "",
     ]
     (DOCS / "ROADMAP.md").write_text("\n".join(lines))

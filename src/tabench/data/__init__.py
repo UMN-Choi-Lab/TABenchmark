@@ -3,6 +3,14 @@
 from pathlib import Path
 
 from ..core.scenario import Demand, ReferenceSolution, Scenario
+from .bo4mob import (
+    BO4MOB_REGISTRY,
+    BO4MOB_SMOKE,
+    Bo4MobHpcOnlyError,
+    Bo4MobSpec,
+    bo4mob_citation,
+    fetch_bo4mob,
+)
 from .builtin import (
     br_two_route_scenario,
     braess_scenario,
@@ -52,6 +60,12 @@ __all__ = [
     "fetch_city",
     "xu2024_citation",
     "xu2024_scenario",
+    "BO4MOB_REGISTRY",
+    "BO4MOB_SMOKE",
+    "Bo4MobSpec",
+    "Bo4MobHpcOnlyError",
+    "fetch_bo4mob",
+    "bo4mob_citation",
 ]
 
 
