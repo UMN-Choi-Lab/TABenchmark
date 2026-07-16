@@ -7,6 +7,7 @@ from .adapters import CallableModel
 # present. Importing ``.adapters`` above already ran its guarded registration, so
 # this block only re-exports the class when available (mirrors the torch models).
 try:
+    from .adapters.sumo_duaiterate import SumoDuaIterateAdapter  # noqa: F401
     from .adapters.sumo_marouter import SumoMarouterModel  # noqa: F401
 
     _HAS_SUMO = True
@@ -114,6 +115,7 @@ if _HAS_TORCH:
 # present, so ``from tabench.models import *`` on a core install never fails.
 if _HAS_SUMO:
     __all__.append("SumoMarouterModel")
+    __all__.append("SumoDuaIterateAdapter")
 
 # Likewise the DTALite adapter, behind the optional ``[dtalite]`` extra.
 if _HAS_DTALITE:

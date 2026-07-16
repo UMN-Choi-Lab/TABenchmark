@@ -170,8 +170,23 @@ def sumo_binary(name: str) -> str:
 
 
 def sumo_env() -> dict[str, str]:
-    """Subprocess env with ``SUMO_HOME`` overridden to the wheel's own home."""
-    return {**os.environ, "SUMO_HOME": sumo.SUMO_HOME}
+    """Subprocess env with ``SUMO_HOME`` overridden to the wheel's own home AND the
+    per-tool ``*_BINARY`` overrides pinned to the wheel's absolute binaries.
+
+    ``sumolib.checkBinary`` (which ``duaIterate.py`` uses to locate ``sumo`` /
+    ``duarouter`` / ``netconvert``) consults ``SUMO_BINARY`` / ``DUAROUTER_BINARY``
+    / ``NETCONVERT_BINARY`` BEFORE ``SUMO_HOME`` / PATH, so an ambient poisoned
+    ``SUMO_BINARY=/opt/sumo-1.12/bin/sumo`` would silently bypass the wheel-only
+    rule inside the driver. Pinning those keys to the wheel closes that hole (F8);
+    the adapter's own direct spawns already use absolute wheel paths."""
+    env = {**os.environ, "SUMO_HOME": sumo.SUMO_HOME}
+    for tool, var in (
+        ("sumo", "SUMO_BINARY"),
+        ("duarouter", "DUAROUTER_BINARY"),
+        ("netconvert", "NETCONVERT_BINARY"),
+    ):
+        env[var] = os.path.join(sumo.SUMO_HOME, "bin", tool)
+    return env
 
 
 def _linear_params(network: Network) -> tuple[np.ndarray, np.ndarray]:

@@ -138,9 +138,12 @@ jobs:
       - name: Test (sumo adapter + spsa-sumo estimator + bo4mob pipeline liveness)
         # Explicit file list (the torch-job precedent): the sumo dependency's test
         # surface is the marouter adapter (adr-027), the SPSA-in-the-loop estimator
-        # built on it (adr-028), and the BO4Mob mesoscopic-pipeline smoke test
-        # (adr-034); the numpy suite is covered by the sumo-free matrix legs.
-        run: pytest tests/test_sumo_marouter.py tests/test_spsa_sumo.py tests/test_bo4mob.py -q -ra
+        # built on it (adr-028), the BO4Mob mesoscopic-pipeline smoke test
+        # (adr-034), and the first EDOC-1 dynamic row sumo-duaiterate (adr-036/037 —
+        # drives duaIterate + the pinned meso replay + duarouter R3 end to end); the
+        # numpy suite (incl. the engine-free EDOC substrate) is covered by the
+        # sumo-free matrix legs.
+        run: pytest tests/test_sumo_marouter.py tests/test_spsa_sumo.py tests/test_bo4mob.py tests/test_sumo_duaiterate.py -q -ra
         env:
           TABENCH_REQUIRE_DATA: "1"
 

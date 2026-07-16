@@ -46,7 +46,7 @@ def _track_manifest() -> dict[str, object]:
     import tabench.tdta as td
     import tabench.transit as tr
 
-    return {
+    manifest: dict[str, object] = {
         "transit-strategy": tr.optimal_strategy,
         "vickrey": bn.vickrey_worked_scenario,
         "vi-due": bn.due_closed_form,
@@ -59,6 +59,16 @@ def _track_manifest() -> dict[str, object]:
         "godunov": dnl.GodunovLink,
         "node-model": dnl.TampereNode,
     }
+    # EDOC producers are not in MODEL_REGISTRY, so they bind to the coverage gate here.
+    # Guarded like the adapter's own import (sumo is optional): enforced on the sumo leg,
+    # invisible on core-only legs (no collection break, no false enforcement).
+    try:
+        from tabench.models.adapters.sumo_duaiterate import SumoDuaIterateAdapter
+        manifest["sumo-duaiterate"] = SumoDuaIterateAdapter
+    except ModuleNotFoundError as exc:
+        if exc.name != "sumo":
+            raise
+    return manifest
 
 
 # Same-ADR sibling folds: one notebook stem certifies several registry units.
@@ -99,14 +109,15 @@ _ALLOWLIST: set[str] = {
     # estimation (batch-10) — SHIPPED, numbered 03-estimation/01..07 (prior +
     # the dynamic trio satisfied via _COVERS folds on 01-gls / 07-od-dynamic)
     # torch (batch-11) + engines (batch-12)
-    "implicit-ue-nn", "het-gnn", "sumo-marouter", "dtalite-tap", "spsa-sumo",
+    # sumo-marouter — SHIPPED, 11-external/01-sumo-marouter.ipynb
+    "implicit-ue-nn", "het-gnn", "dtalite-tap", "spsa-sumo",
 }
-# PIN: today's allowlist is exactly the 5 guarded torch/sumo/dtalite units — any re-add
+# PIN: today's allowlist is exactly the 4 guarded torch/sumo/dtalite units — any re-add
 # of a shipped unit must also bump this bound, forcing a second visible diff line beyond
 # the set literal itself (the shrink-only invariant above is review-enforced, not
 # mechanical; this narrows the blast radius of a silent re-add). Update the bound (and
 # this comment) only when a NEW batch adds a genuinely not-yet-written guarded unit.
-assert len(_ALLOWLIST) <= 5, "allowlist grew — update this pin's bound and comment"
+assert len(_ALLOWLIST) <= 4, "allowlist grew — update this pin's bound and comment"
 
 
 def _enforced_units() -> list[str]:
