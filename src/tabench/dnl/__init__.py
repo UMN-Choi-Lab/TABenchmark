@@ -1,6 +1,11 @@
 """Dynamic network loading primitives and reference runner."""
 
-from .builtin import bottleneck_dynamic_scenario, single_link_dynamic_scenario
+from .builtin import (
+    bottleneck_dynamic_scenario,
+    greenshields_bottleneck_dynamic_scenario,
+    single_link_dynamic_scenario,
+    triangular_bottleneck_dynamic_scenario,
+)
 from .ctm import CTMLink
 from .demand import DynamicDemand, TurningFractions
 from .fd import FundamentalDiagram, GreenshieldsFD, LinkDynamics, TriangularFD
@@ -48,4 +53,6 @@ __all__ = [
     "DNLOutput",
     "single_link_dynamic_scenario",
     "bottleneck_dynamic_scenario",
+    "triangular_bottleneck_dynamic_scenario",
+    "greenshields_bottleneck_dynamic_scenario",
 ]

@@ -34,6 +34,16 @@ first — the design principles (P1–P9) are normative for review.
 - [ ] `pytest` and `ruff check` clean; a test file exercising the model exists
 - [ ] Reference(s) for the method exist in `docs/REFERENCES.md` (add them with
       verified BibTeX if missing — no unverified citations)
+- [ ] A tutorial notebook exists at `tutorials/<NN>-<track>/<MM>-<unit>.ipynb` — the
+      numbered simple→complex layout: `MM` is the **next free number** in the track folder
+      (place it in vintage/dependency order, not just appended). Committed stripped, plots
+      through `tabench.viz` for road link-flow/OD artifacts (non-road tracks plot with plain
+      matplotlib, stating the reason in the Visualize cell), `metadata.tabench.unit`/`track`
+      carry the bare names; `tests/test_tutorials.py` fails the suite for any registered unit
+      without one, or if the numbering collides or gaps, on EVERY CI leg today — the
+      notebook-EXECUTION check (`TABENCH_RUN_TUTORIALS=1`) is currently collected-but-skipped
+      in CI pending the executor-wiring commit; verify locally with
+      `TABENCH_RUN_TUTORIALS=1 pytest tests/test_tutorials.py -k executes` until it lands
 
 ## Contributing a network / scenario
 

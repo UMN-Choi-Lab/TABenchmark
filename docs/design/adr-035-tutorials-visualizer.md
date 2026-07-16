@@ -1,9 +1,9 @@
 # ADR-035: tutorials-visualizer — the house visualizer and the per-unit tutorial notebooks
 
 **Status:** accepted (implemented: `tabench.viz` + `demo_quickstart --viz` + the tutorials
-infrastructure, enforcement, and the 19-notebook static track; the remaining tracks —
-day-to-day, dnl, analytic-dta, newell/transit, estimation, extras, data/experiments — are in
-progress under this same design)
+infrastructure, enforcement, and 44 notebooks across static, day-to-day, estimation, transit,
+dnl, bottleneck, dta, tdta, and newell — every core track; the extras (`10-learned`,
+`11-external`) and `12-data`/`13-experiments` tours remain, under this same design)
 **Date:** 2026-07-16
 **Deciders:** S0 sprint — the visual layer plus the "every model ships a tutorial" deliverable
 **File:** `docs/design/adr-035-tutorials-visualizer.md`
@@ -111,20 +111,29 @@ gap, not censorship; `aon` is feasible and honestly scored).
   capture) → load the scenario, printing `content_hash()[:16]` (P2) → solve via the public API,
   self-reports labelled "provenance only" → **certify in-cell** through the track's P1 evaluator
   with mandatory asserts (feasibility gate, metric bound, self-report ≈ certified for white boxes,
-  analytic anchors RECOMPUTED never quoted) → visualize via `tabench.viz` → takeaways. Core
-  notebooks run in ≤ ~60 s (the static track measured 3.5–4.3 s each), seeds pinned, no timestamps
-  in stdout.
+  analytic anchors RECOMPUTED never quoted) → visualize → takeaways. Core notebooks run in ≤ ~60 s
+  (the static track measured 3.5–4.3 s each), seeds pinned, no timestamps in stdout.
+* **The viz rule.** Notebooks plot via `tabench.viz` where the track's artifacts are road link
+  flows / OD matrices; non-road tracks (cumulative diagrams, occupancy series, (x,t) fields,
+  transit multigraphs) use plain matplotlib, with the reason stated in the Visualize cell's
+  markdown.
 * **Executor.** `nbclient` driven from a parametrized pytest test (`kernel_name="python3"`,
-  `timeout=120`), gated on `TABENCH_RUN_TUTORIALS=1` so laptops skip by design while CI hard-runs
+  `timeout=120`), gated on `TABENCH_RUN_TUTORIALS=1` so laptops skip by design once CI hard-runs
   — the `TABENCH_REQUIRE_DATA` discipline of `tests/conftest.py`. `nbmake` was rejected (glob-
   collected, so it cannot *demand* a missing notebook); `jupyter nbconvert --execute` stays the
   human CLI.
-* **CI wiring (staged with the commits).** The `tutorials` extra
+* **CI wiring (C3, not C2).** The `tutorials` extra
   (`nbclient>=0.10, nbformat>=5.10, ipykernel>=6.29, matplotlib>=3.8`) and the core-job install of
-  `.[dev,viz,tutorials]` with `TABENCH_RUN_TUTORIALS=1` on the 3.12 leg only ship with the
-  tutorials commit (C2/C3); the extras jobs (torch/sumo/dtalite) append `test_tutorials.py` with
-  `-k` filters. No new CI job. These install-line edits were deliberately deferred while the viz
-  commit (C1) was under review, to keep that review's pip-install/actionlint repros stable.
+  `.[dev,viz,tutorials]` with `TABENCH_RUN_TUTORIALS=1` on the 3.12 leg ship in the commit
+  immediately following the tutorials commit (C2); the extras jobs (torch/sumo/dtalite) append
+  `test_tutorials.py` with `-k` filters there too. No new CI job. **At C2, `ci.yml` is untouched**
+  (it carries a concurrent workstream's uncommitted edits, so C2 does not stage the whole file):
+  `test_notebook_executes` is collected but skipped on every leg until C3 lands, while
+  existence/stripping/metadata/numbering enforcement (the rest of `test_tutorials.py`) runs
+  unconditionally on every leg from C2 onward. These install-line edits were ALSO deliberately
+  deferred earlier while the viz commit (C1) was under review, to keep that review's
+  pip-install/actionlint repros stable — the C3 gap is a second, independent deferral for the
+  commit-ordering reason above, not a repeat of the C1 one.
 
 ## Decision D — the enforcement test (`tests/test_tutorials.py`)
 
