@@ -325,8 +325,11 @@ TABenchmark/
 │   │                      # TD-SO LP-bound gap, ADR-031)
 │   │                      # (planned: distributional.py)
 │   ├── experiments/       # runner.py incl. manifests, bootstrap.py, profiles.py (adr-032)
+│   ├── viz.py             # house visualizer: optional [viz] extra (matplotlib), never
+│   │                      #   imported by the core (adr-035); network/OD/scatter figures
 │   └── cli.py             # tabench fetch | list | run (planned: validate)
 ├── scenarios/             # declarative YAML scenario cards (ladder: 0braess, 1siouxfalls, …)
+├── tutorials/             # one certified notebook per unit + test_tutorials.py gate (adr-035)
 ├── demos/                 # demo_quickstart.py (planned ladder: scenario/model/experiment)
 ├── tools/                 # generate_references.py (regenerates REFERENCES.md/ROADMAP.md)
 ├── tests/                 # unit + analytic (Braess) + regression (Sioux Falls oracle)

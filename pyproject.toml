@@ -48,6 +48,10 @@ sumo = ["eclipse-sumo>=1.27"]
 # bundled `.so` that can change under the floor, so the CI WORKFLOW pins
 # DTALite==0.8.1 (the tested engine) as the anchor tripwire, not here in the metadata.
 dtalite = ["DTALite>=0.8"]
+# Optional: the house visualizer (tabench.viz) + `demo_quickstart --viz`. Kept out of
+# the core so the benchmark stays numpy/scipy-only; the module is never imported by
+# `tabench`'s top-level, so `import tabench` works without it. Floor only, NOT a hard pin.
+viz = ["matplotlib>=3.8"]
 
 [project.scripts]
 tabench = "tabench.cli:main"

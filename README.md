@@ -51,6 +51,11 @@ which ships the `marouter`/`netconvert` binaries inside the package — no separ
 SUMO install). Without either extra the core imports cleanly and simply lacks
 those models.
 
+The house visualizer `tabench.viz` (network flows, OD heatmaps, model-vs-reference
+scatter — used by `demos/demo_quickstart.py --viz` and every tutorial notebook) needs
+`pip install tabench[viz]` (matplotlib). It is never imported by the core, so
+`import tabench` stays numpy/scipy-only (adr-035).
+
 ```
 model             certified rel. gap  feasible
 ----------------------------------------------

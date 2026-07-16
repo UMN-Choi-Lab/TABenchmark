@@ -24,7 +24,9 @@ jobs:
           key: tabench-data-${{ hashFiles('src/tabench/data/registry.py', 'src/tabench/data/xu2024.py', 'src/tabench/data/bo4mob.py') }}
           restore-keys: tabench-data-
       - name: Install
-        run: pip install -e ".[dev]"
+        # viz extra (matplotlib) on BOTH matrix legs so tests/test_viz.py runs on
+        # 3.10 + 3.12; the module is optional but its tests must not silently skip in CI.
+        run: pip install -e ".[dev,viz]"
       - name: Fetch benchmark data
         # Explicit prefetch: a failed download fails the job, and a failed
         # job saves no cache — so a partially-populated cache can never be
