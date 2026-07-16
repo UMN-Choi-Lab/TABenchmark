@@ -1,0 +1,39 @@
+# Scenario ladder rung 6: San Francisco (Xu et al. 2024), the cross-domain axis.
+# A larger real US-city instance than Honolulu (rung 5). Data are downloaded on
+# demand (per-file SHA-256, whole-zip md5-pinned) - never vendored (P9).
+# CC BY 4.0; cite the source (below).
+scenario: xu2024-sanfrancisco
+source: xu2024
+family: xu2024-sanfrancisco
+tasks: [t1_equilibrium]
+dimensions:
+  zones: 194
+  nodes: 4986
+  links: 18002
+  bpr: {alpha: 0.5, beta: 1.8}   # per-city calibrated (paper Table 5), uniform
+oracle:
+  kind: published-reference        # NOT best-known: a LOOSE published cross-check
+  file: 03_AequilibraE_results/assignment_result.csv (matrix_ab)
+  relative_gap: 1.27e-3            # the published AequilibraE run's own gap
+  note: >
+    Published AequilibraE UE flows. Their own relative gap is ~1.3e-3, so they
+    are a provenance cross-check, never a regression oracle. The repo's own bfw
+    certifies a far tighter gap on this identical instance (adr-033 /
+    VALIDATION.md).
+known_defect: >
+  AS-PUBLISHED wrong-centroid instance (P2) - identical defect to Honolulu
+  (rung 5): demand injected at node ids 1..Z, not the tract centroids. The
+  shipped instance reproduces the self-consistent as-published 1..Z-centroid
+  graph; cross-solver agreement against the dataset's TransCAD flows is NOT
+  claimed. Corrected tract-centroid variant deferred (adr-033).
+units:
+  free_flow_time: minutes
+  capacity: vehicles/hour
+  demand: vehicles/hour AM peak (0.6 x the input od.csv)
+budgets:
+  iterations: 400   # local/nightly rung
+citation: >
+  Xu, X., Zheng, Z., Hu, Z., Feng, K. & Ma, W. (2024). A unified dataset for the
+  city-scale traffic assignment model in 20 U.S. cities. Scientific Data 11:325,
+  DOI 10.1038/s41597-024-03149-8. Data: figshare
+  https://doi.org/10.6084/m9.figshare.24235696 (v4, file 48908890), CC BY 4.0.

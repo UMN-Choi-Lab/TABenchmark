@@ -21,18 +21,23 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/tabench
-          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py') }}
+          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py', 'src/tabench/data/xu2024.py') }}
           restore-keys: tabench-data-
       - name: Install
         run: pip install -e ".[dev]"
       - name: Fetch benchmark data
         # Explicit prefetch: a failed download fails the job, and a failed
         # job saves no cache — so a partially-populated cache can never be
-        # frozen in by an exact-key hit.
+        # frozen in by an exact-key hit. The xu2024 cross-domain axis (adr-033)
+        # is a SEPARATE registry, NOT in REGISTRY: only its two CI-sized rungs
+        # (Honolulu + San Francisco) are prefetched here, each by HTTP byte-range
+        # of ~1 MB (NOT the 276 MB zip); the other 15 cities are never CI-fetched.
         run: >
           python -c "from tabench.data.registry import REGISTRY;
           from tabench.data.fetcher import fetch;
-          [fetch(s) for s in REGISTRY.values()]"
+          from tabench.data.xu2024 import XU2024_REGISTRY, XU2024_RUNGS, fetch_city;
+          [fetch(s) for s in REGISTRY.values()];
+          [fetch_city(XU2024_REGISTRY[c]) for c in XU2024_RUNGS]"
       - name: Lint
         run: ruff check src tests demos
       - name: Test
@@ -62,7 +67,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/tabench
-          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py') }}
+          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py', 'src/tabench/data/xu2024.py') }}
           restore-keys: tabench-data-
       - name: Install CPU-only torch
         # The +cpu local version satisfies torch>=2.4, so the editable install
@@ -105,7 +110,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/tabench
-          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py') }}
+          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py', 'src/tabench/data/xu2024.py') }}
           restore-keys: tabench-data-
       - name: Install pinned eclipse-sumo
         # Pin the version in the WORKFLOW (not the pyproject floor): marouter's
@@ -147,7 +152,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/tabench
-          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py') }}
+          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py', 'src/tabench/data/xu2024.py') }}
           restore-keys: tabench-data-
       - name: Install pinned DTALite
         # Pin the version in the WORKFLOW (not the pyproject floor): the FW/VDF behavior

@@ -162,6 +162,15 @@ TNTP units — what `tabench` computes — is **4231335.28710744**), TABenchmark
 hardcodes quoted objectives: the oracle objective is always *recomputed from the
 best-known flows* with the package's own Beckmann implementation.
 
+The same discipline governs the **cross-domain axis** (Xu et al. 2024, 17 real US-city
+instances; adr-033): only the per-city AequilibraE trio is fetched, by HTTP byte-range
+extraction of exactly the needed members of a 276 MB CC-BY figshare zip (never the whole
+archive), on a registry deliberately separate from the CI-prefetched TNTP one. Its
+wrong-centroid defect (demand injected at node ids `1..Z`, not the tract centroids) is a
+first-class known-defect entry, its 3 unbuildable cities are named exclusions, and its
+published flows are labelled a *loose* reference (own gap ~1e-3), never a best-known
+oracle — the honest tier separation P9 is built to keep.
+
 ---
 
 ## 2. Object model
@@ -438,7 +447,8 @@ Tiers are driven by the verified reference canon (`docs/REFERENCES.md`, 246 refe
   a per-link surrogate trained on a synthetic family and gated off the disjoint TNTP test
   set by `trained_on` (shipped: `learned-surrogate`, paradigm `learned`,
   [ADR-006](design/adr-006-learned-model-certification.md); Rahman & Hasan 2023 line, with
-  the Xu et al. 2024 dataset a future cross-domain axis — link-flow accuracy is shown *not*
+  the Xu et al. 2024 dataset now shipped as the cross-domain axis
+  ([ADR-033](design/adr-033-xu2024-dataset.md)) — link-flow accuracy is shown *not*
   to imply certification), and the first **torch** model behind the optional `[torch]` extra —
   an implicit-NN UE whose output is demand-feasible *by construction* (v = Δᵀh over
   column-generated route sets), so it clears the audit the ridge is censored by yet still

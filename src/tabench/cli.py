@@ -12,7 +12,17 @@ import yaml
 
 from .core.budget import Budget
 from .core.scenario import ElasticDemand
-from .data import REGISTRY, ChecksumError, citation, fetch, load_scenario
+from .data import (
+    REGISTRY,
+    XU2024_REGISTRY,
+    XU2024_RUNGS,
+    ChecksumError,
+    citation,
+    fetch,
+    fetch_city,
+    load_scenario,
+    xu2024_citation,
+)
 from .estimation.base import ESTIMATOR_REGISTRY
 from .estimation.dynamic_base import DYNAMIC_ESTIMATOR_REGISTRY
 from .experiments.runner import (
@@ -38,6 +48,8 @@ def _cmd_list(_: argparse.Namespace) -> int:
     print("  multiclass      (built-in, analytic multiclass-user equilibrium oracle)")
     for key, spec in sorted(REGISTRY.items()):
         print(f"  {key:<14}({spec.repo_dir}, download-on-demand)")
+    print("  xu2024-<city>   (Xu et al. 2024 cross-domain axis, CC-BY, adr-033;")
+    print(f"                   rungs {', '.join(XU2024_RUNGS)}; {len(XU2024_REGISTRY)} cities)")
     print("\nModels:")
     for name in sorted(MODEL_REGISTRY):
         cls = MODEL_REGISTRY[name]
@@ -57,6 +69,17 @@ def _cmd_list(_: argparse.Namespace) -> int:
 
 
 def _cmd_fetch(args: argparse.Namespace) -> int:
+    if args.scenario.startswith("xu2024-"):
+        city = args.scenario[len("xu2024-") :]
+        city_spec = XU2024_REGISTRY.get(city)
+        if city_spec is None:
+            print(f"Unknown xu2024 city {city!r}; see `tabench list`", file=sys.stderr)
+            return 2
+        paths = fetch_city(city_spec, force=args.force)
+        for role, path in sorted(paths.items()):
+            print(f"{role:<10} {path}")
+        print(f"\nCite: {xu2024_citation(city_spec)}")
+        return 0
     spec = REGISTRY.get(args.scenario)
     if spec is None:
         print(f"Unknown downloadable scenario {args.scenario!r}", file=sys.stderr)

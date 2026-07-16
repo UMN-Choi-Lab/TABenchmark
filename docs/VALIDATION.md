@@ -25,6 +25,19 @@ reproducible link flows:
    agree to `max pairwise |v_i − v_j| ≈ 3e-3` (`test_validation.py`).
 3. **Analytic small-network anchors** (built in, no download): Braess UE, Braess SO,
    two-route logit/probit SUE, elastic two-route. Exact and hand-checkable.
+4. **Cross-domain published references** (Xu et al. 2024, adr-033) — a **loose** tier, kept
+   strictly *below* the best-known tier. The 17 real US-city instances ship AS-PUBLISHED, and
+   the published AequilibraE flows have their own relative gap ~1e-3 (~11 orders looser than a
+   TNTP best-known, because the paper solved to a 0.001 target), so they are a *provenance
+   cross-check*, never a regression oracle. Two things this tier does **not** buy, stated
+   because they would be tempting: it is not cross-*solver* agreement (the dataset's TransCAD
+   side used the correct tract centroids, the AequilibraE side the wrong `1..Z` nodes — a
+   documented defect making them different instances), and it is not best-known accuracy. What
+   it *is* validated by: builder invariants on all 20 cities, published-flow conservation
+   recomputed ≤ 3e-10 (worst: New York ~2e-10 — a deliberately loose prose bound, the
+   residual being summation-order sensitive), and the repo's own `bfw` reaching a far tighter
+   gap on the identical instance — cross-*implementation* agreement (Honolulu: rgap 1.07e-4 in
+   400 iters, correlation 0.99992 to the published flows).
 
 ## Per-model validation
 

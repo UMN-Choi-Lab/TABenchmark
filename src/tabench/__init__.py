@@ -34,6 +34,8 @@ from .core import (
     Trace,
 )
 from .data import (
+    XU2024_REGISTRY,
+    XU2024_RUNGS,
     br_two_route_scenario,
     braess_scenario,
     elastic_two_route_scenario,
@@ -43,6 +45,7 @@ from .data import (
     sc_two_route_scenario,
     two_route_scenario,
     vi_two_route_scenario,
+    xu2024_scenario,
 )
 from .dnl import (
     CTMLink,
@@ -234,6 +237,9 @@ __all__ = [
     "sc_two_route_scenario",
     "vi_two_route_scenario",
     "multiclass_two_route_scenario",
+    "xu2024_scenario",
+    "XU2024_REGISTRY",
+    "XU2024_RUNGS",
     "TimeGrid",
     "assert_wave_resolved",
     "FundamentalDiagram",

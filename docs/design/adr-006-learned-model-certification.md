@@ -51,7 +51,7 @@ The surrogate trains on a **synthetic** random-network family (`trained_on =
 network identity, so the fairness gate has real teeth and the comparison is leakage-free —
 stricter than the ML-TA norm, which usually trains and tests on the *same* topology with
 only demand varied. (The Xu et al. 2024 real-city dataset, disjoint from TNTP and CC-BY, is
-a natural future *cross-domain* test set; it is referenced, not vendored.)
+now shipped as the *cross-domain* axis — integrated download-on-demand, not vendored; adr-033.)
 
 ## What this buys — the methodological point
 
@@ -77,5 +77,5 @@ its (expected non-trivial) equilibrium gap; that, and a real GNN, are the follow
   (197 total with the 8 new).
 - **Gaps deliberately left:** `inputs_required`/`outputs` remain declarative (not enforced);
   a learned model that only sees link counts is not yet *structurally* fenced the way T2 is.
-  A torch GNN, the Xu 2024 cross-domain set, and conservation-aware learned outputs are
-  future work.
+  A torch GNN and conservation-aware learned outputs are future work; the Xu 2024
+  cross-domain set is now shipped (adr-033).
