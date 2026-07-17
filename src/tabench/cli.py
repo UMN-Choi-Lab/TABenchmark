@@ -23,9 +23,12 @@ from .data import (
     load_scenario,
     xu2024_citation,
 )
+from .data.bo4mob import Bo4MobHpcOnlyError
 from .estimation.base import ESTIMATOR_REGISTRY
+from .estimation.bo4mob_base import BO4MOB_ESTIMATOR_REGISTRY
 from .estimation.dynamic_base import DYNAMIC_ESTIMATOR_REGISTRY
 from .experiments.runner import (
+    run_bo4mob_estimation_experiment,
     run_dynamic_estimation_experiment,
     run_estimation_experiment,
     run_experiment,
@@ -34,6 +37,7 @@ from .models.base import MODEL_REGISTRY
 
 _DEFAULT_ESTIMATORS = "prior,gls,vzw-entropy,spiess,spsa"
 _DEFAULT_DYNAMIC_ESTIMATORS = "prior-profile,od-dynamic-sim,od-dynamic-seq"
+_DEFAULT_BO4MOB_ESTIMATORS = "bo4mob-prior"
 
 
 def _cmd_list(_: argparse.Namespace) -> int:
@@ -63,6 +67,11 @@ def _cmd_list(_: argparse.Namespace) -> int:
     print("\nDynamic estimators (T2 within-day, ADR-023):")
     for name in sorted(DYNAMIC_ESTIMATOR_REGISTRY):
         cls = DYNAMIC_ESTIMATOR_REGISTRY[name]
+        caps = cls.capabilities
+        print(f"  {name:<16}{caps.paradigm}, deterministic={caps.deterministic}")
+    print("\nBO4Mob estimators (T2 held-out-count D2, adr-041; needs tabench[sumo]):")
+    for name in sorted(BO4MOB_ESTIMATOR_REGISTRY):
+        cls = BO4MOB_ESTIMATOR_REGISTRY[name]
         caps = cls.capabilities
         print(f"  {name:<16}{caps.paradigm}, deterministic={caps.deterministic}")
     return 0
@@ -97,7 +106,15 @@ def _cmd_run(args: argparse.Namespace) -> int:
     card: dict = {}
     if args.config:
         card = yaml.safe_load(Path(args.config).read_text())
-        if not isinstance(card, dict) or "scenario" not in card:
+        if not isinstance(card, dict):
+            print(f"{args.config}: not a scenario card (missing 'scenario')", file=sys.stderr)
+            return 2
+        # A BO4Mob T2 card carries a `bo4mob_instance`, not a `scenario`: its instances
+        # are NOT load_scenario scenarios (a bo4mob key raises KeyError there by design,
+        # adr-034), so dispatch BEFORE the scenario-card shape check and any load_scenario.
+        if "t2_bo4mob_estimation" in (card.get("tasks") or []):
+            return _run_bo4mob_estimation(args, card)
+        if "scenario" not in card:
             print(f"{args.config}: not a scenario card (missing 'scenario')", file=sys.stderr)
             return 2
         if scenario_key is None:
@@ -371,6 +388,88 @@ def _run_dynamic_estimation(args: argparse.Namespace, card: dict, scenario) -> i
     if args.out:
         print(f"\nWrote CSV + manifest to {args.out}/")
     return 0
+
+
+def _run_bo4mob_estimation(args: argparse.Namespace, card: dict) -> int:
+    """Dispatch a ``t2_bo4mob_estimation`` card to the BO4Mob D2 held-out-count runner."""
+    instance = card.get("bo4mob_instance")
+    if not instance:
+        print("bo4mob card missing 'bo4mob_instance' (e.g. '1ramp')", file=sys.stderr)
+        return 2
+    estimation = card.get("estimation") or {}
+    budgets = card.get("budgets") or {}
+    sp_calls = int(budgets.get("sp_calls", 1))
+    macroreps = int(card.get("macroreps", estimation.get("macroreps", 1)))
+    models_arg = args.models or _DEFAULT_BO4MOB_ESTIMATORS
+    estimators = []
+    for name in models_arg.split(","):
+        name = name.strip()
+        if name not in BO4MOB_ESTIMATOR_REGISTRY:
+            print(f"Unknown bo4mob estimator {name!r}; see `tabench list`", file=sys.stderr)
+            return 2
+        estimators.append(BO4MOB_ESTIMATOR_REGISTRY[name]())
+    budget = Budget(sp_calls=sp_calls)
+    try:
+        result = run_bo4mob_estimation_experiment(
+            instance, estimators, budget, seed=args.seed, macroreps=macroreps,
+            out_dir=args.out, estimation=estimation,
+        )
+    except Bo4MobHpcOnlyError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    except KeyError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    except RuntimeError as exc:  # sumo wheel absent (the tabench[sumo] hint)
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    ident = result.manifest["identifiability"]
+    ho = result.manifest["heldout"]
+    print(
+        f"BO4Mob {instance} (task_hash {result.manifest['task_hash'][:16]}), "
+        f"T2 D2 held-out-count estimation, seed {args.seed}\n"
+    )
+    print(
+        f"provenance: n_od_pairs={result.manifest['n_od_pairs']} "
+        f"n_train_sensors={ident['n_train_sensors']} "
+        f"sensor_pair_coverage={ident['sensor_pair_coverage']:.3f} "
+        f"(held-out: {ho['n_dates']} dates at {ho['hour']}, train anchor "
+        f"{ho['train_anchor']['date']}; identifiability rank test N/A — adr-041)\n"
+    )
+    last: dict[str, dict] = {}
+    for row in result.rows:
+        last[row["estimator"]] = row
+    header = (
+        f"{'estimator':<16}{'feasible':>9}{'obs_nrmse':>12}{'heldout_nrmse':>15}"
+        f"{'ho_min':>10}{'ho_max':>10}"
+    )
+    print(header)
+    print("-" * len(header))
+    for name, row in sorted(last.items(), key=lambda kv: _bo4mob_rank_key(kv[1])):
+        print(
+            f"{name:<16}{int(row['od_feasible']):>9}{row['obs_nrmse']:>12.4f}"
+            f"{row['heldout_nrmse']:>15.4f}{row['heldout_nrmse_min']:>10.4f}"
+            f"{row['heldout_nrmse_max']:>10.4f}"
+        )
+    print(
+        "\nT2 BO4Mob D2 task: ranked by heldout_nrmse (mean over same-hour, "
+        "different-DATE held-out real PeMS counts). Equilibrium is never claimed; "
+        "this same-lab scenario's NRMSE is NOT comparable to the static/dynamic T2 "
+        "heldout_count_rmse scale and does NOT reproduce BO4Mob's own SPSA/BO "
+        "leaderboard rankings (adr-034/adr-041)."
+    )
+    if args.out:
+        print(f"\nWrote CSV + manifest to {args.out}/")
+    return 0
+
+
+def _bo4mob_rank_key(row: dict) -> float:
+    value = row.get("heldout_nrmse")
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return float("inf")
+    return value if value == value else float("inf")  # NaN sorts last
 
 
 def _rank_key(row: dict) -> float:

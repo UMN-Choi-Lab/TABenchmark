@@ -180,6 +180,15 @@ validation of TABench methods, and never claiming the paper's numbers (a measure
 1.12→1.27.1 `edgeData` drift makes them non-reproducible here). BO4Mob keys are NOT
 `load_scenario` scenarios (a meso net with no BPR network and no true OD is data, not a
 `Scenario`); `5fullRegion` (74 MB, ~11 h/eval) is metadata-only and refuses to fetch.
+**Stage 2** ([adr-041](design/adr-041-bo4mob-estimation.md)) adds the `bo4mob-estimation` T2
+family — a NEW sibling task type/certifier (the ADR-023 pattern, since `EstimationTask`/
+`ODCertifier` hard-require a BPR net + true OD + `bfw` pin BO4Mob lacks) scored by a **D2
+observational** certificate: the harness re-runs the pinned od2trips+meso pipeline ONCE on the
+emitted OD and ranks by `heldout_nrmse` (the mean of BO4Mob's count NRMSE over same-hour,
+different-DATE held-out real PeMS dates; the held-out bytes/dates never enter the task, only
+their `heldout_digest`). Equilibrium is never claimed; it reuses `assert_engine_pin` + the
+adr-027/029 subprocess discipline but deliberately NOT EDOC-1's per-agent replay gate (BO4Mob
+emits only an aggregate OD — a category-error boundary).
 
 ---
 

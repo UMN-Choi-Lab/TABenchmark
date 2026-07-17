@@ -5,6 +5,7 @@ from .dnl_gaps import DNLEvaluator
 from .dta_gaps import CellSODTAEvaluator, SODTAEvaluator
 from .due_gaps import DUEEvaluator
 from .estimation import CERTIFICATE_DEFAULTS, ODCertifier
+from .estimation_bo4mob import BO4MOB_METRIC_KEYS, Bo4MobODCertifier
 from .estimation_dynamic import DynamicODCertifier
 from .flows import nrmse, rmse
 from .gaps import Evaluator, node_balance_residual
@@ -32,5 +33,7 @@ __all__ = [
     "tolled_network",
     "ODCertifier",
     "DynamicODCertifier",
+    "Bo4MobODCertifier",
+    "BO4MOB_METRIC_KEYS",
     "CERTIFICATE_DEFAULTS",
 ]

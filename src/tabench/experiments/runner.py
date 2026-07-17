@@ -36,6 +36,21 @@ from ..core.rng import (
     RngBundle,
 )
 from ..core.scenario import Demand, Scenario
+from ..data.bo4mob import (
+    BO4MOB_ANCHOR_DATE,
+    BO4MOB_ANCHOR_HOUR,
+    BO4MOB_ENGINE_NAME,
+    BO4MOB_ENGINE_VERSION,
+    BO4MOB_HELDOUT,
+    BO4MOB_HELDOUT_DATES,
+    BO4MOB_HELDOUT_HOUR,
+    BO4MOB_REGISTRY,
+    bo4mob_citation,
+    bo4mob_pairs,
+    bo4mob_prior_vector,
+    fetch_bo4mob,
+    fetch_bo4mob_heldout,
+)
 from ..estimation._dynamic_map import (
     MAP_RECIPE,
     lagged_assignment_tensor,
@@ -44,14 +59,17 @@ from ..estimation._dynamic_map import (
 )
 from ..estimation._proportions import active_pairs, proportion_matrix
 from ..estimation.base import EstimationTask, ODEstimator, ODTrace
+from ..estimation.bo4mob_base import Bo4MobEstimationTask, Bo4MobODEstimator
 from ..estimation.dynamic_base import DynamicEstimationTask, DynamicODEstimator
 from ..metrics.estimation import CERTIFICATE_DEFAULTS, ODCertifier
+from ..metrics.estimation_bo4mob import Bo4MobODCertifier
 from ..metrics.estimation_dynamic import DynamicODCertifier
 from ..metrics.flows import rmse
 from ..metrics.gaps import Evaluator
 from ..models.base import TrafficAssignmentModel
 from ..models.frank_wolfe import BiconjugateFrankWolfeModel
 from ..observe.levels import (
+    Dataset,
     DayToDayCounts,
     DynamicLinkCounts,
     LinkCounts,
@@ -65,6 +83,7 @@ __all__ = [
     "run_experiment",
     "run_estimation_experiment",
     "run_dynamic_estimation_experiment",
+    "run_bo4mob_estimation_experiment",
     "identifiability_report",
     "dynamic_identifiability_report",
 ]
@@ -1226,3 +1245,309 @@ def _stale_profile(
         draws = rng.gamma(shape=shape, scale=scale, size=int(positive.sum()))
         prior[h][positive] = truth_profile[h][positive] * draws
     return prior
+
+
+# ----------------------------------------------------------------- T2 (BO4Mob D2)
+
+_BO4MOB_CSV_FIELDS = [
+    "instance",
+    "task_hash",
+    "estimator",
+    "macrorep",
+    "iterations",
+    "sp_calls",
+    "wall_ms",
+    "od_feasible",
+    "obs_nrmse",
+    "heldout_nrmse",
+    "heldout_nrmse_min",
+    "heldout_nrmse_max",
+    "n_heldout_dates",
+    "self_obs_nrmse",
+]
+
+# The dual-benchmark honesty contract, shipped IN the manifest (not only in docs):
+# BO4Mob is the lab's OWN benchmark, hosted as scenarios/tasks/certificates and
+# NEVER as validation of TABench methods, and this D2 row does NOT reproduce
+# BO4Mob's own SPSA/BO leaderboard rankings (adr-034 forbidden clause 3, adr-041).
+_BO4MOB_ESTIMATION_NOTES = (
+    "T2 BO4Mob OD estimation (D2 OBSERVATIONAL certificate, adr-041): the emitted OD "
+    "vector is scored by re-running the pinned eclipse-sumo od2trips+meso pipeline ONCE "
+    "and comparing the resulting link counts to real Caltrans PeMS panels — held-out "
+    "NRMSE on same-hour, different-DATE dates (the ranking column) plus the in-sample "
+    "obs NRMSE on the train anchor. Equilibrium is NEVER claimed (no true OD, no BPR "
+    "network, no bfw pin). BO4Mob is a UMN Choi Lab benchmark hosted here as "
+    "scenarios/tasks/certificates only — never validation of TABench methods; this D2 "
+    "held-out NRMSE is NOT comparable to the static/dynamic T2 heldout_count_rmse scale "
+    "and does NOT reproduce BO4Mob's own SPSA/BO leaderboard rankings."
+)
+
+
+def _read_bo4mob_sensor(path: Path) -> tuple[tuple[str, ...], np.ndarray]:
+    """Read a PeMS GT CSV (``link_id, interval_nVehContrib, ...``) -> (ids, counts)."""
+    ids: list[str] = []
+    counts: list[float] = []
+    with open(path, newline="") as f:
+        for row in csv.DictReader(f):
+            ids.append(row["link_id"])
+            counts.append(float(row["interval_nVehContrib"]))
+    return tuple(ids), np.asarray(counts, dtype=np.float64)
+
+
+def _score_bo4mob_estimator(
+    estimator: Bo4MobODEstimator,
+    task: Bo4MobEstimationTask,
+    budget: Budget,
+    rng: RngBundle,
+    certifier: Bo4MobODCertifier,
+    macrorep: int,
+    instance_key: str,
+    rows: list[dict[str, Any]],
+    bundles: dict[tuple[str, str], Any],
+) -> None:
+    trace = ODTrace()
+    bundle = estimator.estimate(task, budget, rng, trace)
+    bundles[(estimator.name, f"m{macrorep}")] = bundle
+    task_hash = task.content_hash()[:16]
+    for state in trace:
+        metrics = certifier.certify(state.od_matrix)
+        row: dict[str, Any] = {
+            "instance": instance_key,
+            "task_hash": task_hash,
+            "estimator": estimator.name,
+            "macrorep": macrorep,
+            "iterations": state.coords.iterations,
+            "sp_calls": state.coords.sp_calls,
+            "wall_ms": round(state.coords.wall_ms, 3),
+            **metrics,
+            "self_obs_nrmse": state.self_report.get("obs_nrmse", ""),
+        }
+        rows.append(row)
+
+
+def run_bo4mob_estimation_experiment(
+    instance_key: str,
+    estimators: list[Bo4MobODEstimator],
+    budget: Budget,
+    seed: int = 0,
+    macroreps: int = 1,
+    out_dir: str | Path | None = None,
+    estimation: dict[str, Any] | None = None,
+) -> ExperimentResult:
+    """Run every BO4Mob estimator on one instance's D2 held-out-count task (adr-041).
+
+    A NEW T2 sibling family (adr-023 pattern): the instance is a mesoscopic-SUMO
+    net with no BPR network and no true OD, so this takes an ``instance_key`` (not a
+    ``Scenario``) and scores through the pinned-engine :class:`Bo4MobODCertifier`,
+    not a ``bfw`` assignment. The estimator emits ONE OD vector from the TRAIN
+    anchor; the certifier re-simulates it ONCE and reports the held-out NRMSE (mean
+    over ``BO4MOB_HELDOUT_DATES`` at ``BO4MOB_HELDOUT_HOUR``, the ranking column)
+    plus the in-sample obs NRMSE. The held-out CSV bytes/dates NEVER enter the task
+    — only their ``heldout_digest`` does (P7). ``5fullRegion`` refuses (HPC-only).
+    """
+    import importlib.util
+
+    estimation = dict(estimation or {})
+    if importlib.util.find_spec("sumo") is None:
+        # The certifier ALWAYS runs od2trips+meso; the clear install error lives at
+        # this runner/CLI boundary, not at decorator-time registration (adr-041).
+        raise RuntimeError(
+            "bo4mob_estimation requires the eclipse-sumo wheel to certify "
+            "(od2trips + mesoscopic SUMO per certify): pip install 'tabench[sumo]'."
+        )
+    if instance_key not in BO4MOB_REGISTRY:
+        raise KeyError(f"unknown bo4mob instance {instance_key!r}; see tabench.data.bo4mob")
+
+    names = [e.name for e in estimators]
+    duplicates = {n for n in names if names.count(n) > 1}
+    if duplicates:
+        raise ValueError(f"Duplicate estimator names {sorted(duplicates)}")
+    for est in estimators:
+        if est.capabilities.trained_on:
+            # No Scenario exists to key the fairness gate off; a learned/SPSA BO4Mob
+            # estimator's lineage check keyed off the instance key is deferred to its
+            # own sprint (adr-041 open item). No learned estimator ships here.
+            raise NotImplementedError(
+                "bo4mob_estimation fairness lineage (trained_on) keyed off the instance "
+                "key is deferred (adr-041 open item); no learned estimator ships this row"
+            )
+
+    # Fetch the single-evaluation bundle + the held-out panel (both refuse 5fullRegion,
+    # HPC-only). fetch_bo4mob raises Bo4MobHpcOnlyError before any network for an
+    # HPC instance, so it is never auto-run/prefetched (adr-034 ruling 11).
+    paths = fetch_bo4mob(BO4MOB_REGISTRY[instance_key])
+    heldout_paths = fetch_bo4mob_heldout(instance_key)
+
+    cfg = json.loads(paths["config"].read_text())
+    od_end_time = int(cfg["od_end_time"])
+    sim_end_time = float(cfg["sim_end_time"])
+    sensor_start = float(cfg["sensor_start_time"])
+    sensor_end = float(cfg["sensor_end_time"])
+
+    pairs = bo4mob_pairs(paths["od"])
+    prior_vector = bo4mob_prior_vector(paths["od"], paths["single_od"])
+    train_ids, train_counts = _read_bo4mob_sensor(paths["sensor"])
+
+    # Held-out digest folds BOTH the held-out (date, hour) DESIGN and the sanctioned
+    # DATA identity — the commit-pinned (sha256, size) of each held-out CSV from
+    # BO4MOB_HELDOUT — into task identity, so the task content_hash COMPLETELY pins
+    # the scored held-out panel (two panels with the same dates but different pinned
+    # data would otherwise share a hash yet differ in heldout_nrmse; adr-041 F3). It
+    # hashes the SANCTIONED checksums, NEVER the raw held-out bytes (P7) — the
+    # dates/bytes still never enter the task, only this digest does.
+    ho_hash = hashlib.sha256()
+    for date, checksum, size in BO4MOB_HELDOUT[instance_key]:
+        ho_hash.update(f"{date}:{BO4MOB_HELDOUT_HOUR}:{checksum}:{size};".encode())
+    ho_hash.update(f"n_heldout={len(BO4MOB_HELDOUT[instance_key])};".encode())
+    heldout_digest = ho_hash.hexdigest()
+
+    # Light, provenance-only identifiability diagnostic (adr-041 ruling 9): BO4Mob
+    # has no declared assignment for Hazelton's linear rank test, so this is a
+    # coverage indicator, NEVER a gate.
+    ident: dict[str, Any] = {
+        "n_active_pairs": len(pairs),
+        "n_train_sensors": len(train_ids),
+        "sensor_pair_coverage": (len(train_ids) / len(pairs)) if pairs else 0.0,
+        "rank_test_applicable": False,
+        "note": (
+            "provenance only; BO4Mob has no declared assignment/proportion matrix for "
+            "Hazelton's linear identifiability rank test, so no od_identifiable gate "
+            "applies (adr-041)"
+        ),
+    }
+
+    engine = {"name": BO4MOB_ENGINE_NAME, "version": BO4MOB_ENGINE_VERSION}
+    wall_deadline = float(estimation.get("wall_deadline_seconds", 300.0))
+    certificate = {
+        "engine": BO4MOB_ENGINE_NAME,
+        "engine_version": BO4MOB_ENGINE_VERSION,
+        "routes_per_od": "single",
+        "od2trips_flags": "--spread.uniform",
+        "od_end_time": od_end_time,
+        "sim_end_time": sim_end_time,
+        "sensor_start_time": sensor_start,
+        "sensor_end_time": sensor_end,
+        "wall_deadline_seconds": wall_deadline,
+        "seed": seed,
+    }
+
+    train_ds = Dataset(
+        kind="bo4mob_train_counts",
+        payload={"link_ids": train_ids, "counts": train_counts},
+        meta={"instance": instance_key, "date": BO4MOB_ANCHOR_DATE, "hour": BO4MOB_ANCHOR_HOUR},
+    )
+    task = Bo4MobEstimationTask(
+        name=instance_key,
+        instance_key=instance_key,
+        pairs=pairs,
+        prior_vector=prior_vector,
+        dataset=train_ds,
+        identifiability=ident,
+        engine=engine,
+        certificate=certificate,
+        seed=seed,
+        heldout_digest=heldout_digest,
+    )
+    certifier = Bo4MobODCertifier(
+        instance_key=instance_key,
+        pairs=pairs,
+        train_sensor=paths["sensor"],
+        heldout_sensors=heldout_paths,
+        paths=paths,
+        od_end_time=od_end_time,
+        sim_end_time=sim_end_time,
+        sensor_start_time=sensor_start,
+        sensor_end_time=sensor_end,
+        engine_version=BO4MOB_ENGINE_VERSION,
+        certificate=certificate,
+        identifiability=ident,
+    )
+
+    rows: list[dict[str, Any]] = []
+    bundles: dict[tuple[str, str], Any] = {}
+    for est in estimators:
+        # The certifier's meso run is seed-stable (adr-034), so a deterministic
+        # estimator collapses to one rep; a future stochastic one emits per-rep ODs.
+        reps = 1 if est.capabilities.deterministic else macroreps
+        for m in range(reps):
+            _score_bo4mob_estimator(
+                est, task, budget, RngBundle(seed, macrorep=m), certifier, m,
+                instance_key, rows, bundles,
+            )
+
+    manifest = {
+        "created_utc": datetime.now(timezone.utc).isoformat(),
+        "task": "t2_bo4mob_estimation",
+        "instance": instance_key,
+        "task_hash": task.content_hash(),
+        "n_od_pairs": len(pairs),
+        "engine": engine,
+        "certificate": certificate,
+        "identifiability": ident,
+        "heldout": {
+            # The held-out design is provenance in the HARNESS manifest (written after
+            # scoring); it is the TASK that must never carry it (P7). Documenting the
+            # concrete train/held-out split (adr-041 ruling 3).
+            "hour": BO4MOB_HELDOUT_HOUR,
+            "dates": list(BO4MOB_HELDOUT_DATES),
+            "n_dates": len(BO4MOB_HELDOUT_DATES),
+            "train_anchor": {"date": BO4MOB_ANCHOR_DATE, "hour": BO4MOB_ANCHOR_HOUR},
+            "heldout_digest": heldout_digest,
+            "ranking_metric": "heldout_nrmse",
+        },
+        "estimators": {
+            e.name: {
+                "capabilities": {
+                    "paradigm": e.capabilities.paradigm,
+                    "deterministic": e.capabilities.deterministic,
+                    "seedable": e.capabilities.seedable,
+                    "inputs_required": sorted(e.capabilities.inputs_required),
+                    "outputs": sorted(e.capabilities.outputs),
+                    "trained_on": list(e.capabilities.trained_on),
+                },
+                "factors": e.factor_values,
+            }
+            for e in estimators
+        },
+        "budget": {
+            "iterations": budget.iterations,
+            "sp_calls": budget.sp_calls,
+            "wall_seconds": budget.wall_seconds,
+            "target_relative_gap": budget.target_relative_gap,
+        },
+        "seed": seed,
+        "macroreps": macroreps,
+        "environment": {
+            "python": sys.version.split()[0],
+            "platform": platform.platform(),
+            "numpy": np.__version__,
+            "scipy": scipy.__version__,
+            "tabench": tabench.__version__,
+            "git_commit": _git_commit(),
+        },
+        "citation": bo4mob_citation(BO4MOB_REGISTRY[instance_key]),
+        "notes": _BO4MOB_ESTIMATION_NOTES,
+    }
+
+    if out_dir is not None:
+        out = Path(out_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        budget_part = "-".join(
+            f"{axis}{value}"
+            for axis, value in (
+                ("it", budget.iterations),
+                ("sp", budget.sp_calls),
+                ("ws", budget.wall_seconds),
+            )
+            if value is not None
+        )
+        task_hash8 = task.content_hash()[:8]
+        stem = f"bo4mob-{instance_key}_t2b-{task_hash8}_{'-'.join(names)}_{budget_part}_seed-{seed}"
+        with open(out / f"{stem}.csv", "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=_BO4MOB_CSV_FIELDS)
+            writer.writeheader()
+            writer.writerows(rows)
+        with open(out / f"{stem}.manifest.json", "w") as f:
+            json.dump(manifest, f, indent=2)
+
+    return ExperimentResult(rows=rows, bundles=bundles, manifest=manifest)

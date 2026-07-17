@@ -160,24 +160,29 @@ jobs:
           from tabench.data.bo4mob import BO4MOB_REGISTRY, BO4MOB_SMOKE, fetch_bo4mob;
           [fetch(s) for s in REGISTRY.values()];
           fetch_bo4mob(BO4MOB_REGISTRY[BO4MOB_SMOKE])"
-      - name: Test (sumo adapter + spsa-sumo estimator + bo4mob pipeline liveness)
+      - name: Test (sumo adapter + spsa-sumo estimator + bo4mob pipeline + estimation)
         # Explicit file list (the torch-job precedent): the sumo dependency's test
         # surface is the marouter adapter (adr-027), the SPSA-in-the-loop estimator
         # built on it (adr-028), the BO4Mob mesoscopic-pipeline smoke test
-        # (adr-034), and the first EDOC-1 dynamic row sumo-duaiterate (adr-036/037 —
-        # drives duaIterate + the pinned meso replay + duarouter R3 end to end); the
-        # numpy suite (incl. the engine-free EDOC substrate) is covered by the
-        # sumo-free matrix legs.
-        run: pytest tests/test_sumo_marouter.py tests/test_spsa_sumo.py tests/test_bo4mob.py tests/test_sumo_duaiterate.py -q -ra
+        # (adr-034), its stage-2 held-out-count estimation certificate (adr-041 —
+        # 1ramp full certify + 2corridor/3junction liveness, ~24 s of meso;
+        # 4smallRegion is opt-in behind TABENCH_RUN_SLOW_BO4MOB), and the first
+        # EDOC-1 dynamic row sumo-duaiterate (adr-036/037 — drives duaIterate + the
+        # pinned meso replay + duarouter R3 end to end); the numpy suite (incl. the
+        # engine-free EDOC substrate and the bo4mob-estimation engine-free tests) is
+        # covered by the sumo-free matrix legs. test_cli.py rides here too so the
+        # sumo-gated bo4mob CLI card tests (happy path + the 5fullRegion HPC refusal)
+        # actually execute (they importorskip sumo, so the sumo-free legs skip them).
+        run: pytest tests/test_sumo_marouter.py tests/test_spsa_sumo.py tests/test_bo4mob.py tests/test_bo4mob_estimation.py tests/test_sumo_duaiterate.py tests/test_cli.py -q -ra
         env:
           TABENCH_REQUIRE_DATA: "1"
       - name: Test (sumo tutorial notebooks)
         # A SEPARATE step (torch-job precedent above): -k scopes execution to
-        # the three sumo-gated notebooks only. bo4mob's own tutorial has just
-        # one OPTIONALLY sumo-gated cell (a soft try/except, not a hard guard),
-        # so it already executes unconditionally on the core 3.12 leg and is
-        # not repeated here.
-        run: pytest tests/test_tutorials.py -k "sumo-marouter or spsa-sumo or sumo-duaiterate" -q -ra
+        # the sumo-gated notebooks only. bo4mob-estimation (adr-041) is a hard
+        # requires_extra=sumo gate (the spsa-sumo precedent): its certifier always
+        # runs od2trips+meso, so it is skipped on the core 3.12 leg and executed
+        # here (only the ~0.4 s 1ramp instance runs in the notebook).
+        run: pytest tests/test_tutorials.py -k "sumo-marouter or spsa-sumo or sumo-duaiterate or bo4mob-estimation" -q -ra
         env:
           TABENCH_REQUIRE_DATA: "1"
           TABENCH_RUN_TUTORIALS: "1"

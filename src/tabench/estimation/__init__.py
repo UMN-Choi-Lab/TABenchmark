@@ -26,6 +26,13 @@ from .base import (
     PriorBaseline,
     register_estimator,
 )
+from .bo4mob_base import (
+    BO4MOB_ESTIMATOR_REGISTRY,
+    Bo4MobEstimationTask,
+    Bo4MobODEstimator,
+    Bo4MobPriorBaseline,
+    register_bo4mob_estimator,
+)
 from .cascetta1993 import (
     SequentialDynamicGLSEstimator,
     SimultaneousDynamicGLSEstimator,
@@ -92,6 +99,11 @@ __all__ = [
     "DynamicODEstimator",
     "DynamicPriorBaseline",
     "register_dynamic_estimator",
+    "BO4MOB_ESTIMATOR_REGISTRY",
+    "Bo4MobEstimationTask",
+    "Bo4MobODEstimator",
+    "Bo4MobPriorBaseline",
+    "register_bo4mob_estimator",
     "SimultaneousDynamicGLSEstimator",
     "SequentialDynamicGLSEstimator",
     "dynamic_gls_simultaneous",

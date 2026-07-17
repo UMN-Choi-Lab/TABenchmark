@@ -52,8 +52,14 @@ reproducible link flows:
    BO4Mob's `arrived+left` convention still holds), so the *instances* transfer and the *values*
    are not reproduced. What this tier does **not** buy, stated because it is the tempting error:
    it is not an oracle, not a certified gap, and not a reproduction of the paper. The T2
-   estimation task with a pinned-engine held-out-date observational certificate is the named
-   stage-2 follow-up.
+   estimation task with a pinned-engine held-out-date observational certificate **shipped as
+   stage 2** (`bo4mob-estimation`, [adr-041](design/adr-041-bo4mob-estimation.md)): a **D2
+   observational** certificate that re-runs the pinned od2trips+meso pipeline ONCE on an emitted
+   OD and ranks by `heldout_nrmse` — the mean of BO4Mob's count NRMSE over same-hour,
+   different-DATE held-out real PeMS dates. It is still **not equilibrium** (no true OD, no BPR,
+   no `bfw` pin) and its NRMSE is **not comparable** to the static/dynamic T2 `heldout_count_rmse`
+   scale; the same honesty contract applies (extended: does not reproduce BO4Mob's own SPSA/BO
+   leaderboard rankings).
 
 ## Per-model validation
 

@@ -52,6 +52,11 @@ from .fetcher import ChecksumError, _sha256, cache_dir
 
 __all__ = [
     "BO4MOB_COMMIT",
+    "BO4MOB_ENGINE_NAME",
+    "BO4MOB_ENGINE_VERSION",
+    "BO4MOB_HELDOUT",
+    "BO4MOB_HELDOUT_DATES",
+    "BO4MOB_HELDOUT_HOUR",
     "BO4MOB_REGISTRY",
     "BO4MOB_SMOKE",
     "Bo4MobHpcOnlyError",
@@ -59,13 +64,24 @@ __all__ = [
     "Bo4MobUpstreamError",
     "bo4mob_citation",
     "bo4mob_nrmse",
+    "bo4mob_pairs",
+    "bo4mob_prior_vector",
     "edgedata_counts",
     "edgedata_has_nvehcontrib",
     "fetch_bo4mob",
+    "fetch_bo4mob_heldout",
+    "fill_od_from_vector",
     "fill_single_od",
     "fix_routes_single",
     "local_edgedata_additional",
 ]
+
+# The pinned mesoscopic engine the stage-2 D2 certificate re-runs (adr-041). A
+# CONSTANT, not "whatever is installed": ``assert_engine_pin`` RAISES if the box's
+# ``eclipse-sumo`` differs, so scoring is always under the pinned engine (matches
+# the CI-pinned 1.27.1 wheel; the paper's 1.12 numbers are non-reproducible here).
+BO4MOB_ENGINE_NAME = "eclipse-sumo"
+BO4MOB_ENGINE_VERSION = "1.27.1"
 
 # --- Provenance (commit-pinned raw files; the TNTP fetcher precedent) -----------
 BO4MOB_COMMIT = "ef571e6819a6e1eb13388f7c0454d32f665b6ce4"
@@ -139,6 +155,52 @@ class Bo4MobSpec:
 # --- Checksummed download-on-demand (the TNTP fetcher mechanics) -----------------
 
 
+def _fetch_checked(
+    local: Path, url: str, checksum: str, size: int, force: bool, timeout: float, label: str
+) -> None:
+    """Download one commit-pinned file to ``local`` and verify it in place.
+
+    Shared by ``fetch_bo4mob`` and ``fetch_bo4mob_heldout`` (same hardening for
+    both the single-evaluation bundle and the held-out panel). The body is
+    **streamed with a cap** at ``size + _SIZE_SLACK`` — an oversized upstream body
+    raises ``Bo4MobUpstreamError`` mid-stream, before it is materialised (lens 1
+    F1). The ``.part`` carries a per-process suffix so concurrent cold-start
+    fetches never collide, and is cleaned in ``finally`` so a mid-download failure
+    strands nothing (xu2024 lesson). The SHA-256 is checked on **every** load; a
+    mismatch evicts the file and raises ``ChecksumError``. ``label`` is the
+    ``key/name`` (or ``key/heldout/name``) used verbatim in error messages.
+    """
+    if force or not local.exists():
+        tmp = local.with_suffix(local.suffix + f".part.{os.getpid()}")
+        cap = size + _SIZE_SLACK
+        try:
+            with urllib.request.urlopen(url, timeout=timeout) as resp, open(tmp, "wb") as out:
+                total = 0
+                while True:
+                    chunk = resp.read(1 << 16)
+                    if not chunk:
+                        break
+                    total += len(chunk)
+                    if total > cap:
+                        raise Bo4MobUpstreamError(
+                            f"bo4mob/{label}: upstream body exceeds the pinned size "
+                            f"{size} B (+{_SIZE_SLACK} slack); refusing before "
+                            "materialising an oversized file (adr-034)."
+                        )
+                    out.write(chunk)
+            tmp.replace(local)
+        finally:  # a mid-download failure must not strand a .part (xu2024 lesson)
+            tmp.unlink(missing_ok=True)
+    actual = _sha256(local)
+    if actual != checksum:
+        local.unlink(missing_ok=True)
+        raise ChecksumError(
+            f"bo4mob/{label}: checksum mismatch "
+            f"(expected {checksum[:12]}…, got {actual[:12]}…). "
+            "File removed from cache; re-run to re-download."
+        )
+
+
 def fetch_bo4mob(spec: Bo4MobSpec, force: bool = False, timeout: float = 60.0) -> dict[str, Path]:
     """Ensure an instance's single-evaluation bundle is cached and verified.
 
@@ -162,36 +224,10 @@ def fetch_bo4mob(spec: Bo4MobSpec, force: bool = False, timeout: float = 60.0) -
     paths: dict[str, Path] = {}
     for role, (repo_path, checksum, size) in spec.files.items():
         local = target_dir / spec.local_name(role)
-        if force or not local.exists():
-            url = f"{BO4MOB_BASE}/{repo_path}"
-            tmp = local.with_suffix(local.suffix + f".part.{os.getpid()}")
-            cap = size + _SIZE_SLACK
-            try:
-                with urllib.request.urlopen(url, timeout=timeout) as resp, open(tmp, "wb") as out:
-                    total = 0
-                    while True:
-                        chunk = resp.read(1 << 16)
-                        if not chunk:
-                            break
-                        total += len(chunk)
-                        if total > cap:
-                            raise Bo4MobUpstreamError(
-                                f"bo4mob/{spec.key}/{spec.local_name(role)}: upstream body "
-                                f"exceeds the pinned size {size} B (+{_SIZE_SLACK} slack); "
-                                "refusing before materialising an oversized file (adr-034)."
-                            )
-                        out.write(chunk)
-                tmp.replace(local)
-            finally:  # a mid-download failure must not strand a .part (xu2024 lesson)
-                tmp.unlink(missing_ok=True)
-        actual = _sha256(local)
-        if actual != checksum:
-            local.unlink(missing_ok=True)
-            raise ChecksumError(
-                f"bo4mob/{spec.key}/{spec.local_name(role)}: checksum mismatch "
-                f"(expected {checksum[:12]}…, got {actual[:12]}…). "
-                "File removed from cache; re-run to re-download."
-            )
+        _fetch_checked(
+            local, f"{BO4MOB_BASE}/{repo_path}", checksum, size, force, timeout,
+            f"{spec.key}/{spec.local_name(role)}",
+        )
         paths[role] = local
     return paths
 
@@ -248,6 +284,78 @@ def fill_single_od(
         key = (rel.get("from"), rel.get("to"))
         if key in flows:
             rel.set("count", flows[key])
+    tree.write(out, encoding="utf-8", xml_declaration=True)
+
+
+def bo4mob_pairs(od_template: str | Path) -> tuple[tuple[str, str], ...]:
+    """The ordered active ``(fromTaz, toTaz)`` OD-cell layout for an instance.
+
+    Read from the shipped ``od.xml`` template's ``tazRelation`` rows **in document
+    order** — the fixed, hashed estimand layout a stage-2 OD estimator emits a
+    vector over (adr-041). Ordering is load-bearing: two tasks whose estimands
+    live in different OD cells must never hash equal (the adr-023 lesson carried
+    to the string-keyed BO4Mob pairs), so this order feeds the task content hash
+    and ``fill_od_from_vector`` uses the SAME order to place each flow.
+    """
+    tree = ET.parse(od_template)
+    return tuple(
+        (rel.get("from"), rel.get("to")) for rel in tree.getroot().iter("tazRelation")
+    )
+
+
+def bo4mob_prior_vector(
+    od_template: str | Path, single_od: str | Path
+) -> np.ndarray:
+    """The prior OD vector (BO4Mob's ``od_for_single_run`` example) over ``bo4mob_pairs``.
+
+    Aligns the ``single_od`` CSV flows to the template's ``tazRelation`` order
+    (0.0 for any pair the CSV omits). This is the stage-1 anchor OD promoted to
+    the stage-2 prior baseline's ``prior_vector``; filling ``od.xml`` from it
+    reproduces ``fill_single_od`` exactly (adr-041 regression).
+    """
+    flows: dict[tuple[str, str], float] = {}
+    with open(single_od, newline="") as f:
+        for row in csv.DictReader(f):
+            flows[(row["fromTaz"], row["toTaz"])] = float(row["flow"])
+    pairs = bo4mob_pairs(od_template)
+    return np.asarray([flows.get(p, 0.0) for p in pairs], dtype=np.float64)
+
+
+def fill_od_from_vector(
+    od_template: str | Path,
+    pairs: tuple[tuple[str, str], ...],
+    od_vector: np.ndarray,
+    out: str | Path,
+    od_end_time: int,
+) -> None:
+    """Fill the ``count=0`` ``od.xml`` template from an in-memory OD ``vector``.
+
+    The vector-based analogue of :func:`fill_single_od` for a stage-2 estimator's
+    emitted OD (adr-041): ``od_vector[k]`` is the flow on ``pairs[k]``. The
+    interval ``end`` is rewritten to ``od_end_time`` **exactly as** ``fill_single_od``
+    does — this is **load-bearing** and NOT cosmetic: keeping the template's
+    ``end=3600`` on 1ramp (whose ``od_end_time=3300``) leaks ~5% of demand past
+    the OD window and silently biases the count NRMSE (adr-034 Decision 3; pilot
+    NRMSE 2.314704 unfixed vs 2.432471221214843 fixed). Any vector-fill that omits
+    this rewrite re-introduces the demand-loss laundering vector, so it carries a
+    duplicated regression test. Counts are written as plain floats stripped of a
+    redundant ``.0`` so od2trips sees the same integer flows ``fill_single_od``
+    wrote from the CSV.
+    """
+    vec = np.asarray(od_vector, dtype=np.float64)
+    if vec.shape != (len(pairs),):
+        raise ValueError(
+            f"od_vector shape {vec.shape} != ({len(pairs)},) for the pair layout"
+        )
+    flows = {p: float(v) for p, v in zip(pairs, vec.tolist(), strict=True)}
+    tree = ET.parse(od_template)
+    for interval in tree.getroot().iter("interval"):
+        interval.set("end", str(od_end_time))
+    for rel in tree.getroot().iter("tazRelation"):
+        key = (rel.get("from"), rel.get("to"))
+        if key in flows:
+            value = flows[key]
+            rel.set("count", str(int(value)) if value == int(value) else repr(value))
     tree.write(out, encoding="utf-8", xml_declaration=True)
 
 
@@ -487,3 +595,122 @@ BO4MOB_REGISTRY: dict[str, Bo4MobSpec] = {
 # The single instance whose end-to-end pipeline the guarded CI smoke test runs
 # (the smallest; 27 KB single-evaluation bundle, < 0.5 s engine time).
 BO4MOB_SMOKE = "1ramp"
+
+
+# --- Held-out panel (stage 2 observational certificate; adr-041) -----------------
+# A stage-2 estimator emits ONE fixed OD from the TRAIN anchor (221008, 06-07);
+# the certifier re-simulates it ONCE and scores the resulting link counts against
+# each held-out date's real PeMS counts. The ranking column ``heldout_nrmse`` is
+# the MEAN of the per-date NRMSE (framing b: one meso run per certify regardless
+# of how many held-out dates are scored). This is a SEPARATE, checksummed,
+# download-on-demand panel — NEVER in the CI-prefetched ``REGISTRY`` — and (P7)
+# the held-out CSV bytes and date strings NEVER enter ``Bo4MobEstimationTask``;
+# only their sha256 ``heldout_digest`` does. The hour window is HELD FIXED: PeMS
+# counts vary enormously across the day (the anchor 06-07 totals ~2121 vs a
+# 17-18 window ~7700), so a single fixed OD only represents one hour's demand and
+# held-out probes same-hour, different-DATE generalisation (measured pilot spread
+# on 1ramp's prior OD: per-date NRMSE 0.56-3.30, mean 1.70 over the 13 dates —
+# non-vacuous and improvable, and the mean-over-13 is stable by construction).
+BO4MOB_HELDOUT_HOUR = BO4MOB_ANCHOR_HOUR  # "06-07"
+# The 13 consecutive dates AFTER the TRAIN anchor 221008 (which stays in TRAIN
+# for stage-1 continuity); held-out is temporally disjoint from train.
+BO4MOB_HELDOUT_DATES: tuple[str, ...] = tuple(f"2210{d:02d}" for d in range(9, 22))
+
+# instance key -> ((date, sha256, byte_size), ...) for that instance's held-out
+# sensor CSVs at ``BO4MOB_HELDOUT_HOUR`` (commit-pinned at ``BO4MOB_COMMIT``, P9;
+# dates align to ``BO4MOB_HELDOUT_DATES``). 5fullRegion stays HPC-only: no panel.
+BO4MOB_HELDOUT: dict[str, tuple[tuple[str, str, int], ...]] = {
+    "1ramp": (
+        ("221009", "3a952307bfffc677cbacdfca401e5d2826bfa8abd7372bdfe6276ca51a24bb4d", 128),
+        ("221010", "9ada4679524031049759567fa7c63e3b365d94c676b2b7817b4da2485e7f5569", 126),
+        ("221011", "3d1dc688f550f87b41bd2fd8f768ae82ad1a54f6c54cf503aec9c2bad2261b6b", 130),
+        ("221012", "3d8218242a06b8cdb2313e22e81937d565814c6e15a2e008098aadea54d410eb", 128),
+        ("221013", "ef675690cb246dd0038b4122183526397dc2f21e099fe7f032ed271ee85497b9", 131),
+        ("221014", "a7a5e64779b7efb5f102b95ac8e3c91ceb8132abb8a78363a42f4c7c11f7288f", 130),
+        ("221015", "e2617f1ea7658fb7ec59ba15a776a0e0a8565d281d9791c44d61cf72012b9ca8", 129),
+        ("221016", "82ffb57d9ada27d07a33ae7a4efe5968742e397d15d896fe9e67bc401bbaa318", 127),
+        ("221017", "fd13434aa3b63888c316c44ec280b463d993d8f03e470e2a51244620b0ea9110", 127),
+        ("221018", "05efdd04caea1b43a568eec61a6482653546a998912ce923bebe6d70f5ff6d03", 128),
+        ("221019", "3c64913bc94fab44126c2f89950f6811eee7ba8ea2232b4a82a6e165d6086116", 131),
+        ("221020", "1109da1f46c1f053239252a42ec828107a05a2d67d853bbebb07dcc6c1671b31", 131),
+        ("221021", "7aed16cc9818664e658cda961d38d95a20e68015122f2a933c3af191d604fa36", 131),
+    ),
+    "2corridor": (
+        ("221009", "d1162b97a82d6e6c62536501c04237c8eaed826c02accd537d9e8fe8f71eb391", 188),
+        ("221010", "42014b185a869e08df180e6ad5e68115da325aaf462e55341503f0d53d5581cf", 196),
+        ("221011", "1f5a6c1393b84c5f1cc5d31b637e50376ac18944a492dd30a9771e7b30dd1abd", 194),
+        ("221012", "2ce9c98ab6bae698caa3f6a6f9808bf551aa9d77bed0d6d42f136773869f4a3a", 196),
+        ("221013", "605bb4a3cb26ffdd705db25f0e98bc70b7d62aaf8a3d1b7aa2bb667762cd0b80", 192),
+        ("221014", "d1eda01ce34b714ccffc01082accdf2c6a5e3a0db0bb1cd0e725aafa57a96838", 169),
+        ("221015", "5603289c6bef674bc4bd510b081071fb79c5731411a086385fe68d7aa1e9e2d2", 170),
+        ("221016", "9fc2390dcedb205755c1ee44b4dd1a82cb7d5a5f0e0610fd3601bde1df8a6e9b", 165),
+        ("221017", "f464c752799319e6385af95de7a9f9231c98930b024e7bbf37c7694843c871c8", 169),
+        ("221018", "7564cb847931025ce9547f2a08c9dfd46cdb52ccb0553348bd7f22042d018790", 154),
+        ("221019", "8e1d9be9415ca9cfa8109783ce202e5d4f12a52af76a44b045c15ba006ca1ebe", 170),
+        ("221020", "9f67f9804a47217d10241b2da31ae2848a6feb621a2cd56d200fdfb1437ae288", 189),
+        ("221021", "1ee8160af1d33b3fb43e2be81c022403fc69bafdec38fa7dcd4e27a28e453194", 196),
+    ),
+    "3junction": (
+        ("221009", "252f0d17f7d248380c6400eb5182b0841775992dd34a12403591318a56c63938", 509),
+        ("221010", "1b230ba33d6ebe0d7fc654112c9465c8019d51613941cc1331dde382391ded25", 521),
+        ("221011", "d0f6372047032992e0a01ba4c4b1d0efcf8a5fda52e35213b7bf2d102951e3e4", 549),
+        ("221012", "f07a48871b2e1a1c8e5358f3b7e5c91501b6ffa9ad46aa1fd2236136e05b7000", 584),
+        ("221013", "b91ce8d511be6ea1506a326e3e800cb489741316b8472aceb25be3bbed44b942", 556),
+        ("221014", "5199a4511e49cd04c8cbe5b7432bda2b913452a69c5dff9cd0b3bf5364d5ff73", 548),
+        ("221015", "b72d222336471fe90d3b959f401c4735ea88db632b4154261fb63c51b859e915", 553),
+        ("221016", "d2aec048d0de37690771c69e7b249c1500f93b6e2c80eb61c1aba6f60a2e23de", 512),
+        ("221017", "81c05fa1630e44bed827a0f5998b1c73e4d105fb649530d65e9e0cfa528abd78", 550),
+        ("221018", "fac8121395be4b4ece1a2bfe7da6ea1ccacf37b33a9d6fe3585bba824a093378", 549),
+        ("221019", "2b3f114df15d2edb15a78f675d6abc7f8c4d51f8f09484bb22c223b3647c18a2", 529),
+        ("221020", "fd11dbd4c607b4484d7639612365f9c66a85d14d36a33edf2a597e735321d64b", 543),
+        ("221021", "ac644983ce7a48727891eedca378d9da2f2ec7794c829f371860964a73eaf218", 595),
+    ),
+    "4smallRegion": (
+        ("221009", "127100ce04d46acb26253575ed1ea8180941b068d99e4864493789b988a3258d", 736),
+        ("221010", "c681b692bf319431c7a5fa55efe76729afbe093e0afb283f75a227902742f8f1", 716),
+        ("221011", "911d7d31554fcedddde690085c0365455c8bc552bcf23e4f46b27e4aef9a91bb", 749),
+        ("221012", "664a14b842d3256c77894cf178fa2aefe7c2eae400e7853e9b00730c89eadb33", 740),
+        ("221013", "3a07cb433a04e665d5555d3c9abf2869260b53dcf0a30b56ac7d0f39dc52ee40", 743),
+        ("221014", "a460ee07484937711efa8518ec79e728297b88b112f55361c49ddddeb1b28900", 741),
+        ("221015", "68795d3ffbdc8b0ab1eebf5570b35552464c29ff6617db26a833f7d3a954ee33", 738),
+        ("221016", "63c36150c7dabcd69a0aa9a98e403d2e6d4372392664a7d7753786088198dd7c", 758),
+        ("221017", "d0b953d63af52974459f0a9b6d14278654481087405b2ef3657078718c1ac02a", 743),
+        ("221018", "6af03c2abd1b8540824b75af109f2393fcc4a005e460808300b01b821164d50a", 749),
+        ("221019", "c6fd8b8a38b4aac9f2f88d91eaf5e4d87586ae1f0a2db37d430bc6298bb4d6b7", 722),
+        ("221020", "24713782cbd887775513c7028120a3182316532e4ddf5c471883057415dcfadb", 802),
+        ("221021", "6e4933539dbd610013abc4c4e9a045ca43678aba61c31f84bbed9e9ef2ec1d53", 805),
+    ),
+}
+
+
+def fetch_bo4mob_heldout(
+    key: str, force: bool = False, timeout: float = 60.0
+) -> dict[str, Path]:
+    """Fetch + verify an instance's held-out sensor panel (``date -> local path``).
+
+    The stage-2 held-out counts (``BO4MOB_HELDOUT_HOUR``, ``BO4MOB_HELDOUT_DATES``)
+    with the SAME hardening as :func:`fetch_bo4mob` (streamed cap, per-process
+    ``.part`` hygiene, per-load SHA-256 eviction), cached under
+    ``~/.cache/tabench/bo4mob/<key>/heldout/``. A SEPARATE registry that is NEVER
+    CI-prefetched; only the sumo-gated bo4mob_estimation certifier pulls it. An
+    HPC-only instance (``5fullRegion``) refuses with the SAME ``Bo4MobHpcOnlyError``
+    class — defense-in-depth on top of the single-evaluation fetcher's refusal.
+    """
+    spec = BO4MOB_REGISTRY.get(key)
+    if spec is not None and spec.hpc_only:
+        raise Bo4MobHpcOnlyError(
+            f"bo4mob {key} is HPC-only and is registered metadata-only; it has no "
+            "held-out panel and refuses to fetch (adr-034/041)."
+        )
+    if key not in BO4MOB_HELDOUT:
+        raise KeyError(f"bo4mob {key!r} has no registered held-out panel (adr-041)")
+    target_dir = cache_dir() / "bo4mob" / key / "heldout"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    paths: dict[str, Path] = {}
+    for date, checksum, size in BO4MOB_HELDOUT[key]:
+        name = f"gt_edge_data_{key}_{date}_{BO4MOB_HELDOUT_HOUR}.csv"
+        local = target_dir / name
+        url = f"{BO4MOB_BASE}/sensor_data/{date}/{name}"
+        _fetch_checked(local, url, checksum, size, force, timeout, f"{key}/heldout/{name}")
+        paths[date] = local
+    return paths

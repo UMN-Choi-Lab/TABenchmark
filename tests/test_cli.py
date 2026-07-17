@@ -1,7 +1,10 @@
 """CLI smoke tests (offline scenarios only)."""
 
 import json
+import os
 from pathlib import Path
+
+import pytest
 
 from tabench.cli import main
 
@@ -112,3 +115,67 @@ def test_run_braess_writes_outputs(tmp_path: Path):
     assert manifest["scenario"] == "braess"
     assert set(manifest["models"]) == {"aon", "msa", "fw"}
     assert len(manifest["scenario_hash"]) == 64
+
+
+# --- BO4Mob T2 estimation card (adr-041) ---------------------------------------
+# The card carries `bo4mob_instance`, NOT `scenario` — a bo4mob key is never a
+# load_scenario Scenario (adr-034), so the CLI must dispatch it BEFORE the
+# scenario-card shape check and before any load_scenario call.
+
+
+def _write_bo4mob_card(tmp_path: Path, instance: str = "1ramp") -> Path:
+    card = tmp_path / "bo4mob.yaml"
+    card.write_text(
+        "tasks: [t2_bo4mob_estimation]\n"
+        f'bo4mob_instance: "{instance}"\n'
+        "budgets: {sp_calls: 1}\n"
+    )
+    return card
+
+
+def test_run_bo4mob_missing_instance_exit2(tmp_path: Path):
+    """A bo4mob card without `bo4mob_instance` exits 2 (before any sumo/runner)."""
+    card = tmp_path / "bad.yaml"
+    card.write_text("tasks: [t2_bo4mob_estimation]\nbudgets: {sp_calls: 1}\n")
+    assert main(["run", "--config", str(card)]) == 2
+
+
+def test_run_bo4mob_unknown_estimator_exit2(tmp_path: Path):
+    """An unknown bo4mob estimator name exits 2 (before the runner is reached)."""
+    card = _write_bo4mob_card(tmp_path)
+    assert main(["run", "--config", str(card), "--models", "nonsense"]) == 2
+
+
+def test_run_bo4mob_hpc_instance_exit2(tmp_path: Path):
+    """5fullRegion is HPC-only: the card dispatches, the runner refuses to fetch it
+    (Bo4MobHpcOnlyError), and the CLI exits 2 (never auto-runs the 74 MB instance)."""
+    pytest.importorskip("sumo")
+    card = _write_bo4mob_card(tmp_path, instance="5fullRegion")
+    assert main(["run", "--config", str(card)]) == 2
+
+
+def test_run_bo4mob_card_dispatch(tmp_path: Path, capsys):
+    """A t2_bo4mob_estimation card runs end to end via cli.main (exit 0), prints the
+    dual-benchmark disclosure + the heldout_nrmse ranking, and writes a CSV + manifest
+    whose task/ranking_metric keys are the D2 ones. No `scenario` key — so this also
+    confirms dispatch happens BEFORE load_scenario (a bo4mob key would KeyError there)."""
+    pytest.importorskip("sumo")
+    if not os.environ.get("TABENCH_REQUIRE_DATA"):
+        try:
+            from tabench.data.bo4mob import BO4MOB_REGISTRY, fetch_bo4mob, fetch_bo4mob_heldout
+
+            fetch_bo4mob(BO4MOB_REGISTRY["1ramp"])
+            fetch_bo4mob_heldout("1ramp")
+        except Exception as exc:  # offline dev box
+            pytest.skip(f"bo4mob 1ramp data unavailable: {exc}")
+    card = _write_bo4mob_card(tmp_path)
+    out = tmp_path / "results"
+    code = main(["run", "--config", str(card), "--out", str(out)])
+    assert code == 0
+    captured = capsys.readouterr().out
+    assert "heldout_nrmse" in captured  # ranked by the D2 column
+    assert "does NOT reproduce BO4Mob's own SPSA/BO leaderboard" in captured
+    manifest = json.loads(next(out.glob("*.manifest.json")).read_text())
+    assert manifest["task"] == "t2_bo4mob_estimation"
+    assert manifest["instance"] == "1ramp"
+    assert manifest["heldout"]["ranking_metric"] == "heldout_nrmse"

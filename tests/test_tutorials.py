@@ -81,6 +81,16 @@ def _track_manifest() -> dict[str, object]:
     # empty). NOT in MODEL_REGISTRY (EDOC producer).
     from tabench.models.adapters.dtalite_simulation import DTALiteSimulationAdapter
     manifest["dtalite-simulation"] = DTALiteSimulationAdapter
+    # bo4mob-estimation (adr-041): a NEW T2 sibling family (BO4MOB_ESTIMATOR_REGISTRY,
+    # not MODEL/ESTIMATOR/DYNAMIC), so it binds to the coverage gate HERE. Its certifier
+    # ALWAYS runs od2trips+meso, so the notebook is requires_extra=sumo (a hard gate, the
+    # spsa-sumo precedent). bo4mob_base imports WITHOUT sumo (the prior baseline registers
+    # unconditionally), so guard the entry on a sumo find_spec — enforced on the sumo leg,
+    # invisible on core-only. The notebook still ships in the tree (same-commit atomic
+    # pattern; _ALLOWLIST stays empty).
+    if importlib.util.find_spec("sumo") is not None:
+        from tabench.estimation.bo4mob_base import Bo4MobPriorBaseline
+        manifest["bo4mob-estimation"] = Bo4MobPriorBaseline
     return manifest
 
 
