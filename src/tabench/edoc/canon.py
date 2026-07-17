@@ -8,9 +8,22 @@ hashes, disclosed. Its founding spec is the **four measured necessities** from t
 pilots: strip the SUMO ``generated on`` timestamp comment + the ``summary``
 wall-clock ``duration`` attribute; sort MATSim same-timestamp event ties; hash the
 **decompressed** payload; positional-parse the DTALite trajectory. (This module
-ships the SUMO canonicalizer — the first row, adr-037 — and the MATSim
-canonicalizer — the second row, adr-039 — under the same version; the DTALite
-canonicalizer lands with its row, S4.)
+ships the SUMO canonicalizer — the first row, adr-037 — the MATSim
+canonicalizer — the second row, adr-039 — and the DTALite canonicalizer — the
+third row, adr-040 — under the same version.)
+
+**DTALite (adr-040):** the engine is byte-deterministic at the pinned
+``OMP_NUM_THREADS=1`` (measured: twin runs in different dirs emit identical
+bytes across all 14 emissions), so the canonicalizer is the IDENTITY plus the
+gzip-decompress rule — idempotent and content-sensitive by construction. The
+founding-spec "positional-parse the DTALite trajectory (13-header/12-field
+rows)" necessity is a PARSER rule realized in the adapter
+(``dtalite_simulation._parse_trajectory`` RAISES on any header/row-shape
+drift, which is the canon-version-bump trigger); the hash surface here is an
+ALLOWLIST of exactly ``{trajectory.csv}`` — the one artifact the score
+consumes (adr-036) — because ``sim_info.csv`` carries a ``timestamp`` header
+column and the debug/summary logs are latent wall-clock surfaces (provenance,
+never hashed, R10).
 
 **MATSim tie-sort (adr-039, the corrected R10 record):** the same-timestamp
 event-order permutation is a MULTITHREADING artifact, not a replay-vs-original
@@ -69,6 +82,13 @@ _MATSIM_HASHED_BASENAMES = frozenset(
     }
 )
 
+# DTALite G1 hash surface (adr-040): allowlist-only, exactly the artifact the
+# score consumes. The twin-run byte census measured ALL 14 emissions identical
+# on one box, but sim_info.csv carries a ``timestamp`` header column and the
+# debug/summary logs are latent wall-clock surfaces — provenance, never hashed
+# (R10: simulation-state artifacts only, and trajectory.csv IS the state).
+_DTALITE_HASHED_BASENAMES = frozenset({"trajectory.csv"})
+
 # The multi-line "<!-- generated on ... by Eclipse SUMO ... -->" header SUMO
 # writes atop every XML output (it embeds the full run configuration, so it spans
 # many lines up to the first "-->"). Non-greedy + DOTALL captures exactly it.
@@ -95,6 +115,14 @@ def is_hashed_matsim_artifact(name: str) -> bool:
     ``_MATSIM_HASHED_BASENAMES`` is provenance (census-measured; see the
     constant's comment). ``name`` may be a path or a basename."""
     return _basename(name) in _MATSIM_HASHED_BASENAMES
+
+
+def is_hashed_dtalite_artifact(name: str) -> bool:
+    """DTALite hash surface (R10, adr-040): allowlist-only — exactly
+    ``trajectory.csv``; every other emission (sim_info.csv's timestamp column,
+    the debug/summary logs, the echoed inputs) is provenance. ``name`` may be
+    a path or a basename."""
+    return _basename(name) in _DTALITE_HASHED_BASENAMES
 
 
 def _is_summary(name: str) -> bool:
@@ -173,6 +201,16 @@ def canonicalize_matsim(name: str, data: bytes) -> bytes:
     return out
 
 
+def canonicalize_dtalite(name: str, data: bytes) -> bytes:
+    """Canonicalize one DTALite artifact (adr-040): the IDENTITY plus the
+    decompress rule — the engine is byte-deterministic at the pinned OMP=1, so
+    no strip/sort is needed; idempotent and content-sensitive by construction.
+    The 13/12 positional-parse necessity (R10's founding spec) lives in the
+    adapter's trajectory PARSER, whose header-shape RAISE is the
+    canon-version-bump trigger for upstream format drift."""
+    return decompress(data)
+
+
 def hash_artifacts(
     artifacts: Mapping[str, bytes],
     canonicalizer: Callable[[str, bytes], bytes],
@@ -206,3 +244,10 @@ def hash_matsim_artifacts(artifacts: Mapping[str, bytes]) -> str:
     """MATSim specialization of :func:`hash_artifacts` (adr-039's row): the
     allowlist surface + the tie-sorting canonicalizer, same domain/version."""
     return hash_artifacts(artifacts, canonicalize_matsim, surface=is_hashed_matsim_artifact)
+
+
+def hash_dtalite_artifacts(artifacts: Mapping[str, bytes]) -> str:
+    """DTALite specialization of :func:`hash_artifacts` (adr-040's row): the
+    ``{trajectory.csv}`` allowlist surface + the identity-plus-decompress
+    canonicalizer, same domain/version."""
+    return hash_artifacts(artifacts, canonicalize_dtalite, surface=is_hashed_dtalite_artifact)

@@ -74,6 +74,13 @@ def _track_manifest() -> dict[str, object]:
     # pattern; _ALLOWLIST stays empty).
     from tabench.models.adapters.matsim_edoc import MatsimAdapter
     manifest["matsim"] = MatsimAdapter
+    # dtalite-simulation (adr-040) likewise imports EVERYWHERE — the module never
+    # imports the DTALite wheel in-host (subprocess-only engine; find_spec probe),
+    # so its entry is UNCONDITIONAL and the coverage gate enforces the notebook on
+    # all legs, satisfied atomically by the same-commit notebook (_ALLOWLIST stays
+    # empty). NOT in MODEL_REGISTRY (EDOC producer).
+    from tabench.models.adapters.dtalite_simulation import DTALiteSimulationAdapter
+    manifest["dtalite-simulation"] = DTALiteSimulationAdapter
     return manifest
 
 

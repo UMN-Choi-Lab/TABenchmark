@@ -18,8 +18,11 @@ The catch is honest and measured: the engine's Armijo line search collapses to s
 row is the wheel-engine-as-shipped, and the ceiling is its line-search stall, not the
 mapping. The citation anchors the DTALite *software lineage* (tool-paper discipline,
 the lopez2018 precedent): ``assignment()`` is static FW on BPR, NOT the 2014 paper's
-mesoscopic DUE machinery, which is the separate ``simulation()`` entry (a named
-non-goal here).
+mesoscopic DUE machinery, which is the separate ``simulation()`` entry -- a named
+non-goal here, now shipped on the OBSERVATIONAL track as ``dtalite-simulation``
+(adr-040, the third EDOC-1 row), which closes the honest-sourcing loop this docstring
+opened: the queue-DNL content the citation names lives in that row's EDOC producer, not
+in this static-assignment adapter.
 
 **Honest traps this adapter refuses / neutralizes (measured on 0.8.1):**
 

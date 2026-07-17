@@ -2,6 +2,11 @@
 
 from .adapters import CallableModel
 
+# The DTALite SIMULATION adapter (EDOC row, adr-040) re-exports UNCONDITIONALLY:
+# unlike dtalite_tap it never imports DTALite in-host (subprocess-only engine;
+# find_spec probe / runtime G0 read), so no guard is needed.
+from .adapters.dtalite_simulation import DTALiteSimulationAdapter
+
 # The MATSim EDOC adapter re-exports UNCONDITIONALLY (Java-only engine, no
 # optional python import to guard — adr-039); availability is a runtime probe.
 from .adapters.matsim_edoc import MatsimAdapter
@@ -79,6 +84,7 @@ from .vi_asym import AsymmetricVIModel
 __all__ = [
     "AlgorithmBModel",
     "CallableModel",
+    "DTALiteSimulationAdapter",
     "MatsimAdapter",
     "AllOrNothingModel",
     "MODEL_REGISTRY",

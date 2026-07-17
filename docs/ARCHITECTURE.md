@@ -378,7 +378,14 @@ scoring the frozen-field best-response gap `RG_D1` on its **own** leaderboard ta
 ([ADR-039](design/adr-039-matsim.md)) — the first **agent-based**, first
 **stochastic-track** external engine (Horni et al. 2016; MATSim 2025.0 on a pinned
 Temurin 21 JDK, addressed via `TABENCH_MATSIM_HOME`/`TABENCH_JAVA_HOME`, no pip extra),
-scored as P8 macroreps over a pinned 5-seed list with a bootstrap CI on the mean.
+scored as P8 macroreps over a pinned 5-seed list with a bootstrap CI on the mean; its
+third is `dtalite-simulation` ([ADR-040](design/adr-040-dtalite-simulation.md)) — the
+first **deterministic-track** external row and the DTALite wheel's *other* entry point,
+the Zhou & Taylor (2014) mesoscopic `simulation()` queue-DNL (a sub-second
+`vehicle.csv → trajectory.csv` map with no declared cost law, closing the adr-029
+honest-sourcing loop). Its engine re-seeds an LCG per time step, so it consumes no seed
+(`seedable=False`, `seed_list=()`, no macroreps — a single `RG_D1` on the same
+observational table); byte-determinism is pinned at `OMP_NUM_THREADS=1` on linux-x86_64.
 DynaMIT has no public artifact; DYNASMART is license-blocked — both still deferred.
 The first is `sumo-marouter` (SUMO's macroscopic `marouter`, Lopez et al. 2018,
 [ADR-027](design/adr-027-sumo-marouter.md)): the `eclipse-sumo` wheel ships the

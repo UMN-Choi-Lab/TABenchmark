@@ -18,11 +18,14 @@ from __future__ import annotations
 
 from .canon import (
     CANON_VERSION,
+    canonicalize_dtalite,
     canonicalize_matsim,
     canonicalize_sumo,
+    hash_dtalite_artifacts,
     hash_matsim_artifacts,
     hash_sumo_artifacts,
     is_hashed_artifact,
+    is_hashed_dtalite_artifact,
     is_hashed_matsim_artifact,
 )
 from .field import (
@@ -48,13 +51,16 @@ __all__ = [
     "assert_engine_pin",
     "build_field_from_records",
     "build_origin_waits",
+    "canonicalize_dtalite",
     "canonicalize_matsim",
     "canonicalize_sumo",
     "certify_macroreps",
     "evaluate_route",
+    "hash_dtalite_artifacts",
     "hash_matsim_artifacts",
     "hash_sumo_artifacts",
     "is_hashed_artifact",
+    "is_hashed_dtalite_artifact",
     "is_hashed_matsim_artifact",
     "per_seed_scenarios",
     "td_shortest_path",

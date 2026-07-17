@@ -242,6 +242,80 @@ def test_canon_matsim_hash_ignores_log_churn():
     assert a == b  # tie permutation + log churn -> identical G1 hash
 
 
+# --------------------------------------------------------------------------
+# DTALite canonicalization (R10, adr-040): identity-plus-decompress, the
+# {trajectory.csv} allowlist surface — the engine is byte-deterministic at OMP=1
+# --------------------------------------------------------------------------
+_DTALITE_TRAJ = (
+    b"agent_id,departure_time,departure_time_hhmmss,loaded_status,o_zone_id,"
+    b"d_zone_id,distance,travel_time,current_link_seq_no,link_ids,"
+    b"arrival_times,departure_times,geometry\n"
+    b'1,420,07:00:00,0,2,1,0.012,1,1;3,07:00:00;07:05:30,07:05:00;07:10:30,"LS (0, 1)"\n'
+)
+
+
+def test_canon_dtalite_hash_surface_is_allowlist_only():
+    """R10 surface (adr-040): ONLY trajectory.csv is hashed — every other
+    emission (sim_info.csv's timestamp column, the debug/summary logs, echoed
+    inputs) is provenance. Both bare-name and full-path forms."""
+    assert canon.is_hashed_dtalite_artifact("trajectory.csv")
+    assert canon.is_hashed_dtalite_artifact("run/out/trajectory.csv")  # path form
+    for name in (
+        "sim_info.csv",
+        "simulation_debug.csv",
+        "summary_log_file.txt",
+        "TAP_log.txt",
+        "sim_error.log",
+        "link.csv",  # an echoed input, not the state
+    ):
+        assert not canon.is_hashed_dtalite_artifact(name)
+        assert not canon.is_hashed_dtalite_artifact("wd/" + name)  # path form
+
+
+def test_canon_dtalite_is_identity_idempotent_and_decompresses_gz():
+    """The canonicalizer is the IDENTITY plus decompress (byte-deterministic
+    engine): passthrough on raw bytes, idempotent, and a gzip payload
+    decompresses to the same bytes as the raw payload — pinning the decompress
+    branch to its documented contract (real DTALite never gzips trajectory.csv)."""
+    once = canon.canonicalize_dtalite("trajectory.csv", _DTALITE_TRAJ)
+    assert once == _DTALITE_TRAJ  # identity on the byte-deterministic artifact
+    assert canon.canonicalize_dtalite("trajectory.csv", once) == once  # idempotent
+    gz = canon.canonicalize_dtalite("trajectory.csv.gz", gzip.compress(_DTALITE_TRAJ))
+    assert gz == _DTALITE_TRAJ  # decompress branch == the raw payload
+
+
+def test_canon_dtalite_digest_moves_on_any_byte_including_dead_column():
+    """Content-sensitivity (P2/P9): any single-byte change in trajectory.csv
+    moves the digest — INCLUDING the dead loaded_status column (position 3),
+    which the parser never reads but the hash still catches as content."""
+    base = canon.hash_dtalite_artifacts({"trajectory.csv": _DTALITE_TRAJ})
+    # flip the loaded_status field 0 -> 1 (the parser-dead column)
+    flipped = _DTALITE_TRAJ.replace(b"07:00:00,0,2,1", b"07:00:00,1,2,1", 1)
+    assert flipped != _DTALITE_TRAJ
+    assert canon.hash_dtalite_artifacts({"trajectory.csv": flipped}) != base
+    # a change in the real experienced chain also moves it
+    exp = _DTALITE_TRAJ.replace(b"07:10:30", b"07:11:30", 1)
+    assert canon.hash_dtalite_artifacts({"trajectory.csv": exp}) != base
+
+
+def test_canon_dtalite_hash_ignores_non_surfaced_keys():
+    """hash_dtalite_artifacts hashes ONLY trajectory.csv (like
+    hash_sumo/matsim_artifacts): churn on any provenance artifact leaves the
+    digest byte-identical."""
+    def run(info: bytes, log: bytes) -> dict[str, bytes]:
+        return {
+            "trajectory.csv": _DTALITE_TRAJ,
+            "sim_info.csv": info,  # carries a timestamp column (adr-040)
+            "simulation_debug.csv": log,
+            "TAP_log.txt": log + b"!",
+        }
+
+    a = canon.hash_dtalite_artifacts(run(b"timestamp\n2026-01-01", b"wall 12ms"))
+    b = canon.hash_dtalite_artifacts(run(b"timestamp\n2099-12-31", b"wall 9999ms"))
+    assert a == b  # only trajectory.csv is on the surface
+    assert a == canon.hash_dtalite_artifacts({"trajectory.csv": _DTALITE_TRAJ})
+
+
 def test_hash_artifacts_surface_refactor_keeps_sumo_digests_byte_identical():
     """REGRESSION PIN (S3): giving hash_artifacts a ``surface`` parameter must
     leave every SUMO digest byte-identical (the default IS the SUMO surface)."""

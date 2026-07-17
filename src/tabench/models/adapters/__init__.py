@@ -2,6 +2,14 @@
 
 from .callable_adapter import CallableModel
 
+# The DTALite SIMULATION adapter (the EDOC row, adr-040) re-exports
+# UNCONDITIONALLY — a named deviation from dtalite_tap's module-scope guard:
+# the module NEVER imports DTALite in-host (the engine runs only in throwaway
+# subprocesses; availability is a find_spec probe / the runtime G0 version
+# read), so it imports stdlib+numpy everywhere and its engine-free test half
+# runs on the core matrix legs. Not in MODEL_REGISTRY (EDOC producer).
+from .dtalite_simulation import DTALiteSimulationAdapter
+
 # The MATSim EDOC adapter needs NO optional python package (the engine is
 # Java-only, addressed at runtime via TABENCH_MATSIM_HOME — adr-039), so unlike
 # sumo/dtalite the re-export is UNCONDITIONAL: the module imports stdlib+numpy
@@ -10,7 +18,7 @@ from .callable_adapter import CallableModel
 # the static gap-certified track — the adr-037 precedent).
 from .matsim_edoc import MatsimAdapter
 
-__all__ = ["CallableModel", "MatsimAdapter"]
+__all__ = ["CallableModel", "DTALiteSimulationAdapter", "MatsimAdapter"]
 
 # The SUMO marouter adapter needs the optional ``eclipse-sumo`` wheel
 # (``pip install tabench[sumo]``): the numpy/scipy core must import without it.
