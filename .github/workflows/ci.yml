@@ -227,17 +227,19 @@ jobs:
           [fetch(s) for s in REGISTRY.values()]"
       - name: Test (dtalite adapters)
         # Explicit file list (the torch/sumo-job precedent): the dtalite dependency's
-        # test surface is the static-assignment adapter (adr-029, test_dtalite.py) AND
-        # the simulation() EDOC row (adr-040, test_dtalite_simulation.py — its
-        # engine-gated half un-skips here, its engine-free half already ran on the
-        # matrix legs). The numpy suite is covered by the dtalite-free matrix legs.
-        run: pytest tests/test_dtalite.py tests/test_dtalite_simulation.py -q -ra
+        # test surface is the static-assignment adapter (adr-029, test_dtalite.py), the
+        # simulation() EDOC row (adr-040, test_dtalite_simulation.py — its engine-gated
+        # half un-skips here, its engine-free half already ran on the matrix legs), AND
+        # the static-ODME guarded T2 estimator (adr-042, test_odme_dtalite.py — same
+        # pinned 0.8.1 wheel, guarded like the T1 adapter). The numpy suite is covered
+        # by the dtalite-free matrix legs.
+        run: pytest tests/test_dtalite.py tests/test_dtalite_simulation.py tests/test_odme_dtalite.py -q -ra
         env:
           TABENCH_REQUIRE_DATA: "1"
       - name: Test (dtalite tutorial notebooks)
         # A SEPARATE step (torch-job precedent above): -k scopes execution to the
-        # two dtalite-gated notebooks (dtalite-tap + dtalite-simulation).
-        run: pytest tests/test_tutorials.py -k "dtalite-tap or dtalite-simulation" -q -ra
+        # three dtalite-gated notebooks (dtalite-tap + dtalite-simulation + odme-dtalite).
+        run: pytest tests/test_tutorials.py -k "dtalite-tap or dtalite-simulation or odme-dtalite" -q -ra
         env:
           TABENCH_REQUIRE_DATA: "1"
           TABENCH_RUN_TUTORIALS: "1"

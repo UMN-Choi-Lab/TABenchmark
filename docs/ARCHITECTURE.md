@@ -282,8 +282,11 @@ TABenchmark/
 │   ├── estimation/        # T2 OD-estimation track (base, entropy/gls/spiess/spsa,
 │   │                      # yang1992/dn_kalman; spsa_sumo.py — spsa-sumo, the first
 │   │                      # GUARDED estimator: SPSA in the marouter loop, optional [sumo]
-│   │                      # extra, adr-028; within-day dynamic: dynamic_base.py,
-│   │                      # _dynamic_map.py, cascetta1993.py — od-dynamic-sim/seq, ADR-023)
+│   │                      # extra, adr-028; odme_dtalite.py — odme-dtalite, DTALite's
+│   │                      # static ODME as a guarded estimator on the UNCHANGED pinned-bfw
+│   │                      # certifier, optional [dtalite] extra, adr-042; within-day
+│   │                      # dynamic: dynamic_base.py, _dynamic_map.py, cascetta1993.py —
+│   │                      # od-dynamic-sim/seq, ADR-023)
 │   ├── dnl/               # Phase-2 dynamic-network-loading foundation (ADR-010): grid.py,
 │   │                      # fd.py (fundamental diagram), demand.py, scenario.py (DynamicScenario
 │   │                      # + domain-separated hash), link.py + node.py (S/R interfaces),

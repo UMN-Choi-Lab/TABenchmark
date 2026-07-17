@@ -67,6 +67,22 @@ except ModuleNotFoundError as exc:  # pragma: no cover - exercised by the sumo-f
     if exc.name != "sumo":
         raise
     _HAS_SUMO = False
+
+# The DTALite-ODME estimator (odme-dtalite, adr-042) needs the optional ``DTALite`` wheel
+# (``pip install tabench[dtalite]``): the numpy/scipy core must import without it. Guarded
+# byte-parallel to the spsa-sumo block above (and the T1 model guard), swallowing ONLY a
+# missing-``DTALite`` failure -- note the exact CAPITAL ``DTALite`` name (the wheel's module
+# name, adr-029), not the lowercase ``sumo`` convention; any other ImportError is a real bug
+# and must propagate. When absent the @register_estimator never runs, so
+# ``ESTIMATOR_REGISTRY``/``tabench list`` simply lack the name.
+try:
+    from .odme_dtalite import DtaliteODMEEstimator  # noqa: F401
+
+    _HAS_DTALITE = True
+except ModuleNotFoundError as exc:  # pragma: no cover - exercised by the dtalite-free legs
+    if exc.name != "DTALite":
+        raise
+    _HAS_DTALITE = False
 from .yang1992 import Yang1992Estimator, yang_solve
 
 __all__ = [
@@ -120,3 +136,8 @@ __all__ = [
 # install never fails (mirrors the guarded model re-export).
 if _HAS_SUMO:
     __all__.append("SumoSPSAEstimator")
+
+# Likewise the DTALite-ODME estimator (adr-042), appended only when the ``DTALite``
+# wheel is present so a core install's ``import *`` never fails.
+if _HAS_DTALITE:
+    __all__.append("DtaliteODMEEstimator")
