@@ -14,7 +14,7 @@ hand-checked @book entry; *partial*: verified after correcting the originally
 compiled metadata (corrections are recorded in the entry's `contribution` field
 in `references.json`).
 
-**246 references** — 63 tier-1, 134 tier-2, 49 tier-3.
+**247 references** — 64 tier-1, 134 tier-2, 49 tier-3.
 
 ## Foundations of Static Equilibrium Assignment
 
@@ -248,6 +248,7 @@ in `references.json`).
 | Cantarella & Cascetta (1995) | [Dynamic processes and equilibrium in transportation networks: towards a unifying theory](https://doi.org/10.1287/trsc.29.4.305) | Transportation Science | 1 | white-box solver | ✓ |
 | He et al. (2010) | [A link-based day-to-day traffic assignment model](https://doi.org/10.1016/j.trb.2009.10.001) | Transportation Research Part B: Methodological | 1 | white-box solver | ✓ |
 | Smith & Watling (2016) | [A route-swapping dynamical system and Lyapunov function for stochastic user equilibrium](https://doi.org/10.1016/j.trb.2015.12.015) | Transportation Research Part B: Methodological | 1 | white-box solver | ✓ |
+| Li et al. (2024) | [Wardrop Equilibrium Can Be Boundedly Rational: A New Behavioral Theory of Route Choice](https://doi.org/10.1287/trsc.2023.0132) | Transportation Science | 1 | white-box solver | ✓ |
 | Cascetta & Cantarella (1991) | [A day-to-day and within-day dynamic stochastic assignment model](https://doi.org/10.1016/0191-2607(91)90144-f) | Transportation Research Part A: General | 2 | white-box solver | ✓ |
 | Davis & Nihan (1993) | [Large population approximations of a general stochastic traffic assignment model](https://doi.org/10.1287/opre.41.1.169) | Operations Research | 2 | white-box solver | ✓ |
 | Zhang & Nagurney (1996) | [On the local and global stability of a travel route choice adjustment process](https://doi.org/10.1016/0191-2615(95)00034-8) | Transportation Research Part B: Methodological | 2 | white-box solver | ✓ |

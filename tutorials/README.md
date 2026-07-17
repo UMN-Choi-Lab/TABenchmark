@@ -117,6 +117,7 @@ Every enforced unit and every track tour below has shipped — the ToC is comple
 | 05 | `dtd-horowitz` | | 5.7 s | shipped |
 | 06 | `dtd-stochastic` | | 7.1 s | shipped |
 | 07 | `dtd-unifying` | | 5.9 s | shipped |
+| 08 | `dtd-cumlog` | | 6.0 s | shipped |
 
 ### `03-estimation/` — T2 OD estimation
 | # | unit | extra | runtime | status |

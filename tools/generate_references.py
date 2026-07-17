@@ -143,6 +143,7 @@ SHIPPED = {
     "cantarella1995dynamic": ("v2", "Cantarella-Cascetta unifying day-to-day process (dtd-unifying)"),
     "he2010linkbased": ("v2", "link-based day-to-day dynamics (dtd-link)"),
     "smith2016routeswapping": ("v2", "route-swap logit-SUE day-to-day variant (dtd-swap-sue)"),
+    "li2024wardrop": ("v2", "cumulative-logit boundedly-rational day-to-day Wardrop UE (dtd-cumlog)"),
     # Data, OD estimation, calibration, and benchmarking.
     "yang1992estimation": ("v1", "bilevel congested-network OD estimator (od-congested)"),
     "cascetta1993dynamic": ("v2", "within-day dynamic OD estimators (od-dynamic-sim/seq, ADR-023)"),

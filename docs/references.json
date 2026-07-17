@@ -3845,6 +3845,26 @@
   "confidence": 0.97
  },
  {
+  "bibkey": "li2024wardrop",
+  "title": "Wardrop Equilibrium Can Be Boundedly Rational: A New Behavioral Theory of Route Choice",
+  "authors": [
+   "Li",
+   "Wang",
+   "Nie"
+  ],
+  "year": 2024,
+  "venue": "Transportation Science",
+  "doi": "10.1287/trsc.2023.0132",
+  "families": [
+   "day-to-day"
+  ],
+  "tier": 1,
+  "contribution": "Exact match; Transportation Science 58(5):973-994. Cumulative-logit (CumLog) day-to-day dynamics: boundedly-rational logit route choice whose global limit is exact deterministic Wardrop UE at finite exploitation r (read in full; DOI/venue/pages verified).",
+  "implement_as": "white-box solver",
+  "verdict": "verified",
+  "confidence": 0.98
+ },
+ {
   "bibkey": "spall1992multivariate",
   "title": "Multivariate stochastic approximation using a simultaneous perturbation gradient approximation",
   "authors": [
