@@ -27,3 +27,6 @@ data/cache/
 # Experiment outputs
 results/
 *.ipynb_checkpoints/
+
+# Documentation site build (Sphinx output + the assembled repo-root mirror)
+docs/_build/

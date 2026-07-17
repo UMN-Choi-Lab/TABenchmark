@@ -142,10 +142,12 @@ def dn_gls_solve(
 ) -> np.ndarray:
     """Nonnegative GLS whitened by the FULL Davis-Nihan count-mean covariance.
 
-    ``argmin_{g>=0} (P g - cbar)^T Sigma_mean^{-1} (P g - cbar)
-                    + (g - g_pr)^T W^{-1} (g - g_pr)``,
+    Solves::
 
-    solved as a bounded least squares on the whitened stacked system
+        argmin_{g>=0} (P g - cbar)^T Sigma_mean^{-1} (P g - cbar)
+                      + (g - g_pr)^T W^{-1} (g - g_pr)
+
+    as a bounded least squares on the whitened stacked system
     ``[W^-1/2 ; Sigma_mean^-1/2 P] g ~ [W^-1/2 g_pr ; Sigma_mean^-1/2 cbar]``.
     ``sigma_mean`` is the ``(S, S)`` covariance of the count *time-mean*
     (``Sigma_stat * tau / T``); its off-diagonals (cross-link DN structure) and

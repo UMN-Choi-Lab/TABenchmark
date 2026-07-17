@@ -1,0 +1,72 @@
+# Read the Docs build configuration (v2 schema, validated against RTD's JSON
+# schema). One manual step remains for the PI to connect this repo to
+# readthedocs.io — see docs/RTD_SETUP.md.
+#
+# The `sphinx:` key below is LOAD-BEARING even though build.jobs.build.html
+# replaces the build command: RTD's project doctype is inferred from the presence
+# of a `sphinx:`/`mkdocs:` key. Without it the project becomes doctype=generic,
+# and RTD's generic path SKIPS create_environment and python.install entirely — so
+# the `.[docs,viz]` install below would never run and the build would fail on a
+# missing sphinx. With `sphinx:` present the doctype is `sphinx`, the full install
+# pipeline runs, and build.jobs.build.html then overrides ONLY the html build
+# command (RTD does not run its own sphinx-build). The first real RTD build should
+# re-confirm this end to end — it cannot be exercised without the PI's account.
+#
+# The build is TWO steps:
+#   1. python docs/build_site.py        -> assemble the repo-root-shaped source
+#      mirror in docs/_build/site/. Required because the tutorial notebooks link
+#      to sibling repo files with repo-root-relative paths (../../docs/MODELS.md,
+#      ../../README.md, ...) that only resolve when the Sphinx source root
+#      mirrors the repository layout (see docs/conf.py).
+#   2. python -m sphinx -c docs ... docs/_build/site  -> build with -W so a broken
+#      link, a failed tutorial, or a bad autodoc ref fails the build (the same bar
+#      as the CI `docs` job).
+version: 2
+
+sphinx:
+  # Presence sets doctype=sphinx (see the note above) so RTD runs create_environment
+  # + python.install; the actual build command is overridden by build.jobs.build.html.
+  configuration: docs/conf.py
+
+build:
+  os: ubuntu-24.04 # pinned LTS, not ubuntu-lts-latest (RTD warns it can break on rollover)
+  tools:
+    python: "3.12" # matches the CI docs job's python-version
+  jobs:
+    # Prefetch benchmark data so the executed notebooks do not each fetch on
+    # demand mid-build: the same set the CI test job prefetches (the REGISTRY
+    # scenarios + the two CI-sized xu2024 rungs + the bo4mob 1ramp smoke bundle
+    # the 12-data notebooks execute against). Explicit prefetch means a failed
+    # download fails the build instead of a partial cache.
+    post_install:
+      - >
+        python -c "from tabench.data.registry import REGISTRY;
+        from tabench.data.fetcher import fetch;
+        from tabench.data.xu2024 import XU2024_REGISTRY, XU2024_RUNGS, fetch_city;
+        from tabench.data.bo4mob import BO4MOB_REGISTRY, BO4MOB_SMOKE, fetch_bo4mob;
+        [fetch(s) for s in REGISTRY.values()];
+        [fetch_city(XU2024_REGISTRY[c]) for c in XU2024_RUNGS];
+        fetch_bo4mob(BO4MOB_REGISTRY[BO4MOB_SMOKE])"
+    build:
+      html:
+        - python docs/build_site.py
+        # LC_ALL=C.UTF-8: the notebook execution kernel dies on a C locale.
+        - >
+          LC_ALL=C.UTF-8 python -m sphinx -T -W --keep-going -b html
+          -c docs docs/_build/site $READTHEDOCS_OUTPUT/html
+  # Phase 2 (when the torch-track notebooks execute on RTD): add a pre-build
+  # `pip install torch --index-url https://download.pytorch.org/whl/cpu` step —
+  # the `torch` extra would pull the multi-GB CUDA build (extras cannot pin an
+  # index; see the pyproject comment on the torch extra). sumo/dtalite are plain
+  # pip wheels, so un-excluding their notebooks is only an install change.
+
+python:
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - docs # sphinx + furo + myst-nb + sphinx-copybutton + sphinxcontrib-mermaid + ipykernel
+        - viz # matplotlib: every executed notebook draws through the inline backend
+
+# formats: default (HTML only). No pdf/epub — a 53-notebook executed site is a
+# web artifact; PDF doubles build time for no audience.

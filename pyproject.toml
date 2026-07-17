@@ -59,6 +59,22 @@ viz = ["matplotlib>=3.8"]
 # because every notebook plots. Floors only, never a hard pin (library metadata must not
 # `==`).
 tutorials = ["nbclient>=0.10", "nbformat>=5.10", "ipykernel>=6.29", "matplotlib>=3.8"]
+# Optional: build the readthedocs.io documentation site (docs/conf.py + docs/build_site.py).
+# Sphinx + MyST render docs/*.md, the 37 ADRs, and README.md; myst-nb EXECUTES the tutorial
+# notebooks at build (the named rendering venue, adr-035) so ipykernel supplies the python3
+# kernel; furo is the theme, sphinx-copybutton the code-copy button, sphinxcontrib-mermaid
+# the docs/MODELS.md evolution diagram. Engine-gated notebooks (torch/sumo/dtalite) are
+# excluded from execution here — the site builds against `.[docs,viz]` only (viz = matplotlib
+# for the notebook kernels), NOT the heavy extras. Floors only, never a hard pin (library
+# metadata must not `==`).
+docs = [
+    "sphinx>=8",
+    "furo>=2024.8",
+    "myst-nb>=1.2",
+    "sphinx-copybutton>=0.5",
+    "sphinxcontrib-mermaid>=0.9",
+    "ipykernel>=6.29",
+]
 
 [project.scripts]
 tabench = "tabench.cli:main"

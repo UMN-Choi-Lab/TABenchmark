@@ -231,3 +231,62 @@ jobs:
         env:
           TABENCH_REQUIRE_DATA: "1"
           TABENCH_RUN_TUTORIALS: "1"
+
+  # The readthedocs.io documentation site, built with warnings-as-errors. The
+  # non-engine-gated tutorial notebooks EXECUTE during the build (myst-nb), so
+  # this job is also an integration test of src/ — a solver change that breaks a
+  # tutorial fails here — which is why it runs on EVERY PR with no paths filter
+  # (a docs/**-filter would skip exactly those regressions). Kept a SEPARATE job
+  # (house style, cf. the torch/sumo/dtalite split): a break in the docs
+  # toolchain download cannot kill the test-matrix signal. RTD PR builds are the
+  # complementary preview (org.readthedocs.build URL); this job is the merge gate,
+  # so merges never wait on RTD Community's 2-build concurrency. Engine-gated
+  # notebooks (torch/sumo/dtalite) are excluded from EXECUTION by docs/conf.py
+  # (this job installs only .[docs,viz]); they still render un-executed.
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12" # matches .readthedocs.yaml build.tools.python
+      - name: Cache benchmark data
+        # Same key as the test/torch/sumo/dtalite jobs: the executed notebooks
+        # fetch the same scenarios, so they share the cache.
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/tabench
+          key: tabench-data-${{ hashFiles('src/tabench/data/registry.py', 'src/tabench/data/xu2024.py', 'src/tabench/data/bo4mob.py') }}
+          restore-keys: tabench-data-
+      - name: Install
+        # docs = the Sphinx site toolchain; viz = matplotlib, which every
+        # executed notebook draws through. NOT the torch/sumo/dtalite extras —
+        # their notebooks are excluded from execution by docs/conf.py.
+        run: pip install -e ".[docs,viz]"
+      - name: Fetch benchmark data
+        # Same prefetch discipline and set as the test job (REGISTRY + the two
+        # xu2024 CI rungs + the bo4mob 1ramp smoke bundle), so a failed download
+        # fails the job instead of freezing a partial cache: the 12-data
+        # notebooks execute against exactly this data.
+        run: >
+          python -c "from tabench.data.registry import REGISTRY;
+          from tabench.data.fetcher import fetch;
+          from tabench.data.xu2024 import XU2024_REGISTRY, XU2024_RUNGS, fetch_city;
+          from tabench.data.bo4mob import BO4MOB_REGISTRY, BO4MOB_SMOKE, fetch_bo4mob;
+          [fetch(s) for s in REGISTRY.values()];
+          [fetch_city(XU2024_REGISTRY[c]) for c in XU2024_RUNGS];
+          fetch_bo4mob(BO4MOB_REGISTRY[BO4MOB_SMOKE])"
+      - name: Build docs (warnings are errors)
+        # Two steps, mirroring .readthedocs.yaml: assemble the repo-root-shaped
+        # source mirror, then build with -W (the same bar as RTD's -W). -c docs
+        # points at docs/conf.py while the source dir is the mirror.
+        # LC_ALL: the notebook execution kernel dies on a C locale. No
+        # TABENCH_REQUIRE_DATA here: it only governs pytest's conftest fetch gate,
+        # not a sphinx/myst-nb build (the notebooks fetch directly), so it is inert
+        # here — the "Fetch benchmark data" step above is the enforcement point (a
+        # failed download fails the job before this build runs).
+        env:
+          LC_ALL: C.UTF-8
+        run: |
+          python docs/build_site.py
+          python -m sphinx -T -W --keep-going -b html -c docs docs/_build/site docs/_build/html

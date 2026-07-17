@@ -1,62 +1,39 @@
 # TABenchmark
 
-**A shared benchmark for 50 years of traffic assignment models.**
+**A shared benchmark for 50 years of traffic assignment models.** One harness runs
+everything from Frank–Wolfe (1975) and bush-based equilibrium solvers to external
+simulators and learned GNN surrogates on identical networks, demand, data availability,
+and budgets. The harness — never the model — recomputes every scored metric from the
+link flows a model emits, so a black box cannot self-report its way onto the leaderboard.
+Full documentation and executed tutorials: **<https://tabenchmark.readthedocs.io>**.
 
-Traffic assignment research spans from Wardrop's principles (1952) and Beckmann's convex
-program (1956) through Frank–Wolfe, bush-based solvers, stochastic and elastic-demand user
-equilibrium, and dynamic traffic assignment, to today's GNN surrogates and end-to-end
-learned models — yet there has never been a shared testbed on which all of them can be
-compared under identical networks, demand, data availability, and budgets. TABenchmark is
-that testbed:
-
-- **One harness, every vintage.** A minimal model contract plus capability declarations
-  lets a compact Frank–Wolfe, a bush-based solver, and a trained surrogate run in the same
-  experiment matrix — a white-box solver, a subprocess-wrapped simulator, and a neural
-  model are all just objects that emit link flows.
-- **Certified, not self-reported.** The harness recomputes every scored metric from the
-  emitted link flows — the equilibrium relative gap is a property of the flows, so even a
-  black box receives an externally certified gap (and a demand-feasibility audit first).
-  Model self-reports are kept as provenance and diffed as an honesty check, never scored.
-- **Data levels are first-class.** Full OD tables, noisy stale-prior OD, and per-period
-  link counts on sensor subsets: every observation process is a seeded projection of
-  stored ground truth, with identifiability conditions reported per configuration.
-- **Fair across the decades.** Hardware-free budgets (iterations / shortest-path calls;
-  wall-clock recorded but never the ranking axis), training-lineage gates against test
-  contamination, content-hashed scenarios, and full run manifests.
-
-Built on the verified canon of **246 references** spanning 12 model families
-([docs/REFERENCES.md](docs/REFERENCES.md)), the design synthesizes
-[SimOpt](https://github.com/simopt-admin/simopt)'s testbed machinery,
-[BO4Mob](https://github.com/UMN-Choi-Lab/BO4Mob)'s benchmark conventions, and
-Hazelton's (AOAS 2015) statistical treatment of network flow observability —
-see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-
-## Quickstart
+## Install
 
 ```bash
-pip install -e .
-python demos/demo_quickstart.py         # built-in Braess scenario, no download
+pip install -e .        # core: numpy + scipy + pyyaml only, Python >= 3.10
 ```
 
-The core is numpy/scipy-only. The learned **torch** models (`implicit-ue-nn`,
-`het-gnn`) require the optional extra: `pip install tabench[torch]`. On Linux that pulls the
-default (CUDA) build; for CPU-only, install torch from the CPU wheel index first —
-`pip install torch --index-url https://download.pytorch.org/whl/cpu` — then
-`pip install -e ".[torch]"` (the `+cpu` build satisfies the requirement, so it is
-not re-resolved to the multi-GB CUDA wheel).
+Optional extras (the core imports and runs without any of them; models behind a missing
+extra simply do not register):
 
-The external-simulator model `sumo-marouter` (Lopez et al. 2018) requires a
-second optional extra: `pip install tabench[sumo]` (the `eclipse-sumo` wheel,
-which ships the `marouter`/`netconvert` binaries inside the package — no separate
-SUMO install). Without either extra the core imports cleanly and simply lacks
-those models.
+| Extra | Adds | Note |
+|---|---|---|
+| `torch` | learned models `implicit-ue-nn`, `het-gnn` | for CPU-only, install torch from the CPU wheel index first |
+| `sumo` | adapter `sumo-marouter`, guarded estimator `spsa-sumo`, EDOC row `sumo-duaiterate` | `eclipse-sumo` wheel bundles the binaries (`sumo-duaiterate` is an EDOC row, not in `tabench list`) |
+| `dtalite` | external engine `dtalite-tap` | PyPI `DTALite` wheel |
+| `viz` | house visualizer `tabench.viz` (matplotlib) | never imported by the core |
+| `tutorials` | execute the notebooks (`nbclient`, `ipykernel`) | drives `TABENCH_RUN_TUTORIALS=1` |
+| `docs` | build the readthedocs.io site (Sphinx + MyST) | needs `viz` too: `pip install -e ".[docs,viz]"`, then `python docs/build_site.py` |
+| `dev` | pytest + ruff | `pytest -q` runs the full suite |
 
-The house visualizer `tabench.viz` (network flows, OD heatmaps, model-vs-reference
-scatter — used by `demos/demo_quickstart.py --viz` and every tutorial notebook) needs
-`pip install tabench[viz]` (matplotlib). It is never imported by the core, so
-`import tabench` stays numpy/scipy-only (adr-035).
+## Quickstart (60 seconds)
 
+```bash
+python demos/demo_quickstart.py   # built-in Braess scenario, no download
 ```
+
+```text
+Scenario: braess (hash cf00f411cdccec88)
 model             certified rel. gap  feasible
 ----------------------------------------------
 aon                        1.912e-01         1
@@ -64,160 +41,121 @@ msa                        1.577e-03         1
 fw                         7.188e-14         1
 cfw                       -2.060e-16         1
 bfw                       -2.060e-16         1
-toy-surrogate                    nan         0   <- black box failed the demand
-                                                    audit: censored, not scored
+toy-surrogate                    nan         0
 ```
 
-Run a downloaded instance (data fetched on demand, checksummed) — the certified solver
-ladder, an elastic-demand equilibrium, or a learned surrogate, all through one CLI:
+`toy-surrogate`'s flows fail the demand-feasibility audit, so its gap is censored to
+`nan` rather than scored — a black box can neither crash the run nor top the leaderboard.
 
-```bash
-tabench run --scenario siouxfalls --models fw,cfw,bfw,algb,tapas --iterations 300 --out results/
-tabench run --scenario winnipeg   --models bfw --iterations 500 --target-gap 1e-4 --out results/
-tabench run --scenario elastic-tworoute --models fw-elastic --out results/
-tabench list                            # scenarios, models, and T2 estimators
-```
-
-Wrap **your** model in three lines — the harness scores it identically:
+Wrap your own model in three lines — the harness certifies it identically:
 
 ```python
 from tabench import CallableModel, Budget, load_scenario, run_experiment
 
-model = CallableModel(fn=my_gnn_predict, name="my-gnn", trained_on=("tntp-small-v1",))
-result = run_experiment(load_scenario("siouxfalls"), [model], Budget(iterations=1))
+model = CallableModel(fn=my_predict, name="my-gnn", trained_on=("tntp-small-v1",))
+result = run_experiment(load_scenario("braess"), [model], Budget(iterations=1))
 ```
 
-(If `trained_on` intersects the evaluation scenario's lineage, the harness refuses to
-run it — that's the point.)
+`my_predict(scenario, rng)` returns link flows; the harness recomputes the relative gap
+from them, censors it (`nan`) if the flows fail the demand-feasibility audit, and refuses
+to run at all if `trained_on` intersects the scenario's training lineage. CLI equivalent:
 
-## The model roster
+```bash
+tabench run --scenario siouxfalls --models fw,cfw,bfw --iterations 300 --out results/
+tabench list      # all scenarios, models, and estimators registered in this install
+```
 
-Thirty-one road assignment models (four require an optional extra: `implicit-ue-nn` and `het-gnn` need `torch`; `sumo-marouter`, the first external-simulator adapter, needs `eclipse-sumo`; `dtalite-tap`, the second external engine, needs `DTALite`), a transit optimal-strategy model (Spiess & Florian 1989), and eight OD-estimation baselines (seven numpy/scipy-only, plus the guarded `spsa-sumo` — SPSA calibration in a real SUMO `marouter` loop, Balakrishna et al. 2007, needing `eclipse-sumo`) ship today, spanning white-box
-solvers, a stochastic track, elastic and combined-distribution demand, day-to-day dynamical
-systems (route-swap, link-based, route-space projected-gradient, cost-smoothing SUE, a finite-population stochastic process, and the Cantarella–Cascetta unifying process), a boundedly-rational equilibrium, a capacity-constrained equilibrium, a non-separable-cost asymmetric-VI equilibrium, a multiclass-user equilibrium, and the first two learned models (a ridge surrogate and an implicit-NN UE) — every one certified
-from its emitted flows by the identical P1 harness. For what each model does
-*differently* from its predecessors and the lineage of the whole family, see the
-**[model compendium](docs/MODELS.md)** and its [evolution graph](docs/model-evolution.svg).
+## Repository map
 
-| Paradigm | Models |
-|---|---|
-| Baselines | `aon` all-or-nothing · `msa` method of successive averages |
-| Link-based UE | `fw` Frank–Wolfe · `cfw` / `bfw` conjugate & bi-conjugate FW (Mitradjieva & Lindberg 2013) |
-| Path / bush-based UE | `gp` gradient projection (Jayakrishnan et al. 1994) · `oba` origin-based assignment (Bar-Gera 2002) · `algb` Algorithm B (Dial 2006) · `tapas` paired alternative segments (Bar-Gera 2010) |
-| Stochastic UE | `sue-msa` logit via Dial-STOCH + MSA (Fisk 1980) · `sue-probit-msa` probit via Monte-Carlo MSA (Sheffi & Powell 1982) |
-| System optimum | `so-bfw` marginal-cost UE — certified SO gap, price of anarchy, first-best tolls |
-| Elastic demand | `fw-elastic` variable-demand UE (Florian & Nguyen 1974 via the Gartner excess-demand transform) |
-| Combined distribution + assignment | `evans` fully endogenous OD from fixed trip-end margins via a doubly-constrained gravity, in one convex program (Evans 1976) |
-| Day-to-day dynamics | `dtd-swap` Smith's (1984) proportional route-swap dynamical system — models the disequilibrium adjustment toward the UE, with a Beckmann Lyapunov function that decreases monotonically day-to-day · `dtd-friesz` Friesz et al.'s (1994) route-based *projected dynamical system* `ḣ = P_K(h, −c(h))` — the state is per-OD route flows moved along the projection of the negative route-cost vector onto the demand simplex, i.e. projected gradient descent on Beckmann in *route* space (Jacobi: the whole route-flow vector is projected against today's frozen costs at once, via an exact Euclidean simplex projection that conserves each OD's demand every day); reaches the identical UE as `dtd-swap`/`dtd-link` by the same monotone Beckmann descent, distinguishing the route-space projection paradigm from Smith's swap and He-Guo-Liu's link projection · `dtd-link` He, Guo & Liu's (2010) link-based day-to-day — the state is the aggregate *link*-flow vector (not per-OD route flows), adjusted toward the frozen-cost proximal target projected onto the feasible link polytope, reaching the identical UE via the same monotone Beckmann descent · `dtd-swap-sue` Smith & Watling's (2016) logit-SUE sibling of `dtd-swap` — the same route-swap dynamics driven by the Fisk-generalized cost `c_k + (1/θ) ln h_k`, so the rest point is the logit stochastic user equilibrium (not deterministic UE), with Fisk's SUE objective as the monotone day-to-day Lyapunov function · `dtd-horowitz` Horowitz's (1984) cost-smoothing day-to-day SUE — travelers carry a perceived *link*-cost vector exponentially smoothed toward the experienced costs `p ← (1−w)p + w·t(v)` and logit-load at it, reaching the same logit SUE as `sue-msa`; but uniquely among the day-to-day models NO damping is added, so above a task-dependent stability threshold `w* ≈ 0.81` the process settles into a period-2 limit cycle instead of converging — that instability is the phenomenon the model exists to exhibit · `dtd-stochastic` Cascetta's (1989) finite-population *stochastic process* — the benchmark's first genuinely stochastic day-to-day model: each day a finite population of travelers draws routes by multinomial sampling from the Dial-STOCH logit fractions at `dtd-horowitz`'s smoothed perceived costs, so `{p}` is a Markov chain whose "equilibrium" is a stationary *distribution*, not a fixed point; daily flows keep a persistent `O(1/√N)` variability while the emitted burnt-in time average converges (ergodic theorem) to the stationary mean ≈ logit SUE (Davis & Nihan 1993 large-population limit), certified by the same ADR-001 residual — which honestly floors at O(finite-population bias + sampling SE), not at solver precision · `dtd-unifying` Cantarella & Cascetta's (1995) *unifying* process — one two-equation link-space process (exponential cost-learning filter `p ← (1−w)p + w·t(v)` plus choice-inertia update `v ← v + αₙ(ChoiceLoad(p) − v)`, only a fraction `αₙ` of travelers reconsidering each day) whose choice map is gated per scenario: all-or-nothing best response on deterministic tasks (fixed point = Wardrop UE) and the Dial-STOCH logit load on SUE tasks (fixed point = logit SUE); at `α=1` it reduces exactly to `dtd-horowitz` and at `w=1, α=1` to `msa`, and its joint `(α, w)` flip boundary `(2−w)(2−α) = αw\|φ′\|` exhibits C&C's headline: *either* cost memory or choice inertia stabilizes the process that limit-cycles with neither |
-| Boundedly-rational UE | `br-ue` an indifference-band relaxation of Wardrop (Mahmassani & Chang 1987) — used routes need only lie within a band `ε` of the shortest, so equilibrium is a *set* and the emitted flow sits at the band edge, not the UE point |
-| Side-constrained UE | `sc-tap` UE under hard link capacities `v_a ≤ u_a` (Larsson & Patriksson 1995) — an augmented-Lagrangian whose multipliers are the queueing tolls at binding links; reduces exactly to UE when nothing binds |
-| Asymmetric-VI UE | `vi-asym` non-separable cost `t(v) = t_BPR(v) + Cv` with an asymmetric interaction `C ≠ Cᵀ`, solved by Dafermos diagonalization — a variational-inequality equilibrium that minimizes no potential, so no Beckmann/Frank–Wolfe solver reaches it (Dafermos 1980; Smith 1979) |
-| Learned (black box) | `learned-surrogate` a ridge volume/capacity surrogate — the ML-wrapper demonstrator · `implicit-ue-nn` Liu et al.'s (2023) implicit-NN UE (a lean torch variant): a monotone MLP cost head inside a differentiable logit route-choice fixed-point layer, trained by an exact IMD/adjoint hypergradient — its output is demand-feasible **by construction** (unlike the censored ridge), earning a real certified gap a converged solver still beats · `het-gnn` Liu & Meidani's (2024) heterogeneous GNN (a lean torch variant): hand-rolled typed message passing over real + virtual OD edges with size-agnostic node-kernel features, emitting **two** certified checkpoints — the paper-faithful raw flow/capacity prediction (censored: soft conservation is not a constraint) and a flagged repo-extension route-decode that recovers demand feasibility *(both require `pip install tabench[torch]`)* |
-| External simulator (adapter) | `sumo-marouter` SUMO's macroscopic `marouter` assignment (Lopez et al. 2018) wrapped as a benchmark model — the first Phase-4 external simulator: a fixed-demand `power=1` scenario is compiled to a SUMO network (marouter's cost law is a hardcoded linear-in-flow class function, matched to the BPR to machine precision on representable links, with two documented representability floors), run to stochastic-UE convergence, and its per-edge flows certified under the *declared* BPR costs — an industrially converged assignment that is perfectly demand-feasible yet certifies a real, small mapping gap (Braess ~1.7e-4) *(requires `pip install tabench[sumo]`)* · `dtalite-tap` the PyPI `DTALite` wheel's static Frank–Wolfe `assignment()` (Zhou & Taylor 2014) — the second external engine, whose per-link BPR VDF maps the repo cost **exactly** (the compile map is the identity, so BPR `power=4` encodes directly — the first external engine on the Sioux Falls power-4 ladder), the emitted flows certified under the declared BPR: the gap freezes at the engine's Armijo line-search stall (Braess ~1.2e-2, Sioux Falls ~5.0e-3), a converged `bfw` beats it by orders of magnitude — the honest wheel-engine-as-shipped, not a mapping floor *(requires `pip install tabench[dtalite]`)* |
-| OD estimation (T2) | `vzw-entropy` · `gls` (Cascetta 1984) · `spiess` gradient (Spiess 1990) · `spsa` (Spall 1992) · `od-congested` bilevel ODME on congested networks (Yang et al. 1992) · `od-kalman` Davis–Nihan (1993) linear-Gaussian estimation from a *time series* of counts — whitens by the DN cross-link covariance and an AR(1) effective-sample-size (`τ`) correction, the first estimator to use the counts' covariance and day-to-day autocorrelation rather than their mean · `prior` stale-prior baseline |
-| Dynamic OD estimation (T2, within-day) | `od-dynamic-sim` / `od-dynamic-seq` (Cascetta, Inaudi & Marquis 1993) — recover the `(H, Z, Z)` departure-slice OD *profile* from time-sliced link counts linked by a frozen **exogenous** free-flow lag map; the simultaneous GLS solves all slices jointly (efficient), the sequential GLS slice-by-slice with earlier estimates frozen (online-capable, provably less efficient). The time axis is the *signal*, distinct from `gls` (time = replication) and `od-kalman` (time = day-to-day noise); certified by an exact bfw-free linear map · `prior-profile` baseline |
+```text
+TABenchmark/
+├── src/tabench/           # the package (core is numpy/scipy-only)
+│   ├── core/              # Scenario (frozen, content-hashed), Capabilities, Budget, Trace, RNG
+│   ├── data/              # TNTP parser; checksummed on-demand fetchers (-> ~/.cache/tabench)
+│   ├── models/            # road assignment models: AON/MSA/FW/CFW/BFW, bush & path UE, SUE,
+│   │   │                  #   SO, elastic, combined, day-to-day, BR/side-constrained/VI,
+│   │   │                  #   multiclass, learned surrogates
+│   │   └── adapters/      # CallableModel wrapper; external engines (sumo-marouter, dtalite-tap)
+│   ├── observe/           # observation processes: FullOD, LinkCounts, StalePriorOD + identifiability
+│   ├── estimation/        # T2 OD estimation: entropy, GLS, Spiess, SPSA, Yang'92, DN-Kalman,
+│   │                      #   within-day dynamic (Cascetta'93), guarded spsa-sumo
+│   ├── metrics/           # the certifiers — every scored metric recomputed here from emitted flows
+│   ├── experiments/       # T1 grid + T2 estimation runners, provenance manifests, profiles
+│   ├── dnl/               # dynamic network loading: CTM, LTM, Godunov, Tampère node model
+│   ├── dta/  tdta/  bottleneck/  # analytical & time-dependent DTA: Merchant–Nemhauser,
+│   │                      #   Ziliaskopoulos LP, Vickrey, VI-DUE, Peeta–Mahmassani
+│   ├── transit/           # Spiess–Florian optimal strategies
+│   ├── newell/            # three-detector traffic-state estimation
+│   ├── edoc/              # external-dynamic-engine observational certificate (adr-036/037)
+│   ├── viz.py             # plotting helpers ([viz] extra)
+│   └── cli.py             # tabench fetch | list | run
+├── scenarios/             # declarative YAML scenario cards (ladder 0braess → 4winnipeg, + xu2024;
+│                          #   bo4mob is fetch-and-cite, registered separately — not a YAML card)
+├── tutorials/             # 53 numbered notebooks, simple → complex: one stripped, certified
+│                          #   notebook per unit (<NN>-track/<MM>-unit.ipynb; executed on the docs
+│                          #   site, bar the engine-gated torch/sumo/dtalite pages)
+├── demos/                 # demo_quickstart.py, demo_profiles.py
+├── tests/                 # 1000+ tests: analytic anchors, published-oracle regressions (pytest -q)
+├── tools/                 # doc generators (model compendium, references, evolution graph)
+├── docs/                  # architecture, model compendium, validation, roadmap, references, 37 ADRs
+└── CITATION.cff, LICENSE  # MIT
+```
 
-## What ships
+Orientation facts (for humans and agents):
 
-| Component | Contents |
-|---|---|
-| Core | `Scenario` (frozen, content-hashed; optional SUE dispersion `θ`; optional `ElasticDemand`), `Capabilities`, `Budget` (incl. Boyce-style convergence target), `Trace`, spawn-key RNG schema |
-| Data | Defensive TNTP parser, commit-pinned checksummed fetcher, per-network units metadata; scenario ladder Braess → Sioux Falls → Anaheim → Barcelona → Winnipeg, plus built-in analytic anchors (two-route logit-SUE, two-route probit, elastic two-route); and the **cross-domain axis** — Xu et al. (2024) real US-city instances via HTTP-range download-on-demand of only the AequilibraE trio (Honolulu + San Francisco as CI-sized rungs, 15 more local-only), shipped AS-PUBLISHED with the wrong-centroid defect documented and the published flows a *loose* reference, not a best-known oracle ([ADR-033](docs/design/adr-033-xu2024-dataset.md)); and the **BO4Mob scenario family** — the lab's own NeurIPS-2025 San Jose freeway OD-estimation instances (`UMN-Choi-Lab/BO4Mob`, MIT), hosted as *scenarios/data only* under a dual-benchmark honesty contract (never validation of TABench methods; the paper's numbers never claimed — a measured SUMO 1.12→1.27.1 engine drift), a separate commit-pinned checksummed fetcher for the four small instances with `5fullRegion` (74 MB, ~11 h/eval) metadata-only, plus a guarded mesoscopic-SUMO pipeline-liveness smoke ([ADR-034](docs/design/adr-034-bo4mob-scenarios.md)) |
-| Models | 31 assignment models across the roster above: baselines, link-based UE, path/bush-based UE (gradient projection, origin-based, Algorithm B, TAPAS), stochastic UE, system optimum, elastic demand, combined distribution+assignment, day-to-day dynamical systems (route-swap toward UE, its logit-SUE variant, link-based, route-space projected-gradient, Horowitz cost-smoothing SUE, Cascetta's finite-population stochastic process, and the Cantarella–Cascetta unifying cost-learning + choice-inertia process), a boundedly-rational band equilibrium, a side-constrained capacitated equilibrium, an asymmetric-VI non-separable-cost equilibrium, a multiclass-user equilibrium (Dafermos 1972: per-class demand + class-coupled costs, certified by a class-summed VI residual), a learned surrogate, and — the two **torch** models, behind the optional `[torch]` extra — an implicit-NN UE (Liu et al. 2023, a lean variant: a monotone MLP cost head in a differentiable logit route-choice fixed-point layer, trained by an exact IMD/adjoint hypergradient, demand-feasible by construction) and a heterogeneous GNN (Liu & Meidani 2024, a lean variant: hand-rolled typed message passing with size-agnostic node-kernel features, emitting a censored paper-faithful raw flow prediction and a flagged repo-extension route-decode that recovers demand feasibility) — and, behind the optional `[sumo]` extra, the first external-simulator adapter `sumo-marouter` (Lopez et al. 2018: SUMO's macroscopic `marouter` assignment compiled from a `power=1` scenario and certified under the declared BPR costs, with the mapping-floor semantics of its hardcoded linear cost law made explicit) and — behind the optional `[dtalite]` extra — the second external engine `dtalite-tap` (Zhou & Taylor 2014: the PyPI `DTALite` wheel's static Frank–Wolfe `assignment()`, whose per-link BPR VDF maps the repo cost *exactly* so BPR `power=4` encodes directly — the first external engine on the Sioux Falls power-4 ladder — the emitted flows certified under the declared BPR at the engine's line-search-stall floor, a converged `bfw` beating it) — mixing freely in one experiment matrix via the `CallableModel` adapter; **plus**, in its own parallel module, a **transit** optimal-strategy model (Spiess & Florian 1989: uncongested frequency-based hyperpaths on a directed transit multigraph, certified by an LP optimality gap) |
-| Metrics | Certified relative gap / average excess cost / Beckmann objective; certified SO gap + price of anarchy + first-best tolls (Yang & Huang 1998; Roughgarden & Tardos 2002); SUE fixed-point residual — closed-form for logit ([ADR-001](docs/design/adr-001-logit-sue-dial-certificate.md)), pinned-Monte-Carlo with noise floor for probit ([ADR-003](docs/design/adr-003-probit-sue-mc-certificate.md)); route-flow proportionality diagnostic for TAPAS ([ADR-004](docs/design/adr-004-proportionality-certificate.md)); demand-recomputing gap for elastic demand ([ADR-005](docs/design/adr-005-elastic-demand.md)); a gravity-recomputing gap for combined distribution+assignment ([ADR-007](docs/design/adr-007-combined-distribution-assignment.md)); a necessary indifference-band acceptability check for boundedly-rational UE ([ADR-008](docs/design/adr-008-boundedly-rational-ue.md)); an exact link-capacity feasibility check for side-constrained UE ([ADR-009](docs/design/adr-009-side-constrained-ue.md)); a demand-aware feasibility audit and flow RMSE vs. best-known throughout |
-| Observe | `FullOD`, `LinkCounts` (sensor mask × periods × noise), `StalePriorOD`, Hazelton identifiability check |
-| Estimation (T2) | OD estimation from link counts under a pinned-assignment certificate ([ADR-002](docs/design/adr-002-t2-estimation-certificate.md)): VZW entropy, Cascetta GLS, Spiess gradient, SPSA, the Yang et al. (1992) bilevel congested-network estimator (`od-congested`), the Davis–Nihan (1993) linear-Gaussian time-series estimator (`od-kalman`, [ADR-012](docs/design/adr-012-dn-kalman.md); a new `DayToDayCounts` observation level emits the DN large-population VAR(1) count series it consumes), and a stale-prior baseline; held-out sensors rank, identifiability reported per task. **Within-day dynamic** OD estimation (Cascetta, Inaudi & Marquis 1993, `od-dynamic-sim`/`od-dynamic-seq`, [ADR-023](docs/design/adr-023-od-dynamic.md); a new `DynamicLinkCounts` level and a bfw-free **exact** linear certifier that regenerates the frozen free-flow lag map from the hashed recipe) recovers the `(H, Z, Z)` departure-slice profile — the estimand is the time axis itself |
-| Learned models | The wrapper, certificate, and lineage gate a learned model plugs into ([ADR-006](docs/design/adr-006-learned-model-certification.md)) — trained on a synthetic family, evaluated on disjoint TNTP networks |
-| Experiments | Grid runner (T1) + estimation runner (T2), CSV results, full provenance manifests |
-| Validation | Per-model provenance report ([docs/VALIDATION.md](docs/VALIDATION.md)) tying every solver to an independent oracle: published best-known flows, cross-solver agreement, and exact analytic anchors |
-| Tests | 817 numpy-core tests (torch-free), plus 37 torch tests for `implicit-ue-nn` (18) and `het-gnn` (19) in a dedicated CI job, plus 30 `sumo-marouter` tests in a fourth CI job (the Braess mapping floor and a MANDATORY cost-matched anchor separating the mapping floor from solver error, the asymmetric two-route UE-approx with bfw strictly better, byte-determinism with the seed on the command line, the honest negative controls — incremental is a much worse gap, UE/gawron/lohse refused — the capability-refusal gates including power-4 Sioux Falls, the wall-timeout kill, temp-dir hygiene, multi-OD mass conservation, the representability-floor closed forms, and the three-lens adversarial-review regressions: the compile read-back catching netconvert's 0.1 m min-length clamp, the OD-window sizing that keeps a high-demand assignment from collapsing to free-flow, toll and lane-explosion refusals, the compile-phase wall budget, and the empty/multi-interval netload guards; adr-027), and 13 `spsa-sumo` tests in that same fourth CI job (the first guarded T2 estimator — SPSA calibrating demand in a real `marouter` loop certified through the UNCHANGED pinned-bfw certifier: a pinned-seed clean-count recovery anchor with a loose improves-on-prior bound, a poisson negative-control disclosing that anchor's noise fragility, the `sp_calls`-only refusal and `sp_calls=0` disclosure, the adapter-delegated power/toll envelope refusals, bit-reproducibility with macrorep divergence, the wall-kill RuntimeError, the box-binding projection regression that pins emitted==evaluated==in-box and fails under a clip-removal mutation — the three-lens review's confirmed P1 fix — and sparse checkpointing; adr-028), and 26 `dtalite-tap` tests in a fifth CI job (the second external engine — the PyPI `DTALite` wheel's static Frank–Wolfe `assignment()` whose per-link BPR VDF maps the repo cost via the IDENTITY compile map, certified under the declared BPR at the engine's Armijo line-search floor: the Braess convergence floor and the MANDATORY cost-matched anchor proving the engine's own `travel_time` equals the repo BPR at the emitted flows on every link, the two-route exact deterministic UE needing no theta calibration, the Sioux Falls power-4 marquee — the first external engine on the power-4 ladder, a converged `bfw` beating its floor — the iterations=1 near-AON worse-gap control with `RG(1) > RG(100)`, byte-determinism, the read-back gate, the capability/`sp_calls`-only/wall-timeout refusals, temp-dir hygiene, and the banner-suppression + core-install guard unique to this adapter — `import tabench` prints nothing and the model unregisters when `DTALite` is blocked; adr-029): analytic Braess UE/SO and two-route logit/probit/elastic oracles, a symmetric-bipartite combined distribution+assignment oracle (with the certificate's aggregate-multicommodity limitation pinned transparently), the day-to-day route-swap convergence + Beckmann-Lyapunov monotonicity, its logit-SUE sibling reaching the analytic logit fixed point with a monotone Fisk-Lyapunov objective (with its two honestly-scoped hard-network limits pinned: the now-exposed efficient-set enumeration cap and the never-pruned-stale-route exact rest point that plateaus O(1) above sue-msa), the link-based day-to-day invariance (link flows stay in the OD polytope every day) reaching the same certified UE as the route-swap dynamics — plus a regression pinning its live-cost Gauss-Seidel inner solve, which must recompute the proximal path costs before each shift or the default config stalls short of UE on overlapping high-curvature instances, the route-space projected-gradient (Friesz) day-to-day reaching that identical certified UE with a hand-checked projection-step direction, an exact demand-conserving simplex projection, and an Armijo-backtracking monotone-descent regression, the Horowitz cost-smoothing day-to-day SUE converging to the analytic logit split below its stability threshold and settling into a period-2 limit cycle above it, the Cascetta stochastic-process day-to-day (sampled-load unbiasedness at CLT tolerance, per-day demand feasibility, persistent daily variability shrinking O(1/√N) in population, seeded byte-reproducibility with independent macroreps, the burn-in soft handoff, and its task-dependent stability + certificate-amplification adversarial regressions), the Cantarella–Cascetta unifying day-to-day process recovering *both* anchor limits (the Wardrop UE and the analytic logit-SUE split) with exact reductions to `dtd-horowitz` at `α=1` and to `msa` at `w=1, α=1` pinned to float precision, plus its re-derived joint `(α, w)` flip boundary — no inertia limit-cycles, either form of inertia converges, bracketing Horowitz's `w* ≈ 0.81` at `α=1`, the boundedly-rational two-route band edge (and its necessary-not-sufficient certificate); the dynamic-network-loading core primitives (fundamental diagrams, link/node-model axioms, time-varying demand, loader, and DNL certificates) — including the gated-review C6/C8 certificate hardening (C6 free-flow reformulated as the per-vehicle travel-time restatement of the C4 envelope, a redundant belt-and-suspenders cross-check honestly scoped gating-complete only at CFL=1; C8 turning-fraction fidelity now gating every diverge's split `d_in[out_j] = Σᵢ frac[i,j]·d_out[in_i]` — the review caught that the 1-in-only draft silently certified a gross multi-in merge-diverge violation); the Daganzo (1994) cell transmission model (`ctm`: the first DNL `LinkModel`, Godunov cell dynamics at CFL=1 — free-flow translation `n_out(t)=n_in(t−L/vf)` bit-exact, a queue-spillback anchor reproducing the Rankine-Hugoniot shock speed `−0.5` with exact bottleneck boundary curves and the congested density `κ−q_B/w=3.5`, backward-wave diffusion correctly left non-gating Tier-B); the Yperman (2007) link transmission model (`ltm`: the second DNL `LinkModel`, the stateless Newell-Daganzo cumulative-curve method — free-flow bit-exact, reproducing CTM's symmetric-bottleneck curves byte-for-byte, an asymmetric `w<vf` spillback with RH speed `−0.25`/shock-to-`x=0`-at-`t=18`, and — its concrete advantage over CTM — running on a non-cell-aligned grid `L/vf=1.5` where CTM raises; both primaries open and read, with the Yperman signed-`w` vs `wave_speed>0` sign convention pinned); the Tampère et al. (2011) generic first-order node model (`node-model`: the general merge/diverge solver — oriented-capacity-proportional distribution with FIFO hold-back, satisfying node axioms N1–N6 — that unlocks network loading, so `ctm`/`ltm` now run on arbitrary junctions; merge `[2/3,1/3]`, diverge FIFO `[0.6,0.4]`, and 2×2 `[[105/37,45/37],[80/37,120/37]]` anchors, N6 invariance, a 300-case axiom fuzz, and end-to-end merge/diverge scenarios certified through the loader with C8 turn fidelity ~0); the Lebacque (1996) Godunov scheme (`godunov`: the general-FD Godunov cell scheme on the benchmark's first non-triangular fundamental diagram — the smooth parabolic `GreenshieldsFD` `Q(k)=vf·k(1−k/κ)` — so it captures the first rarefaction physics in the suite: the transonic Godunov flux `min(demand,supply)=q_max` at the sonic point, a Greenshields loading certified through the loader with the triangular-majorant envelopes sound on the concave FD, and a dam-break rarefaction converging to the analytic self-similar fan as the cells refine, CTM being its triangular special case); the Vickrey (1969) single-bottleneck departure-time equilibrium (`vickrey`: the first departure-*time* equilibrium and the entry of the analytical-DTA track, in a parallel `bottleneck/` module — the closed-form UE queue-build/dissipate schedule certifying `equilibrium_gap=0` (every used departure time exactly `C*=βγ/(β+γ)·N/s`) while the system optimum, which meters at capacity with no queue, certifies a *positive* gap because it is not a departure-time equilibrium, giving the classic price of anarchy `=2` for any `β,γ`; the P1 certifier recomputes the point queue + generalized costs from the *emitted* departure curve alone); the Merchant & Nemhauser (1978) exit-function SO-DTA (`merchant-nemhauser`: the first network DTA model, in a parallel `dta/` module — two hand-derived anchors machine-verified with exact LP-duality certificates: a parallel-route instance whose SO optimum 10 meters the fast link at capacity, and a series instance where *holding back* is strictly optimal — the Carey(1987)-relaxed optimum 18 beats the naive M-N equality dynamics' 22 — with the P1 certifier recomputing conservation/node-balance/exit-bounds/terminal clearance and total cost from the emitted trajectory, resolving the canonical-LP optimum harness-side for `so_optimality_gap`, and verifying emitted dual certificates by pure arithmetic — forged duals are reported, never believed; hardened by a three-lens adversarial review that CONFIRMED a critical aggregate-tolerance teleport, a negative-occupancy shadow-shift undercut, and an unclearable-scenario scoring crash — all fixed with two-scale mass-budget gates, clamped-cost scoring, a weak-duality undercut censor, and eager reference-optimum resolution, each regression-pinned); the Ziliaskopoulos (2000) LP SO-DTA on CTM cells (`lp-so-dta`: the CTM min-flux relaxed to four linear constraint families — the hand-derived diverge/spillback anchor J*=26 whose one-vehicle bottleneck cell is jam-full in every optimum (the storage pair lemma; relaxing it to two vehicles gives 25, a finite-storage effect the M-N exit-function model cannot express), LP traffic-holding demonstrated on the optimal face and reported as a Tier-B `holding_max` diagnostic, a strict-CTM rollout attaining the LP bound, and the control-free corridor whose LP optimum equals the repo's own `CTMLink`/`NetworkLoader` loading exactly — with the `CellSODTAEvaluator` inheriting the full adr-020 two-scale/undercut-censor hardening plus pure-arithmetic dual certificates; its own three-lens adversarial review then CONFIRMED a critical initial-condition teleport (the one gate missing an aggregate budget — 495x tol of gap hidden by deleting trickle-source vehicles at t=0), a false-censor class (demand pulses into finite-storage sources made the certifier reject the solver's own optimum), and scale-blind dual reporting — all fixed and regression-pinned, while the formulation survived full independent re-derivation: 5584 strict-CTM rollouts never beat the LP bound and dual forgery is blocked by the dual LP's own maximum equalling Z*); the Friesz et al. (1993) VI dynamic user equilibrium (`vi-due`: the simultaneous route-and-departure-time DUE closing the analytical-DTA track — each used route runs its own Vickrey equilibrium at the common cost level `C=(δN+αΣs·f)/Σs` (greedy used-set; worked instance C=0.9, split 5250/750, total 5400, both-used threshold N>3750), the single-route `f=0` reduction reproducing the shipped `vickrey` model exactly (cross-certified by the adr-019 evaluator at 1e-13), and the `DUEEvaluator` scoring per-traveler level-inverted costs against a marginal-insertion reference scan over EVERY route — which rejects the route axis's own false equilibrium: all-on-one-route equalizes its used costs at 1.0 while the idle route's insertion costs 0.7, scored at exactly gap 1/3; hardened by a TWO-round adversarial review — the numerics lens caught a grid-horizon-dependent served-curve extension (same plan scored 25.6× differently), a greedy float-underflow C=inf, and a catastrophic-cancellation split, then the re-run soundness+formulation lenses independently converged on a CRITICAL false-accept: a solver-stretched grid hull diluted the marginal-insertion sweep until a truncated-isocost profile in which every traveler could improve 20% certified due_gap=0.0 — all fixed by an EXACT served-curve reconstruction (interior queue-clearing kinks inserted analytically) and an EXACT kink-enumerated reference minimum (pullbacks of served-curve levels + queue-vanishing zeros of A(t)−S(t+f)), plus a tiny-N −inf censor and a float64 conditioning gate, each regression-pinned); the Peeta & Mahmassani (1993/1995) time-dependent SO/UE assignment (`pm-td-ue`/`pm-td-so`: the first iterative simulation-based TD route equilibrium, in a parallel `tdta/` module — fixed-departure route choice, MSA over an enumerated per-OD path set, the repo's own CTM/LTM loading substituted for the licensing-deferred DYNASMART (adr-030) as the constraint evaluator; the model emits only its decision variable (`TDPathFlows`, per-path per-departure-interval flow) and the harness reruns its own per-path loading — a private first link per path plus `TampereNode` merges on an interior-diverge-free topology that keeps per-commodity experienced times exactly decidable — scoring `tdue_gap` (the experienced-time route-swap residual, 0 iff the discrete Wardrop conditions hold, the reference minimum scanning EVERY declared path) and `so_bound_gap` (`(TSTT−Z*)/Z*` against the `lp-so-dta` LP optimum on the CTM-cell instance derived from the same grid); anchors derived from scratch since the paper's 50-node DYNASMART numerics are engine-bound/irreproducible — a single-path corridor whose loaded TSTT equals the ADR-021 `zil_corridor` optimum 33 exactly through the new loader, a symmetric diamond whose exact TD-UE certifies `tdue_gap=0` (all-on-one control 0.75, the hidden-cheap-path family), an SO≠UE wedge where the SO split attains the LP bound and beats the UE TSTT (23 < 24 — the paper's headline made executable), a merge for attribution, `ltm==ctm`, and the aggregate loader passing `dnl_gaps` C0–C8 as a free oracle; the MSA solvers are non-certified (the certifier arbitrates, emitting the best iterate); primary READ IN FULL, single class, fixed departures, NOT rolling-horizon); the Yang (1992) bilevel OD-estimation-on-congested-networks estimator (closed-form θ-weighted anchor, the prior↔count θ spectrum, and congested-fixed-point recovery of the equilibrium-consistent truth); the Dafermos (1980)/Smith (1979) asymmetric-VI UE with non-separable costs (hand-derived asymmetric anchor whose equilibrium differs from BOTH the plain-UE and the symmetrized-Beckmann split — a flow no potential-minimizing solver reaches — with the VI residual harness-recomputed at the asymmetric cost and reducing exactly to Frank-Wolfe UE when the interaction vanishes); the Davis–Nihan (1993) linear-Gaussian time-series OD estimator (`od-kalman`: the two-route DN cross-link covariance closed form `(D²/N)·p_A·p_B` with same-route/cross-route sign structure, the single-sensor DN-GLS closed form, the AR(1) `τ = (1+ρ)/(1−ρ)` effective-sample-size factor recovered from the count series, UE-centered day-to-day counts whose fluctuation shrinks O(1/population), and planted-demand recovery — distinct from `gls` in both the off-diagonal covariance whitening and the temporal correction); the Dafermos (1972) multiclass-user equilibrium (`multiclass`: hand-derived symmetric/integrable and asymmetric/genuine-VI two-class anchors recovered exactly — cars and trucks routing distinctly — with the class-summed VI residual harness-recomputed from the emitted per-class flows, a per-class conservation audit, and censoring of an aggregate-only flow; the additive `class_link_flows` contract leaving the golden Braess hash byte-identical); the Spiess & Florian (1989) transit optimal strategies (`transit-strategy`: the two common-lines anchors recovered exactly — both lines attractive → 24 min with a 2:1 frequency split, and the attractiveness threshold excluding a slow line → 21 min all on one line — a multi-leg interchange, a deterministic-walk-dominates case, the primal-dual identity `Z_emitted = Z*`, and a multi-destination shared-node scenario plus a near-zero-frequency parasite-arc guard (both adversarial-review CRITICALs, fixed to a per-destination LP-minimal-wait `w_i = maxₐ vₐ/fₐ` certificate that keeps the optimality gap provably ≥ 0), in a parallel module that leaves the road suite and golden hash byte-untouched); the Cascetta, Inaudi & Marquis (1993) within-day dynamic OD estimator (`od-dynamic-sim`/`od-dynamic-seq`: five hand-derived closed-form anchors recomputed in-test — an integer-lag reduction to the static gls closed form (simultaneous == sequential), the fractional-lag instance where the simultaneous estimate strictly dominates the sequential componentwise `(128/35, 142/35)` vs `(16/5, 94/25)` against truth `(4,6)`, a pure-math pin with the sequential-minus-simultaneous covariance gap exactly rank-1 PSD (eigenvalues `{0, 17/220}`, a test-local derivation, no shipped covariance API), a mean-collapse distinctness witness proving it is not a `gls` rename, and the two new identifiability edges — cross-slice temporal confounding (held-out sensors share the lag structure, so a count-invariant shift fools the held-out column too) and horizon truncation (demand dumped into an unobservable last slice is count-invariant) — both gating `od_identifiable`; a bfw-free exact linear certifier that regenerates the full-network free-flow lag map from the hashed recipe, plus registry-separation, seeded byte-reproducibility, map determinism + task-hash sensitivity, and a pinned static-T2 task hash; golden Braess hash `cf00f411…` byte-identical; its three-lens adversarial review CONFIRMED a MAJOR count-invisible off-support-demand family beyond the documented confound/truncation surfaces (dumped demand on inactive OD cells certified byte-identical count columns to the truth — now censored), a MAJOR harness hang at prior_var_floor=0, and five MINORs (diagonal-inflated negativity tolerance — fixed in the static certifier too for parity, unvalidated map-recipe dial, toll-shifted crossing lags, an unhashed pairs payload, and a float SVD rank sold as exact — now gated on a documented sigma_min floor) — all fixed and regression-pinned, while both estimators survived 2300 random instances against independent from-scratch implementations with zero disagreements); the Newell (1993) three-detector interior reconstruction (`newell-3det`: the benchmark's FIRST traffic-state-estimation task, in a parallel `newell/` module — given noisy/partial boundary detector curves, reconstruct the interior cumulative field `N(x,t)=min(N_up(t−x/vf), N_dn(t−(L−x)/w)+κ(L−x))` at a fixed hashed query grid, scored against the harness-regenerated closed-form min; five hand-derived anchors — free-flow exactness, an asymmetric interior Rankine-Hugoniot shock whose min-switch is the hand-computed crossing `x=2 at t=10`/density `k_B=κ−q_B/w=2.5` (with the `+(L−x)/w` wrong-sign variant machine-caught moving the switch to `t=14`), LTM==CTM byte-for-byte on the aligned symmetric bottleneck (cross-model truth), a seeded Gaussian-reading noisy card where the isotonic-then-min estimator strictly beats the naive running-max baseline `1.093 → 0.448` (the acceptance test the ranked task is not a formula evaluation), and a masked-upstream observability edge where the congested branch alone pins the interior exactly where active; the `ThreeDetectorEvaluator` gates emission-alone validity (finite/zero-start/non-negativity/running-max total-retraction) while the pairwise Newell envelopes stay non-gating Tier-B — a legitimate noisy estimate violates them at noise scale, so gating false-censors the honest baseline, the repo's own C4-gating/C5-Tier-B split; the clean level is an oracle row never ranked, the truth recipe never reaches the model-visible payload, and Newell's LOADING content already ships as `ltm` so this ships the INTERIOR minimum principle as state estimation, not a third `LinkModel`; its three-lens adversarial review CONFIRMED three MAJORs with one root cause — masked-window branch-dropping made the honest reconstruction non-monotone (C3 false-censored BOTH reference baselines on 125/514 fuzzed windowed scenarios) and doubly-masked cells emitted inf (C0 whole-field false-censor) — fixed at the root by a suffix-min repair (the tightest nondecreasing upper bound consistent with the retained branches, identity on fully observed data), plus a degenerate-rankable constructor guard (gaussian sigma=0 was RANKED while the formula scores exactly 0) and five MINORs (infinite vehicle scale neutering every gate + enabling a confirmed hash byte-migration collision — now finite-gated and length-framed; apex-clipped metering; Poisson sampling bound; max-drop retraction convention; truth-exactness scoped to grid-aligned recipes) — all regression-pinned, while the formula survived independent re-derivation + a from-scratch Godunov cross-check on 200 random instances (adr-024)); the Peeta & Mahmassani (1995) time-dependent SO/UE assignment (`pm-td-ue`/`pm-td-so`, the first iterative simulation-based TD route equilibrium — the single-path corridor whose per-path-loaded TSTT equals the ADR-021 `zil_corridor` LP optimum 33 exactly (the derived cell scenario byte-identical to `zil_corridor`), the symmetric diamond certifying `tdue_gap=0` at 50/50 with the all-on-one control at hand gap 0.75, the SO≠UE wedge where the SO split attains the LP bound and beats the UE TSTT (23 < 24), the merge attribution anchor, `ltm==ctm`, the aggregate loader passing `dnl_gaps` C0–C8 as a free oracle, the two-scale demand-match/negative/retraction/stranded-flow censor gates, the multi-destination no-SO-bound path, the interior-diverge rejection, and the MSA convergence envelope — adr-031); best-known-solution regressions on Sioux Falls, Anaheim, Barcelona, Winnipeg; cross-family solver agreement; the Eckman et al. (2023) SimOpt-style progress-curve and solvability-profile diagnostics (`experiments.profiles`, adr-032, ~48 closed-form tests: the strict-`<` crossing at a knot, censored entries staying in every cdf denominator, the SimOpt-exact exclusive β-quantile checked against `statistics.quantiles` (with the censoring-robust opt-in and the flat-zero-into-the-censored-tail cases pinned), inf-honest quantiles/bootstrap bands/difference profiles (never NaN), the full-cross-design refusal for incongruent model sets, the metric-threaded axis guard, the all-static-SO default, T2-schema and overshoot-censoring guards, union-mesh mean/quantile aggregation, the Moré–Wild data-profile staircase across two scenarios, byte-deterministic functional bootstrap bands, the braess {msa: 5, fw: 24, bfw: 4} α-solve-time regression, and the strict-RFC-8259 `profiles.json` (`"Infinity"` string) round-trip — pure post-hoc arithmetic over the certified rows, redeeming the P5/P6 profile promise with the golden Braess hash byte-identical); conjugacy-identity and golden-hash regressions |
+- Every scored metric is computed in `src/tabench/metrics/`, never by a model; model
+  self-reports are provenance only.
+- Scenarios are frozen and content-hashed; benchmark networks are fetched on demand,
+  SHA-256-checksummed, cached under `~/.cache/tabench`, and never redistributed.
+- Tests: `pytest -q` (numpy core needs no extra). CI runs a py3.10/3.12 core matrix
+  plus dedicated `torch`, `sumo`, `dtalite`, and `docs` (site build, warnings-as-errors) jobs.
+- Optional-extra models register only when their extra is installed; `import tabench`
+  stays numpy/scipy-only either way.
 
-The certified solver ladder on Winnipeg (147 zones, 2,836 links; iterations to
-self-monitored relative gap 1e-4, then the externally certified gap at a fixed
-100-iteration budget):
+## Models, leaderboard, validation
 
-| model | iters to RG 1e-4 | certified gap @ 100 iters |
-|---|---|---|
-| aon | – | 3.2e-01 |
-| msa | – | 1.4e-03 |
-| fw  | 161 | 2.2e-04 |
-| cfw | 70 | 5.6e-05 |
-| bfw | 57 | 2.8e-05 |
+The full roster — road assignment across five decades, day-to-day dynamics, a transit
+optimal-strategy model, static and within-day-dynamic OD estimators, and DNL/DTA/state-
+estimation tracks — ships today, each certified by the same harness and validated against
+an independent oracle (analytic anchors, published best-known flows, cross-solver agreement).
 
-The staged roadmap toward the full canon (DTA, dynamic network loading, day-to-day
-dynamics, engine adapters, and the T3 intervention track) is in
-[docs/ROADMAP.md](docs/ROADMAP.md).
+- What each model does and its lineage: [docs/MODELS.md](docs/MODELS.md) ·
+  [evolution graph](docs/model-evolution.svg)
+- Certified results and per-model oracles: [docs/VALIDATION.md](docs/VALIDATION.md)
+- Staged plan toward the full canon: [docs/ROADMAP.md](docs/ROADMAP.md)
 
-## Why it is trustworthy
+## Documentation
 
-TABenchmark rests on nine design principles ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md));
-four carry the most weight:
-
-- **P1 — the certificate principle.** The harness, never the model, computes every scored
-  metric. The relative gap is a property of `(link_flows, scenario)`, so a 1975 Frank–Wolfe
-  and a 2025 GNN share one leaderboard, and a black box cannot self-report its way to the top.
-- **P2 — scenarios are data.** Every `Scenario` is frozen and content-hashed; a silently
-  edited network cannot masquerade as the benchmark instance.
-- **P7 — fairness is enforced by the harness.** Training-lineage gates block evaluating a
-  model on a scenario it was trained on; budgets count work, not wall-clock.
-- **P9 — data are fetched, never vendored.** Networks are downloaded on demand, checksummed
-  at fetch, and regression-tested against published best-known objectives — no dataset is
-  redistributed.
-
-Each model is additionally validated against an **independent oracle**, not just its own
-gap ([docs/VALIDATION.md](docs/VALIDATION.md)): the UE solvers converge to the published
-best-known link flows and agree with one another across algorithm families (link-based,
-path-based, bush-based, PAS-based); the Sioux Falls best-known flows reproduce the
-Transportation Networks published optimal Beckmann objective (`42.31335287107440`) to full
-precision; and the Braess network pins the exact UE (route cost 92), the system optimum
-(route cost 83), and the price of anarchy (`≈ 1.108`).
+The docs site (<https://tabenchmark.readthedocs.io>) carries the tutorials rendered and
+**executed at build** (bar the engine-gated torch/sumo/dtalite pages, which render
+un-executed), the design principles, the CLI reference, leaderboards, and data licensing.
+Canonical sources in-repo: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (design principles
+P1–P9 and the object model), [docs/REFERENCES.md](docs/REFERENCES.md) (verified reference
+canon, BibTeX in [docs/references.bib](docs/references.bib)), and 37 architecture decision
+records in [docs/design/](https://github.com/UMN-Choi-Lab/TABenchmark/tree/main/docs/design)
+(also in the site sidebar). The one PI-only step to connect the repo to
+readthedocs.io is [docs/RTD_SETUP.md](docs/RTD_SETUP.md).
 
 ## Data licensing
 
-Benchmark networks come from
-[TransportationNetworks](https://github.com/bstabler/TransportationNetworks), donated
-for academic research. TABenchmark **never redistributes** these files: they are fetched
-on demand from a commit-pinned URL, verified against SHA-256 checksums, cached locally,
-and cited (`tabench fetch <scenario>` prints the citation). The package code is MIT.
-
-The **cross-domain axis** ([ADR-033](docs/design/adr-033-xu2024-dataset.md)) adds the
-real US-city instances of Xu et al. (2024), *A unified dataset for the city-scale traffic
-assignment model in 20 U.S. cities* (Scientific Data 11:325, DOI
-[10.1038/s41597-024-03149-8](https://doi.org/10.1038/s41597-024-03149-8), data on figshare
-under **CC BY 4.0**). Same P9 discipline: only the per-city AequilibraE trio is fetched —
-by HTTP byte-range extraction of exactly three members of the 276 MB zip, so a single-city
-load transfers ~1–4 MB, never the whole archive — checksum-verified and cited. 17 of the 20
-cities ship (three are excluded and named for an internal centroid defect); the instances
-are shipped **AS-PUBLISHED**, with the dataset's wrong-centroid defect documented and the
-published flows treated as a *loose* reference (own gap ~1e-3), never a best-known oracle.
-
-The **BO4Mob scenario family** ([ADR-034](docs/design/adr-034-bo4mob-scenarios.md)) adds the
-lab's own NeurIPS-2025 benchmark (Ryu et al. 2025, *BO4Mob*, `UMN-Choi-Lab/BO4Mob`, MIT): five
-San Jose freeway networks posed as OD estimation from real Caltrans PeMS counts via mesoscopic
-SUMO. Because the lab owns both benchmarks, the integration is governed by a **dual-benchmark
-honesty contract**: the instances are hosted as *scenarios/data only* — never as validation of
-TABenchmark's own methods — and the paper's published numbers are **never claimed reproduced**
-(the shipped `eclipse-sumo` 1.27.1 wheel drifts from the paper's SUMO 1.12; the *instances*
-transfer, the *values* do not). Stage 1 ships **data availability + pipeline liveness only**:
-same P9 discipline (a separate commit-pinned checksummed fetcher for the four small instances;
-`5fullRegion`, 74 MB and ~11 h/eval, is metadata-only and refuses to fetch) plus a guarded
-smoke test that runs od2trips + mesoscopic SUMO end-to-end on the smallest instance. The T2
-estimation task and its pinned-engine held-out-date certificate are a named stage-2 follow-up.
+Benchmark networks are **never redistributed**: they are fetched on demand from
+commit-pinned URLs, checksum-verified, and cited (`tabench fetch <scenario>` prints the
+citation). Sources: [TransportationNetworks](https://github.com/bstabler/TransportationNetworks)
+(academic use), Xu et al. 2024 20-US-cities (CC BY 4.0, adr-033), and the lab's
+[BO4Mob](https://github.com/UMN-Choi-Lab/BO4Mob) instances (MIT, adr-034). Package code is MIT.
 
 ## Citing
 
-If you use TABenchmark, please cite this repository (see `CITATION.cff`) and the
-original references of any model or dataset you evaluate — all 246 entries in
-[docs/REFERENCES.md](docs/REFERENCES.md) carry verified BibTeX in
+Cite the repository via [CITATION.cff](CITATION.cff), plus the original references of any
+model or dataset you evaluate — all carry verified BibTeX in
 [docs/references.bib](docs/references.bib).
 
 ## Contributing
 
-New models, networks, observation levels, and reference implementations from the
-community are the purpose of this repository — see
-[CONTRIBUTING.md](CONTRIBUTING.md) for the model contract and conformance checklist.
+New models, networks, and observation levels are the purpose of this repository — the
+model contract and conformance checklist are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
 Maintained by the [UMN Choi Lab](https://choi-seongjin.umn.edu/) ·
-University of Minnesota Twin Cities
+University of Minnesota Twin Cities · MIT License
