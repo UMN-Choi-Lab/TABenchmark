@@ -52,6 +52,7 @@ stays dependency-free. Design: docs/design/adr-036/adr-037.
 from __future__ import annotations
 
 import gzip
+import hashlib
 import importlib.metadata
 import math
 import os
@@ -88,12 +89,41 @@ _MIN_EDGE_LENGTH_M = 0.1
 _LENGTH_TARGET_FACTOR = 1.05
 _READBACK_LENGTH_RTOL = 1e-3  # _sumo_io._READBACK_LENGTH_RTOL precedent
 
-# Families whose negative control has been separation-vetted by
+# Topologies whose negative control has been separation-vetted by
 # :func:`negative_control_separation` (adr-036 R-control / F10). The row's
 # certification path (:func:`certify_emitted`) REFUSES to certify an instance
-# whose family is not in this set, so a non-separating topology cannot be silently
-# certified — the procedural gate made structural.
-_SEPARATION_VETTED_FAMILIES: set[str] = set()
+# whose TOPOLOGY digest is not in this set, so a non-separating topology cannot
+# be silently certified — the procedural gate made structural. Keyed on the
+# topology digest, NOT the family string (the S3 review's F3, an inherited S2
+# defect: a never-vetted topology relabeled with a vetted family name passed a
+# name-keyed gate) — runtime state only, no instance hash involved.
+_SEPARATION_VETTED_TOPOLOGIES: set[str] = set()
+
+
+def _topology_digest(scenario: EdocScenario) -> str:
+    """The F10 vetting key (S3 review F3): what the separation gate vets is a
+    TOPOLOGY — edge structure, lane (capacity) pattern, free-flow times and OD
+    endpoints — so certification keys on this digest, never on the forgeable
+    ``family`` STRING."""
+    h = hashlib.sha256()
+    h.update(b"tabench-edoc-vetting-v1;")
+    for label, seq in (
+        ("eid", scenario.edge_ids),
+        ("etail", scenario.edge_tail),
+        ("ehead", scenario.edge_head),
+        ("aorg", scenario.agent_origin),
+        ("adst", scenario.agent_dest),
+    ):
+        joined = "\x1f".join(seq).encode()
+        h.update(f"{label}:{len(joined)};".encode())
+        h.update(joined)
+    lanes = np.ascontiguousarray(scenario.edge_lanes, dtype=np.int64)
+    h.update(f"lanes:{lanes.size};".encode())
+    h.update(lanes.tobytes())
+    fftt = np.ascontiguousarray(scenario.edge_fftt, dtype=np.float64)
+    h.update(f"fftt:{fftt.size};".encode())
+    h.update(fftt.tobytes())
+    return h.hexdigest()
 
 # The certifier's zero-wait profile: R3 compares the substrate's DRIVEN field cost
 # (no origin wait) to duarouter's driven re-cost (also no origin wait) — like-for-like.
@@ -174,19 +204,29 @@ def _reap_group(proc: subprocess.Popen) -> None:
 
 def _intersect_replay_deadline(
     scenario: EdocScenario, deadline: float | None
-) -> float:
+) -> tuple[float, bool]:
     """The certifier's hard replay deadline (F3): the scenario-declared hashed
     ``replay_deadline_s`` measured from now, intersected with any tighter caller
     wall. So the hashed constant ALWAYS bounds a certifier replay — a post-
     publication edit to it changes real behavior (as its being hashed implies), and
-    a head-blocking plan cannot hang the certifier unboundedly (adr-036 R6)."""
+    a head-blocking plan cannot hang the certifier unboundedly (adr-036 R6).
+
+    Returns ``(deadline, clipped_by_caller)``. The flag carries the R6
+    crash-vs-censor typing for a mid-replay timeout (the S3 review's F1 — an
+    inherited S2 defect, fixed here with the matsim row; MATSim's ~2.8 s JVM
+    startup merely widened the same window ~100x): only an expiry of the
+    SCENARIO-declared deadline is the model's fault (an unexecutable /
+    head-blocking plan — censor); a caller wall clipping below it is a
+    certifier-side budget exhaustion and must RAISE as infrastructure."""
     scen_deadline = time.perf_counter() + float(scenario.replay_deadline_s)
-    return scen_deadline if deadline is None else min(deadline, scen_deadline)
+    if deadline is None or deadline >= scen_deadline:
+        return scen_deadline, False
+    return deadline, True
 
 
 def _run(
     cmd: list[str], *, cwd: str, deadline: float | None, what: str,
-    censor_on_fail: bool = False,
+    censor_on_fail: bool = False, censor_on_timeout: bool | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Run a SUMO subprocess under adr-027 discipline: wheel ``SUMO_HOME``,
     ``stdin=DEVNULL``, the single wall deadline as timeout, output captured, its
@@ -195,11 +235,18 @@ def _run(
     Crash-vs-censor (adr-036 R6): by default a timeout / OS error / nonzero rc is
     a certifier-side INFRASTRUCTURE ``RuntimeError``. For the ONE step that replays
     the MODEL's emitted plans (the pinned ``sumo`` meso replay), the caller passes
-    ``censor_on_fail=True`` so a genuine subprocess crash/timeout raises
+    ``censor_on_fail=True`` so a genuine subprocess crash raises
     :class:`~tabench.edoc.replay.PlanReplayFailure` (the censor signal — an
-    unexecutable/head-blocking plan is an invalid emission). A ``_remaining``
-    pre-exhaustion and a missing binary (``OSError``) stay infrastructure RAISEs on
-    every step, replay included (they are not the plan crashing the engine)."""
+    unexecutable/head-blocking plan is an invalid emission). The TIMEOUT typing is
+    split out (the S3 review's F1, an inherited S2 defect): ``censor_on_timeout``
+    (default: follows ``censor_on_fail``) is passed as ``False`` by the replay when
+    a CALLER wall clipped below the scenario-declared deadline, so a certifier-side
+    budget kill RAISES instead of censoring — only a scenario-deadline expiry
+    blames the plan. A ``_remaining`` pre-exhaustion and a missing binary
+    (``OSError``) stay infrastructure RAISEs on every step, replay included (they
+    are not the plan crashing the engine)."""
+    if censor_on_timeout is None:
+        censor_on_timeout = censor_on_fail
     timeout = _remaining(deadline)  # pre-exhaustion -> plain RuntimeError (infra)
     try:
         proc = subprocess.Popen(
@@ -219,7 +266,7 @@ def _run(
     except subprocess.TimeoutExpired as exc:
         _reap_group(proc)
         msg = f"{what}: killed by the wall deadline\n  cmd: {' '.join(cmd)}"
-        if censor_on_fail:
+        if censor_on_timeout:
             raise PlanReplayFailure(msg) from exc
         raise RuntimeError(msg) from exc
     if proc.returncode != 0:
@@ -522,10 +569,12 @@ def pinned_meso_replay(
     tighter caller wall wins (intersection). So the hashed hard-deadline constant
     is what actually stops a head-blocking replay, not an ad-hoc caller argument."""
     assert_engine_pin(installed_engine_version(), scenario.engine_version)
-    deadline = _intersect_replay_deadline(scenario, deadline)
+    deadline, clipped_by_caller = _intersect_replay_deadline(scenario, deadline)
 
     own_tmp = workdir is None
-    workdir = workdir or tempfile.mkdtemp(prefix="tabench-edoc-replay-")
+    # pid-scoped prefix (S3 review F5): hygiene snapshots diff only their own
+    # process's dirs, so concurrent sessions on one box cannot cross-flake.
+    workdir = workdir or tempfile.mkdtemp(prefix=f"tabench-edoc-{os.getpid()}-replay-")
     try:
         if net_path is None:
             net_path = compile_net(scenario, workdir, deadline)
@@ -552,7 +601,11 @@ def pinned_meso_replay(
                 *_MESO_OPTS,
             ],
             cwd=workdir, deadline=deadline, what="sumo meso replay",
-            censor_on_fail=True,  # a crash/timeout HERE = the plan hung the engine (R6 censor)
+            # an engine CRASH here is always the plan's fault (R6 censor); a
+            # TIMEOUT censors only when the SCENARIO deadline was binding — a
+            # caller-clipped wall is a certifier budget fault, infra RAISE (F1).
+            censor_on_fail=True,
+            censor_on_timeout=not clipped_by_caller,
         )
         if not os.path.exists(tripinfo_path):
             raise RuntimeError("sumo meso replay reported success but wrote no tripinfo")
@@ -629,8 +682,9 @@ def duarouter_recost_crosscheck(
     field the engine itself reads. Returns the measured mean/max discrepancy."""
     from ...edoc.field import build_field_from_records
 
-    deadline = _intersect_replay_deadline(scenario, deadline)
-    workdir = tempfile.mkdtemp(prefix="tabench-edoc-r3-")
+    # the clip flag is irrelevant here: every R3 step is infra-typed anyway.
+    deadline, _clipped = _intersect_replay_deadline(scenario, deadline)
+    workdir = tempfile.mkdtemp(prefix=f"tabench-edoc-{os.getpid()}-r3-")
     try:
         net_path = compile_net(scenario, workdir, deadline)
         # re-emit the driven plans + the frozen dump for duarouter to re-cost.
@@ -752,7 +806,10 @@ class SumoDuaIterateAdapter:
         assert_engine_pin(installed_engine_version(), scenario.engine_version)
         deadline = time.perf_counter() + wall_seconds if wall_seconds is not None else None
         keep = self.keep_files
-        workdir = tempfile.mkdtemp(prefix="tabench-edoc-keep-" if keep else "tabench-edoc-")
+        workdir = tempfile.mkdtemp(
+            prefix=f"tabench-edoc-{os.getpid()}-keep-" if keep
+            else f"tabench-edoc-{os.getpid()}-"
+        )
         self.last_workdir = workdir
         try:
             net_path = compile_net(scenario, workdir, deadline)
@@ -937,7 +994,8 @@ def negative_control_separation(
             f"declared {scenario.separation_factor}x (a non-separating topology — e.g. a "
             "shared-edge bottleneck — is a construction error, never a certified row)"
         )
-    _SEPARATION_VETTED_FAMILIES.add(scenario.family)  # F10: mark the family vetted
+    # F10: mark the TOPOLOGY vetted (digest-keyed, not the family string — F3).
+    _SEPARATION_VETTED_TOPOLOGIES.add(_topology_digest(scenario))
     return {
         "control_rg_d1": a_rg,
         "converged_rg_d1": c_rg,
@@ -966,16 +1024,19 @@ def certify_emitted(
       disagrees with the substrate field beyond ``r3_tolerance_s`` (infra RAISE,
       never a censor — adr-036 R3); the returned metrics carry the ``r3_*`` evidence
       that the cross-check ran.
-    * **Separation-vetting (F10):** REFUSES up front unless the scenario's family
-      was separation-vetted by :func:`negative_control_separation`, so an un-vetted
-      (possibly non-separating) instance cannot be silently certified."""
+    * **Separation-vetting (F10):** REFUSES up front unless the scenario's TOPOLOGY
+      was separation-vetted by :func:`negative_control_separation` (digest-keyed —
+      a relabeled family string cannot borrow another topology's vetting, the S3
+      review's F3), so an un-vetted (possibly non-separating) instance cannot be
+      silently certified."""
     from ...metrics.edoc_gaps import EdocEvaluator
 
-    if scenario.family not in _SEPARATION_VETTED_FAMILIES:
+    if _topology_digest(scenario) not in _SEPARATION_VETTED_TOPOLOGIES:
         raise RuntimeError(
-            f"certify_emitted refuses {scenario.name!r}: its family {scenario.family!r} "
-            "has not been separation-vetted — run negative_control_separation on the "
-            "family's reference first (adr-036 R-control / F10)"
+            f"certify_emitted refuses {scenario.name!r} (family {scenario.family!r}): "
+            "its TOPOLOGY has not been separation-vetted — run "
+            "negative_control_separation on this topology first (adr-036 R-control / "
+            "F10; vetting is keyed on the topology digest, not the family string)"
         )
     deadline = time.perf_counter() + wall_seconds if wall_seconds is not None else None
     runner = make_replay_runner(deadline=deadline)

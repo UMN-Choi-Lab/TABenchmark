@@ -363,15 +363,23 @@ macroreplicates over training seeds for distributional scoring. The leaderboard
 legitimately shows "gap 1e-14 in 200 SP-call-equivalents" next to "gap 3e-2 in 1
 evaluation" — that contrast *is* the scientific output.
 
-**External engines — SUMO + DTALite shipped; the MATSim/DynaMIT/DYNASMART adapters
+**External engines — SUMO, DTALite and MATSim shipped; DynaMIT/DYNASMART stay
 deferred on a measured record
 ([ADR-030](design/adr-030-external-dta-simulators-deferred.md)):** the pattern is write
 inputs, shell out (with an explicit seed where the engine takes one), parse outputs —
 same ABC, same trace, same certification where static costs permit; otherwise scored on
-the observational track (which for external dynamic engines does not exist yet — MATSim
-runs headless on this box but its queue model has no static latency function, so the
-mandatory cost-matched anchor is impossible in kind until that certificate ADR ships;
-DynaMIT has no public artifact; DYNASMART is license-blocked).
+the **observational track**, which now exists: **EDOC-1**, the external-dynamic-engine
+observational certificate ([ADR-036](design/adr-036-external-dynamic-observational-certificate.md))
+— the engine is part of the instance hash and the certifier re-derives the score by
+re-running the pinned engine in zero-replanning replay on the model's emitted plans,
+scoring the frozen-field best-response gap `RG_D1` on its **own** leaderboard table
+(never the static Wardrop `relative_gap`). Its first row is `sumo-duaiterate`
+([ADR-037](design/adr-037-sumo-duaiterate.md)); its second is `matsim`
+([ADR-039](design/adr-039-matsim.md)) — the first **agent-based**, first
+**stochastic-track** external engine (Horni et al. 2016; MATSim 2025.0 on a pinned
+Temurin 21 JDK, addressed via `TABENCH_MATSIM_HOME`/`TABENCH_JAVA_HOME`, no pip extra),
+scored as P8 macroreps over a pinned 5-seed list with a bootstrap CI on the mean.
+DynaMIT has no public artifact; DYNASMART is license-blocked — both still deferred.
 The first is `sumo-marouter` (SUMO's macroscopic `marouter`, Lopez et al. 2018,
 [ADR-027](design/adr-027-sumo-marouter.md)): the `eclipse-sumo` wheel ships the
 binaries inside the package (addressed via `sumo.SUMO_HOME`), so it is a registered,

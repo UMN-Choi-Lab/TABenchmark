@@ -76,16 +76,36 @@ nb_execution_raise_on_error = True  # a broken tutorial must fail the build
 nb_merge_streams = True
 
 # Engine-gated tutorials (metadata.tabench.requires_extra in {torch, sumo,
-# dtalite}) cannot execute in the docs environment, which installs only
+# dtalite, matsim}) cannot execute in the docs environment, which installs only
 # ``.[docs,viz]`` -- so exclude them from EXECUTION. They still render as
 # readable, un-executed pages. The list is DERIVED from the notebooks' own
 # metadata, so it tracks the tree automatically for every KNOWN extra; a NEW
-# extra (matsim is queued) must be added to ``_EXTRA_MODULE`` below, which the
-# loop enforces with a loud, self-describing error rather than a bare KeyError.
-# An extra that IS importable is NOT excluded -- installing sumo/dtalite
-# un-excludes their notebooks by config alone (only torch's multi-GB CUDA wheel
-# stays stuck out).
-_EXTRA_MODULE = {"torch": "torch", "sumo": "sumo", "dtalite": "DTALite"}
+# extra must be added to ``_EXTRA_MODULE`` below, which the loop enforces with
+# a loud, self-describing error rather than a bare KeyError. An extra that IS
+# available is NOT excluded -- installing sumo/dtalite (or addressing a matsim
+# toolchain) un-excludes their notebooks by config alone (only torch's multi-GB
+# CUDA wheel stays stuck out). torch/sumo/dtalite probe by module name via
+# find_spec (never imported); 'matsim' is a Java-only engine with no python
+# module (adr-039), so its probe is the adapter's side-effect-free availability
+# CALLABLE (tabench is pip-installed in the docs env, and the adapter module
+# imports without any optional extra).
+from tabench.models.adapters._matsim_io import matsim_available as _matsim_available
+
+_EXTRA_MODULE = {
+    "torch": "torch",
+    "sumo": "sumo",
+    "dtalite": "DTALite",
+    "matsim": _matsim_available,
+}
+
+
+def _extra_available(extra: str) -> bool:
+    probe = _EXTRA_MODULE[extra]
+    if callable(probe):
+        return bool(probe())
+    return find_spec(probe) is not None
+
+
 nb_execution_excludepatterns: list[str] = []
 for _nb in sorted((_REPO / "tutorials").rglob("*.ipynb")):
     if ".ipynb_checkpoints" in _nb.parts:
@@ -104,7 +124,7 @@ for _nb in sorted((_REPO / "tutorials").rglob("*.ipynb")):
             f"import-probe mapping. Add {_extra!r} to _EXTRA_MODULE in {Path(__file__).name} "
             f"(known: {sorted(_EXTRA_MODULE)})."
         )
-    if find_spec(_EXTRA_MODULE[_extra]) is None:
+    if not _extra_available(_extra):
         nb_execution_excludepatterns.append(f"**/{_nb.parent.name}/{_nb.name}")
 
 # -- autodoc ----------------------------------------------------------------

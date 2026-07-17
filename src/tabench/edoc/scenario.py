@@ -89,6 +89,15 @@ class EdocScenario:
     origin_wait_convention: str = "profile"
     walk_bound: int = 8
     walk_count_bound: int = 200_000
+    # The R5 pinned macrorep seed LIST (stochastic track, adr-036/adr-039).
+    # Deterministic-track instances keep the empty default; a stochastic-track
+    # instance pins >= 5 distinct seeds and its own ``seed`` is one of them (the
+    # macrorep harness derives per-seed instances by replacing ``seed`` only, so
+    # every macrorep carries the full hashed list — seed shopping and friendlier
+    # private lists are hash-visible, forgery pair N1). Hashed: adding this field
+    # migrates every EdocScenario digest — permitted (the edoc instance hashes
+    # are unpublished, adr-036) and disclosed in adr-039.
+    seed_list: tuple[int, ...] = ()
     family: str = _dc_field(default="")
 
     # -------------------------------------------------------------- gates
@@ -207,6 +216,29 @@ class EdocScenario:
                 f"negative-control anchor)"
             )
 
+        # R5 pinned seed list (stochastic track): >= 5 distinct ints, and the
+        # instance's own seed is one of the pinned macroreps. Empty = the
+        # deterministic track (no macroreps, disclosed per adr-036).
+        for s in self.seed_list:
+            if isinstance(s, bool) or not isinstance(s, (int, np.integer)):
+                raise ValueError(
+                    f"EdocScenario {self.name!r}: seed_list entries must be ints, got {s!r}"
+                )
+        object.__setattr__(self, "seed_list", tuple(int(s) for s in self.seed_list))
+        if self.seed_list:
+            if len(self.seed_list) < 5:
+                raise ValueError(
+                    f"EdocScenario {self.name!r}: a stochastic-track seed_list needs >= 5 "
+                    f"pinned seeds (adr-036 R5), got {len(self.seed_list)}"
+                )
+            if len(set(self.seed_list)) != len(self.seed_list):
+                raise ValueError(f"EdocScenario {self.name!r}: duplicate seed in seed_list")
+            if int(self.seed) not in self.seed_list:
+                raise ValueError(
+                    f"EdocScenario {self.name!r}: seed {self.seed} is not in the pinned "
+                    "seed_list — every macrorep instance must pin one of the listed seeds"
+                )
+
     # -------------------------------------------------------------- derived
     @property
     def n_edges(self) -> int:
@@ -267,6 +299,13 @@ class EdocScenario:
         lanes = np.ascontiguousarray(self.edge_lanes, dtype=np.int64)
         h.update(f"lanes:{lanes.size};".encode())
         h.update(lanes.tobytes())
+        # the R5 pinned macrorep seed list (stochastic track), framed as int64;
+        # the empty deterministic-track default still frames ("seeds:0;") — this
+        # block migrated every EdocScenario digest when it landed (S3, disclosed
+        # in adr-039; the edoc hashes were unpublished, adr-036).
+        seeds = np.ascontiguousarray(self.seed_list, dtype=np.int64)
+        h.update(f"seeds:{seeds.size};".encode())
+        h.update(seeds.tobytes())
         # engine identity + all scored-outcome constants
         h.update(
             (

@@ -232,6 +232,78 @@ jobs:
           TABENCH_REQUIRE_DATA: "1"
           TABENCH_RUN_TUTORIALS: "1"
 
+  # Optional MATSim EDOC adapter (matsim, adr-039), py3.12 only. The engine is
+  # JAVA-ONLY (no pip extra; PyPI 'matsim' is an unrelated neuronal simulator),
+  # so this job installs the pinned toolchain itself: the Temurin 21.0.11+10 JDK
+  # from the hard Adoptium asset URL (sha256-verified — actions/setup-java can
+  # pin '21.0.11' but not the exact +10 build, so the direct download is the
+  # stricter, provider-independent pin; recorded in adr-039) and the
+  # matsim-2025.0 release zip (md5-verified BEFORE unzip — the supply-chain
+  # gate; note the GitHub release TAG is '2025.0', the guessable 'matsim-2025.0'
+  # 404s). Kept a separate job (house style) so a break in the ~315 MB of
+  # downloads cannot kill the torch/sumo/dtalite signals. The matsim-free
+  # matrix above is the live regression that the adapter module imports (and
+  # its engine-free tests pass) without any toolchain.
+  matsim:
+    runs-on: ubuntu-latest
+    # The two toolchain checksums live HERE as the single source of truth (S3
+    # review F7): the cache key AND the verify lines both read them, so a pin
+    # bump can never leave a stale cache key behind (a stale hit would skip
+    # both re-download and re-verification via the presence guards below).
+    env:
+      MATSIM_JDK_SHA256: 4b2220e232a97997b436ca6ab15cbf70171ecff52958a46159dfa5a8c44ca4de
+      MATSIM_ZIP_MD5: c65f35eafabea2456b818875f08048ca
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Cache the pinned JDK + MATSim release
+        uses: actions/cache@v4
+        with:
+          path: ~/matsim-toolchain
+          # keyed on BOTH artifact checksums (the job env above): a pin bump
+          # mints a new key and re-downloads.
+          key: matsim-toolchain-${{ env.MATSIM_JDK_SHA256 }}-${{ env.MATSIM_ZIP_MD5 }}
+      - name: Install pinned toolchain (checksums verified before extraction)
+        # curl --fail (S3 review F7): an HTTP error page must fail the download
+        # itself, not surface later as a confusing checksum mismatch.
+        run: |
+          set -euo pipefail
+          mkdir -p ~/matsim-toolchain && cd ~/matsim-toolchain
+          if [ ! -x jdk-21.0.11+10/bin/java ]; then
+            curl -fsSL -o jdk.tar.gz "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.11%2B10/OpenJDK21U-jdk_x64_linux_hotspot_21.0.11_10.tar.gz"
+            echo "$MATSIM_JDK_SHA256  jdk.tar.gz" | sha256sum -c -
+            tar -xzf jdk.tar.gz && rm jdk.tar.gz
+          fi
+          if [ ! -f matsim-2025.0/matsim-2025.0.jar ]; then
+            curl -fsSL -o matsim-2025.0-release.zip "https://github.com/matsim-org/matsim-libs/releases/download/2025.0/matsim-2025.0-release.zip"
+            echo "$MATSIM_ZIP_MD5  matsim-2025.0-release.zip" | md5sum -c -
+            unzip -q matsim-2025.0-release.zip && rm matsim-2025.0-release.zip
+          fi
+          jdk-21.0.11+10/bin/java -version
+          # env: values are never shell-expanded by Actions, so export the
+          # ABSOLUTE toolchain paths here (the F8 addressing rule wants them
+          # absolute anyway).
+          echo "TABENCH_MATSIM_HOME=$HOME/matsim-toolchain" >> "$GITHUB_ENV"
+          echo "TABENCH_JAVA_HOME=$HOME/matsim-toolchain/jdk-21.0.11+10" >> "$GITHUB_ENV"
+      - name: Install
+        # tutorials extra (nbclient/nbformat/ipykernel) needed for the notebook
+        # step below — without it test_notebook_executes' importorskip would
+        # silently skip instead of executing.
+        run: pip install -e ".[dev,tutorials]"
+      - name: Test (matsim adapter — engine-free + engine-gated halves)
+        # One file carries the row's whole surface (adr-039); the engine-gated
+        # half un-skips because TABENCH_MATSIM_HOME/TABENCH_JAVA_HOME are
+        # exported by the toolchain step above.
+        run: pytest tests/test_matsim_edoc.py -q -ra
+      - name: Test (matsim tutorial notebook)
+        # A SEPARATE step (torch/sumo/dtalite-job precedent): -k scopes
+        # execution to the single matsim-gated notebook.
+        run: pytest tests/test_tutorials.py -k "matsim" -q -ra
+        env:
+          TABENCH_RUN_TUTORIALS: "1"
+
   # The readthedocs.io documentation site, built with warnings-as-errors. The
   # non-engine-gated tutorial notebooks EXECUTE during the build (myst-nb), so
   # this job is also an integration test of src/ — a solver change that breaks a
@@ -241,8 +313,9 @@ jobs:
   # toolchain download cannot kill the test-matrix signal. RTD PR builds are the
   # complementary preview (org.readthedocs.build URL); this job is the merge gate,
   # so merges never wait on RTD Community's 2-build concurrency. Engine-gated
-  # notebooks (torch/sumo/dtalite) are excluded from EXECUTION by docs/conf.py
-  # (this job installs only .[docs,viz]); they still render un-executed.
+  # notebooks (torch/sumo/dtalite/matsim) are excluded from EXECUTION by
+  # docs/conf.py (this job installs only .[docs,viz], and no matsim toolchain
+  # is addressed); they still render un-executed.
   docs:
     runs-on: ubuntu-latest
     steps:

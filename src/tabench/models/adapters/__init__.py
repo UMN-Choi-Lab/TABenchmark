@@ -2,7 +2,15 @@
 
 from .callable_adapter import CallableModel
 
-__all__ = ["CallableModel"]
+# The MATSim EDOC adapter needs NO optional python package (the engine is
+# Java-only, addressed at runtime via TABENCH_MATSIM_HOME — adr-039), so unlike
+# sumo/dtalite the re-export is UNCONDITIONAL: the module imports stdlib+numpy
+# everywhere and engine absence surfaces as the matsim_available() probe / a G0
+# RAISE, never an ImportError. Not in MODEL_REGISTRY (EDOC producers are not
+# the static gap-certified track — the adr-037 precedent).
+from .matsim_edoc import MatsimAdapter
+
+__all__ = ["CallableModel", "MatsimAdapter"]
 
 # The SUMO marouter adapter needs the optional ``eclipse-sumo`` wheel
 # (``pip install tabench[sumo]``): the numpy/scipy core must import without it.

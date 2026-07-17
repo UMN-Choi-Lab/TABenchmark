@@ -107,9 +107,10 @@ def test_negative_control_separates():
     anchors = negative_control_separation(sc, wall_seconds=_WALL, converged_iterations=15)
     assert anchors["separation"] >= sc.separation_factor
     assert anchors["control_rg_d1"] > anchors["converged_rg_d1"]
-    # F10: a passing separation gate marks the FAMILY separation-vetted, which
+    # F10: a passing separation gate marks the TOPOLOGY separation-vetted
+    # (digest-keyed, not the family string — the S3 review's F3), which
     # certify_emitted then asserts before certifying.
-    assert sc.family in sd._SEPARATION_VETTED_FAMILIES
+    assert sd._topology_digest(sc) in sd._SEPARATION_VETTED_TOPOLOGIES
 
 
 def test_shared_edge_bottleneck_is_refused():
@@ -130,9 +131,12 @@ def test_runner_engine_pin_raises_on_version_mismatch():
 
 def test_temp_dir_hygiene(converged):
     """emit + a certifier replay leave NO working tree behind. F9b: snapshot-diff
-    every ``tabench-edoc-*`` dir before/after (the old ``tabench-edoc-[0-9]*`` glob
-    saw neither the ``replay-``/``r3-`` prefixes nor ~84% of emit-dir suffixes)."""
-    pat = tempfile.gettempdir() + "/tabench-edoc-*"
+    the ``tabench-edoc-<pid>-*`` dirs before/after (the old ``tabench-edoc-[0-9]*``
+    glob saw neither the ``replay-``/``r3-`` prefixes nor ~84% of emit-dir
+    suffixes). Scoped to THIS process's pid prefix (S3 review F5): a box-global
+    glob was flaked by a concurrent matsim engine session's live workdirs
+    (observed) — the check only assumes this process cleans up after itself."""
+    pat = tempfile.gettempdir() + f"/tabench-edoc-{os.getpid()}-*"
     before = set(glob.glob(pat))
     sc = reference_scenario()
     adapter = SumoDuaIterateAdapter(iterations=2)
@@ -194,7 +198,9 @@ def test_replay_deadline_s_is_enforced(converged):
     per F1); and under a ``None`` caller wall the deadline is derived from the
     scenario field (was unbounded)."""
     sc, emitted, _m = converged
-    derived = sd._intersect_replay_deadline(sc, None) - time.perf_counter()
+    deadline, clipped = sd._intersect_replay_deadline(sc, None)
+    assert not clipped  # no caller wall: the scenario deadline is binding
+    derived = deadline - time.perf_counter()
     assert derived == pytest.approx(sc.replay_deadline_s, abs=1.0)  # live, not None
 
     tight = dataclasses.replace(sc, replay_deadline_s=0.001)
@@ -202,6 +208,40 @@ def test_replay_deadline_s_is_enforced(converged):
     with pytest.raises((RuntimeError, OSError)) as ei:
         EdocEvaluator(tight, runner).certify(emitted)
     assert not isinstance(ei.value, PlanReplayFailure)  # infra RAISE, not the censor signal
+
+
+def test_replay_timeout_typing_scenario_deadline_censors_caller_clip_raises(
+    tmp_path, monkeypatch
+):
+    """S3 review F1 (an inherited S2 defect, fixed with the matsim row): a
+    mid-replay timeout censors (PlanReplayFailure) ONLY when the SCENARIO-
+    declared ``replay_deadline_s`` was the binding wall; a tighter CALLER wall
+    is a certifier-side budget exhaustion and RAISES RuntimeError — never
+    laundered into feasible=0. Stub-sleeper engine: no real sumo run."""
+    fake = tmp_path / "sumo"
+    fake.write_text("#!/bin/sh\nsleep 30\n")
+    fake.chmod(0o755)
+    sc = reference_scenario()  # replay_deadline_s = 240 (the hashed constant)
+    monkeypatch.setattr(sd, "sumo_binary", lambda name: str(fake))
+    monkeypatch.setattr(sd, "installed_engine_version", lambda: sc.engine_version)
+    plans = {"v0": (("a1", "a2"), 0.0)}
+
+    d, clipped = sd._intersect_replay_deadline(sc, time.perf_counter() + 0.4)
+    assert clipped
+    _d, clipped = sd._intersect_replay_deadline(sc, time.perf_counter() + 3600.0)
+    assert not clipped  # a LOOSER caller wall never clips
+
+    # caller-clipped kill -> infra RAISE, never the censor signal
+    with pytest.raises(RuntimeError, match="wall deadline") as ei:
+        sd.pinned_meso_replay(
+            sc, plans, deadline=time.perf_counter() + 0.4, net_path="unused.net.xml"
+        )
+    assert not isinstance(ei.value, PlanReplayFailure)
+
+    # scenario-declared deadline expiry -> the R6 censor signal
+    tight = dataclasses.replace(sc, replay_deadline_s=0.4)
+    with pytest.raises(PlanReplayFailure, match="wall deadline"):
+        sd.pinned_meso_replay(tight, plans, deadline=None, net_path="unused.net.xml")
 
 
 def test_missing_binary_is_infra_raise_not_censor(converged, monkeypatch):
@@ -217,15 +257,18 @@ def test_missing_binary_is_infra_raise_not_censor(converged, monkeypatch):
 
 def test_certify_emitted_wires_r3_and_requires_separation_vetting(converged, monkeypatch):
     """F4 + F10: the ROW certify path runs the mandatory R3 duarouter cross-check
-    and refuses an un-separation-vetted family."""
+    and refuses an un-separation-vetted TOPOLOGY (digest-keyed — the S3 review's
+    F3: a relabeled family string cannot borrow another topology's vetting)."""
     sc, emitted, _m = converged
 
-    # F10: an un-vetted family is refused loudly (before any engine work).
-    unvetted = dataclasses.replace(sc, family="edoc-unvetted-pin")
+    # F10: an un-vetted TOPOLOGY is refused loudly (before any engine work) —
+    # the never-vetted shared-edge topology, even under the reference's family.
+    unvetted = dataclasses.replace(shared_bottleneck_scenario(), family=sc.family)
     with pytest.raises(RuntimeError, match="separation-vetted"):
         certify_emitted(unvetted, emitted, wall_seconds=_WALL)
 
-    sd._SEPARATION_VETTED_FAMILIES.add(sc.family)  # (negative_control_separation does this)
+    # (what negative_control_separation does on success)
+    sd._SEPARATION_VETTED_TOPOLOGIES.add(sd._topology_digest(sc))
 
     # F4: certify_emitted invokes duarouter (poison it -> the cross-check must fire).
     real = sd.sumo_binary
@@ -247,8 +290,8 @@ def test_certify_emitted_wires_r3_and_requires_separation_vetting(converged, mon
     assert "r3_mean_s" in m
 
     # F4: a forced R3 disagreement (tolerance 0) RAISES infra (never a censor).
+    # (same topology as sc, so the digest-keyed vetting above already covers it)
     tight = dataclasses.replace(sc, r3_tolerance_s=0.0)
-    sd._SEPARATION_VETTED_FAMILIES.add(tight.family)
     with pytest.raises(RuntimeError, match="R3 cross-check FAILED"):
         certify_emitted(tight, emitted, wall_seconds=_WALL)
 

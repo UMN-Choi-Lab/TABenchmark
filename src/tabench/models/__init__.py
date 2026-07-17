@@ -2,6 +2,10 @@
 
 from .adapters import CallableModel
 
+# The MATSim EDOC adapter re-exports UNCONDITIONALLY (Java-only engine, no
+# optional python import to guard — adr-039); availability is a runtime probe.
+from .adapters.matsim_edoc import MatsimAdapter
+
 # The SUMO marouter adapter is an OPTIONAL extra (``pip install tabench[sumo]``);
 # it is registered (and importable here) only when the ``eclipse-sumo`` wheel is
 # present. Importing ``.adapters`` above already ran its guarded registration, so
@@ -75,6 +79,7 @@ from .vi_asym import AsymmetricVIModel
 __all__ = [
     "AlgorithmBModel",
     "CallableModel",
+    "MatsimAdapter",
     "AllOrNothingModel",
     "MODEL_REGISTRY",
     "TrafficAssignmentModel",

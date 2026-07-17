@@ -68,6 +68,12 @@ def _track_manifest() -> dict[str, object]:
     except ModuleNotFoundError as exc:
         if exc.name != "sumo":
             raise
+    # matsim (adr-039) imports EVERYWHERE (Java-only engine, no python extra), so
+    # its entry is UNCONDITIONAL — the coverage gate then enforces the notebook on
+    # ALL legs, which the same-commit notebook satisfies (the S2 atomicity
+    # pattern; _ALLOWLIST stays empty).
+    from tabench.models.adapters.matsim_edoc import MatsimAdapter
+    manifest["matsim"] = MatsimAdapter
     return manifest
 
 
@@ -269,7 +275,7 @@ def test_notebook_metadata_consistent(nb_path):
     assert tab.get("track") == _strip_num(nb_path.parent.name), (
         f"{name}: metadata.tabench.track != folder name (sans NN- prefix)"
     )
-    assert tab.get("requires_extra") in (None, "torch", "sumo", "dtalite"), (
+    assert tab.get("requires_extra") in (None, "torch", "sumo", "dtalite", "matsim"), (
         f"{name}: bad metadata.tabench.requires_extra {tab.get('requires_extra')!r}"
     )
     # metadata.tabench.covers must actually BE the enforcement source (README says the
@@ -318,15 +324,28 @@ def test_notebook_numbering_is_ordered():
         )
 
 
-# requires_extra -> the module name to probe. `import DTALite` is BANNED in-process
-# (adr-029: it prints a banner and ctypes-loads the engine .so into the host), and the
-# extra name 'dtalite' is not even the module name ('DTALite' is) — so probe EVERY extra
-# with find_spec, which never imports. Uniform and side-effect free.
-_EXTRA_MODULE = {"torch": "torch", "sumo": "sumo", "dtalite": "DTALite"}
+# requires_extra -> the probe. torch/sumo/dtalite probe by MODULE NAME via find_spec
+# (BYTE-FOR-BYTE the pre-S3 behavior: `import DTALite` is BANNED in-process — adr-029:
+# it prints a banner and ctypes-loads the engine .so into the host — and the extra name
+# 'dtalite' is not even the module name; find_spec never imports). 'matsim' has NO
+# python module at all (Java-only engine, adr-039; PyPI 'matsim' is an unrelated
+# neuronal simulator), so its probe is the adapter's side-effect-free runtime
+# availability CALLABLE (env-var + jar + java path checks; no JVM is started).
+from tabench.models.adapters._matsim_io import matsim_available  # noqa: E402
+
+_EXTRA_MODULE = {
+    "torch": "torch",
+    "sumo": "sumo",
+    "dtalite": "DTALite",
+    "matsim": matsim_available,
+}
 
 
 def _extra_available(extra: str) -> bool:
-    return importlib.util.find_spec(_EXTRA_MODULE[extra]) is not None
+    probe = _EXTRA_MODULE[extra]
+    if callable(probe):
+        return bool(probe())
+    return importlib.util.find_spec(probe) is not None
 
 
 def test_extra_gate_probes_dtalite_by_module_name_via_find_spec():
@@ -336,6 +355,14 @@ def test_extra_gate_probes_dtalite_by_module_name_via_find_spec():
     assert _EXTRA_MODULE["dtalite"] == "DTALite"
     assert importlib.util.find_spec("dtalite") is None  # the extra name is not a module
     assert _extra_available("dtalite") == (importlib.util.find_spec("DTALite") is not None)
+
+
+def test_extra_gate_probes_matsim_by_callable():
+    # Regression pin (adr-039): matsim must be probed via the adapter's runtime
+    # callable — a find_spec probe would either skip forever (no such module) or,
+    # worse, match the unrelated PyPI 'matsim' neuronal simulator (adr-030).
+    assert _EXTRA_MODULE["matsim"] is matsim_available
+    assert _extra_available("matsim") == matsim_available()
 
 
 @pytest.mark.skipif(
@@ -354,4 +381,8 @@ def test_notebook_executes(nb_path):
     extra = nb.get("metadata", {}).get("tabench", {}).get("requires_extra")
     if extra and not _extra_available(extra):
         pytest.skip(f"optional extra {extra!r} not installed")
-    nbclient.NotebookClient(nb, timeout=120, kernel_name="python3").execute()
+    # Per-CELL cap. 300 s (was 120): the matsim notebook's negative-control cell
+    # runs 2 states x 5 macroreps x (one JVM co-evolution + 2 JVM replays) in ONE
+    # cell — measured ~112 s on the dev box (adr-039), so 120 s would flake on a
+    # slower runner. Still a hang-stop, not a budget (the docs build allows 600).
+    nbclient.NotebookClient(nb, timeout=300, kernel_name="python3").execute()
