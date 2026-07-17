@@ -32,17 +32,17 @@ jupyter nbconvert --to notebook --execute tutorials/01-static/05-bfw.ipynb --std
 
 Notebooks are committed **stripped** (no cell outputs, no execution counts) so they can
 never drift out of sync with the code — the gate is *execution success plus the
-in-notebook certified asserts*, never output identity, once execution is wired into CI.
-**As shipped at C2**, every CI leg enforces existence + stripping + metadata + numbering
-(`tests/test_tutorials.py` runs unconditionally, no env flag needed for those checks);
-the notebook-EXECUTION test (`test_notebook_executes`, gated on `TABENCH_RUN_TUTORIALS=1`)
-is currently **collected but skipped on every leg** — no workflow sets the flag or
-installs the `tutorials` extra yet. That wiring (Python 3.12 leg:
-`pip install -e '.[dev,viz,tutorials]'` + `TABENCH_RUN_TUTORIALS=1`; torch / sumo /
-dtalite legs: `-k` filters on their extra-gated notebooks) lands in the
-immediately-following CI commit — until then, run
-`TABENCH_RUN_TUTORIALS=1 pytest tests/test_tutorials.py -k executes` locally to get the
-execution guarantee this section describes.
+in-notebook certified asserts*, never output identity. **Every CI leg enforces this.**
+`tests/test_tutorials.py` runs unconditionally on existence + stripping + metadata +
+numbering, no env flag needed. The notebook-EXECUTION test (`test_notebook_executes`) is
+wired in too: the core job's Python 3.12 leg installs `.[dev,viz,tutorials]` and sets
+`TABENCH_RUN_TUTORIALS=1`, re-executing every unguarded notebook from a cleared kernel
+(the 3.10 leg skips it — redundant kernel-start cost, no extra signal); each of the
+torch / sumo / dtalite legs installs its own extra plus `tutorials` and runs
+`tests/test_tutorials.py` with a `-k` filter scoped to its own extra-gated notebooks. A
+notebook that raises, or whose in-cell certified `assert` fails, fails CI — run
+`TABENCH_RUN_TUTORIALS=1 pytest tests/test_tutorials.py -k executes` locally for the same
+guarantee.
 
 ## Enforcement
 
@@ -81,9 +81,8 @@ and `solve_td_so`'s objectives over the single ADR-031 path-marginal task.
 
 `extra` blank = core install. Runtimes are wall-clock on the author's box (kernel start
 ~2–3 s dominates the small ones); treat them as order-of-magnitude, re-measured in CI.
-Rows marked *(batch NN)* are planned in that internal batch and enforced via the
-shrinking allowlist until they ship; their within-track numbers are assigned here so
-forward-links and later batches stay consistent.
+Every enforced unit and every track tour below has shipped — the ToC is complete, and
+`_ALLOWLIST` in `tests/test_tutorials.py` is empty (see Enforcement above).
 
 ### `01-static/` — road static assignment (T1), the model-evolution ladder
 | # | unit | extra | runtime | status |
@@ -158,20 +157,25 @@ forward-links and later batches stay consistent.
 | 01 | `newell-3det` | | 5.4 s | shipped |
 
 ### `10-learned/` — optional-extra learned models
-| # | unit | extra | status |
-|---|---|---|---|
-| 01–02 | `implicit-ue-nn`, `het-gnn` | torch | *(batch 11)* |
+| # | unit | extra | runtime | status |
+|---|---|---|---|---|
+| 01 | `implicit-ue-nn` | torch | 19 s | shipped |
+| 02 | `het-gnn` | torch | 71 s | shipped |
 
 ### `11-external/` — external-engine adapters
-| # | unit | extra | status |
-|---|---|---|---|
-| 01 | `sumo-marouter` | sumo | *(batch 12)* |
-| 02 | `sumo-duaiterate` | sumo | *(S2 / extdyn-impl)* |
-| 03 | `dtalite-tap` | dtalite | *(batch 12)* |
-| 04 | `spsa-sumo` | sumo | *(batch 12)* |
+| # | unit | extra | runtime | status |
+|---|---|---|---|---|
+| 01 | `sumo-marouter` | sumo | 8 s | shipped |
+| 02 | `sumo-duaiterate` | sumo | 12 s | shipped |
+| 03 | `dtalite-tap` | dtalite | 7 s | shipped |
+| 04 | `spsa-sumo` | sumo | 23 s | shipped |
 
 ### `12-data/` · `13-experiments/` — tours (outside the enforced unit set)
-| folder / # | notebook | extra | status |
-|---|---|---|---|
-| `12-data` 01–02 | `xu2024`, `bo4mob` | network download | *(batch 13; never default-prefetch)* |
-| `13-experiments` 01 | `profiles` | | *(batch 13)* |
+| folder / # | notebook | extra | runtime | status |
+|---|---|---|---|---|
+| `12-data` 01 | `xu2024` | network download | 14 s | shipped |
+| `12-data` 02 | `bo4mob` | network download | 7 s | shipped |
+| `13-experiments` 01 | `profiles` | | 5 s | shipped |
+
+Data-track notebooks never default-prefetch: `xu2024`/`bo4mob` fetch (checksummed) or
+raise a clear diagnostic if the network is unreachable, per each notebook's own guard.

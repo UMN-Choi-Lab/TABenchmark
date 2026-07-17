@@ -53,10 +53,11 @@ dtalite = ["DTALite>=0.8"]
 # `tabench`'s top-level, so `import tabench` works without it. Floor only, NOT a hard pin.
 viz = ["matplotlib>=3.8"]
 # Optional: execute the tutorial notebooks (tutorials/<NN>-<track>/<MM>-<unit>.ipynb) from
-# a cleared state under TABENCH_RUN_TUTORIALS=1 (the CI wiring for this lands in the
-# immediately-following commit; run it locally until then). nbclient runs them, nbformat
-# reads them, ipykernel supplies the python3 kernel, matplotlib because every notebook
-# plots. Floors only, never a hard pin (library metadata must not `==`).
+# a cleared state under TABENCH_RUN_TUTORIALS=1 (wired into every CI leg — core job's
+# 3.12 leg plus the torch/sumo/dtalite extras jobs, each with its own -k filter). nbclient
+# runs them, nbformat reads them, ipykernel supplies the python3 kernel, matplotlib
+# because every notebook plots. Floors only, never a hard pin (library metadata must not
+# `==`).
 tutorials = ["nbclient>=0.10", "nbformat>=5.10", "ipykernel>=6.29", "matplotlib>=3.8"]
 
 [project.scripts]

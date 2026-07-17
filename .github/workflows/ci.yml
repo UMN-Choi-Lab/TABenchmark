@@ -26,7 +26,9 @@ jobs:
       - name: Install
         # viz extra (matplotlib) on BOTH matrix legs so tests/test_viz.py runs on
         # 3.10 + 3.12; the module is optional but its tests must not silently skip in CI.
-        run: pip install -e ".[dev,viz]"
+        # tutorials extra (nbclient/nbformat/ipykernel) drives TABENCH_RUN_TUTORIALS=1
+        # notebook execution below, 3.12 leg only.
+        run: pip install -e ".[dev,viz,tutorials]"
       - name: Fetch benchmark data
         # Explicit prefetch: a failed download fails the job, and a failed
         # job saves no cache — so a partially-populated cache can never be
@@ -47,6 +49,12 @@ jobs:
         env:
           # Data failures must fail CI, never silently skip (tests/conftest.py).
           TABENCH_REQUIRE_DATA: "1"
+          # Notebook execution (test_notebook_executes) on the 3.12 leg only —
+          # kernel-start cost x2 legs buys nothing the 3.10 leg's unconditional
+          # existence/stripping/metadata checks in tests/test_tutorials.py don't
+          # already cover. Empty string is falsy for the test's os.environ.get
+          # check, so 3.10 skips cleanly (adr-035 Decision C).
+          TABENCH_RUN_TUTORIALS: ${{ matrix.python-version == '3.12' && '1' || '' }}
 
   # Optional torch models (implicit-ue-nn, het-gnn), py3.12 only. The torch-free
   # matrix above is the live regression that `import tabench` works without torch,
@@ -76,7 +84,10 @@ jobs:
         # below will not re-resolve it to the multi-GB CUDA wheel.
         run: pip install torch --index-url https://download.pytorch.org/whl/cpu
       - name: Install
-        run: pip install -e ".[dev,torch]"
+        # tutorials extra (nbclient/nbformat/ipykernel) needed for the notebook
+        # step below — without it test_notebook_executes' importorskip would
+        # silently skip instead of executing.
+        run: pip install -e ".[dev,torch,tutorials]"
       - name: Fetch benchmark data
         run: >
           python -c "from tabench.data.registry import REGISTRY;
@@ -89,6 +100,17 @@ jobs:
         run: pytest tests/test_implicit_ue.py tests/test_het_gnn.py -q -ra
         env:
           TABENCH_REQUIRE_DATA: "1"
+      - name: Test (torch tutorial notebooks)
+        # A SEPARATE step, not appended to the file list above: -k applies to
+        # the whole pytest invocation, so combining it with the untargeted
+        # torch-model tests would deselect them (they don't match the
+        # notebook-path keywords). -k scopes execution to just the two
+        # torch-gated notebooks; the rest of the suite already ran on the
+        # core 3.12 leg (adr-035 Decision C).
+        run: pytest tests/test_tutorials.py -k "implicit-ue-nn or het-gnn" -q -ra
+        env:
+          TABENCH_REQUIRE_DATA: "1"
+          TABENCH_RUN_TUTORIALS: "1"
 
   # Optional SUMO adapter (sumo-marouter), py3.12 only. The sumo-free matrix
   # above is the live regression that `import tabench` works without the wheel,
@@ -122,7 +144,10 @@ jobs:
         # first so the editable install below does not re-resolve them.
         run: pip install eclipse-sumo==1.27.1 sumo-data==1.27.1
       - name: Install
-        run: pip install -e ".[dev,sumo]"
+        # tutorials extra (nbclient/nbformat/ipykernel) needed for the notebook
+        # step below — without it test_notebook_executes' importorskip would
+        # silently skip instead of executing.
+        run: pip install -e ".[dev,sumo,tutorials]"
       - name: Fetch benchmark data
         # Also prefetch the BO4Mob 1ramp single-evaluation bundle (~27 KB, adr-034),
         # the only instance whose od2trips + mesoscopic-SUMO pipeline the smoke test
@@ -146,6 +171,16 @@ jobs:
         run: pytest tests/test_sumo_marouter.py tests/test_spsa_sumo.py tests/test_bo4mob.py tests/test_sumo_duaiterate.py -q -ra
         env:
           TABENCH_REQUIRE_DATA: "1"
+      - name: Test (sumo tutorial notebooks)
+        # A SEPARATE step (torch-job precedent above): -k scopes execution to
+        # the three sumo-gated notebooks only. bo4mob's own tutorial has just
+        # one OPTIONALLY sumo-gated cell (a soft try/except, not a hard guard),
+        # so it already executes unconditionally on the core 3.12 leg and is
+        # not repeated here.
+        run: pytest tests/test_tutorials.py -k "sumo-marouter or spsa-sumo or sumo-duaiterate" -q -ra
+        env:
+          TABENCH_REQUIRE_DATA: "1"
+          TABENCH_RUN_TUTORIALS: "1"
 
   # Optional DTALite static-assignment adapter (dtalite-tap), py3.12 only. The
   # dtalite-free matrix above is the live regression that `import tabench` works without
@@ -173,7 +208,10 @@ jobs:
         # re-resolve it.
         run: pip install DTALite==0.8.1
       - name: Install
-        run: pip install -e ".[dev,dtalite]"
+        # tutorials extra (nbclient/nbformat/ipykernel) needed for the notebook
+        # step below — without it test_notebook_executes' importorskip would
+        # silently skip instead of executing.
+        run: pip install -e ".[dev,dtalite,tutorials]"
       - name: Fetch benchmark data
         run: >
           python -c "from tabench.data.registry import REGISTRY;
@@ -186,3 +224,10 @@ jobs:
         run: pytest tests/test_dtalite.py -q -ra
         env:
           TABENCH_REQUIRE_DATA: "1"
+      - name: Test (dtalite tutorial notebook)
+        # A SEPARATE step (torch-job precedent above): -k scopes execution to
+        # the single dtalite-gated notebook.
+        run: pytest tests/test_tutorials.py -k "dtalite-tap" -q -ra
+        env:
+          TABENCH_REQUIRE_DATA: "1"
+          TABENCH_RUN_TUTORIALS: "1"

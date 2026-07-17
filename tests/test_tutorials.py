@@ -99,25 +99,30 @@ _CANON_TRACK_NUM = {
 # at which point the coverage gate is fully strict. `test_allowlist_is_honest` fails if
 # an allowlisted unit already has a notebook (drift) or is not a real enforced unit
 # (typo). Seeded for batch-00, where only static/bfw.ipynb exists.
-_ALLOWLIST: set[str] = {
-    # static (batches 01–05) + bfw have all shipped — the whole static track is done
-    # day-to-day (batch-06) — SHIPPED, numbered 02-day-to-day/01..07
-    # dnl (batch-07) — SHIPPED, numbered 05-dnl/01..04
-    # analytic dta (batch-08) — SHIPPED (06-bottleneck/01..02, 07-dta/01..02,
-    # 08-tdta/01)
-    # newell + transit (batch-09) — SHIPPED, numbered 09-newell/01, 04-transit/01
-    # estimation (batch-10) — SHIPPED, numbered 03-estimation/01..07 (prior +
-    # the dynamic trio satisfied via _COVERS folds on 01-gls / 07-od-dynamic)
-    # torch (batch-11) + engines (batch-12)
-    # sumo-marouter — SHIPPED, 11-external/01-sumo-marouter.ipynb
-    "implicit-ue-nn", "het-gnn", "dtalite-tap", "spsa-sumo",
-}
-# PIN: today's allowlist is exactly the 4 guarded torch/sumo/dtalite units — any re-add
-# of a shipped unit must also bump this bound, forcing a second visible diff line beyond
-# the set literal itself (the shrink-only invariant above is review-enforced, not
-# mechanical; this narrows the blast radius of a silent re-add). Update the bound (and
-# this comment) only when a NEW batch adds a genuinely not-yet-written guarded unit.
-assert len(_ALLOWLIST) <= 4, "allowlist grew — update this pin's bound and comment"
+# static (batches 01–05) + bfw have all shipped — the whole static track is done
+# day-to-day (batch-06) — SHIPPED, numbered 02-day-to-day/01..07
+# dnl (batch-07) — SHIPPED, numbered 05-dnl/01..04
+# analytic dta (batch-08) — SHIPPED (06-bottleneck/01..02, 07-dta/01..02, 08-tdta/01)
+# newell + transit (batch-09) — SHIPPED, numbered 09-newell/01, 04-transit/01
+# estimation (batch-10) — SHIPPED, numbered 03-estimation/01..07 (prior + the dynamic
+# trio satisfied via _COVERS folds on 01-gls / 07-od-dynamic)
+# torch (batch-11) + engines (batch-12) — all SHIPPED:
+# sumo-marouter — 11-external/01-sumo-marouter.ipynb
+# implicit-ue-nn — 10-learned/01-implicit-ue-nn.ipynb
+# het-gnn — 10-learned/02-het-gnn.ipynb
+# dtalite-tap — 11-external/03-dtalite-tap.ipynb
+# spsa-sumo — 11-external/04-spsa-sumo.ipynb
+#
+# `{}` is a DICT literal in Python, not an empty set — set() is required so this stays
+# the set _unit_satisfied/_ALLOWLIST arithmetic below expects.
+_ALLOWLIST: set[str] = set()
+# PIN: EMPTY (the C3 closing pass, S0b) — every enforced unit now has a shipped notebook,
+# so the coverage gate is fully strict: any future model/estimator/parallel-track unit
+# added without a tutorial fails test_unit_has_tutorial_notebook immediately, with no
+# allowlist escape hatch left to re-open. Re-adding an entry here is therefore a real
+# regression, not routine batch bookkeeping — it must name why coverage is going
+# backwards, not just bump this bound.
+assert len(_ALLOWLIST) <= 0, "allowlist grew — update this pin's bound and comment"
 
 
 def _enforced_units() -> list[str]:

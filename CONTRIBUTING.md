@@ -40,10 +40,12 @@ first — the design principles (P1–P9) are normative for review.
       through `tabench.viz` for road link-flow/OD artifacts (non-road tracks plot with plain
       matplotlib, stating the reason in the Visualize cell), `metadata.tabench.unit`/`track`
       carry the bare names; `tests/test_tutorials.py` fails the suite for any registered unit
-      without one, or if the numbering collides or gaps, on EVERY CI leg today — the
-      notebook-EXECUTION check (`TABENCH_RUN_TUTORIALS=1`) is currently collected-but-skipped
-      in CI pending the executor-wiring commit; verify locally with
-      `TABENCH_RUN_TUTORIALS=1 pytest tests/test_tutorials.py -k executes` until it lands
+      without one, or if the numbering collides or gaps, on EVERY CI leg. The
+      notebook-EXECUTION check (`test_notebook_executes`, `TABENCH_RUN_TUTORIALS=1`) is wired
+      in too — core job's 3.12 leg and the torch/sumo/dtalite jobs (each with their own `-k`
+      filter) all re-execute your notebook from a cleared kernel; a raise or a failed in-cell
+      certified `assert` fails CI. Verify locally with
+      `TABENCH_RUN_TUTORIALS=1 pytest tests/test_tutorials.py -k executes`
 
 ## Contributing a network / scenario
 
