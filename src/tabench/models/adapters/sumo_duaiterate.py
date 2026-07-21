@@ -57,7 +57,6 @@ import importlib.metadata
 import math
 import os
 import shutil
-import signal
 import subprocess
 import sys
 import tempfile
@@ -71,13 +70,14 @@ import sumo
 from ...edoc.field import build_origin_waits
 from ...edoc.replay import (
     EmittedBundle,
-    PlanReplayFailure,
     ReplayAgent,
     ReplayResult,
     assert_engine_pin,
 )
 from ...edoc.scenario import EdocScenario
 from ...edoc.tdsp import evaluate_route
+from ._subprocess import intersect_replay_deadline as _intersect_replay_deadline
+from ._subprocess import remaining, run_disciplined
 from ._sumo_io import sumo_binary, sumo_env
 
 # netconvert silently clamps any edge shorter than this to it (the _sumo_io
@@ -175,109 +175,35 @@ def _duaiterate_tool() -> str:
     return os.path.join(sumo.SUMO_HOME, "tools", "assign", "duaIterate.py")
 
 
+# The subprocess discipline (wall deadline / process-group kill / crash-vs-censor
+# typing) lives in ``_subprocess.py`` — the S2 shape, shared with the matsim and
+# dtalite EDOC rows so a timeout/kill fix lands once. This row binds only the two
+# engine-specific dials: the SUMO wheel env (``sumo_env()``) and the row label.
+# ``_remaining`` / ``_intersect_replay_deadline`` are imported; ``_run`` is a thin
+# wrapper. adr-027 subprocess hazards are documented in the module docstring above.
+_LABEL = "sumo-duaiterate"
+
+
 def _remaining(deadline: float | None) -> float | None:
-    """Seconds left on the single wall deadline, or ``None`` if unbudgeted. RAISES
-    if the deadline already passed (a compile/iterate phase ate the whole budget)."""
-    if deadline is None:
-        return None
-    left = deadline - time.perf_counter()
-    if left <= 0.0:
-        raise RuntimeError("sumo-duaiterate wall deadline exhausted before the next step")
-    return left
-
-
-def _reap_group(proc: subprocess.Popen) -> None:
-    """SIGKILL the subprocess's whole process GROUP, then reap it. ``subprocess``
-    times out only the direct child; a SUMO tool (``duaIterate.py``) spawns
-    ``sumo``/``duarouter`` grandchildren that orphan to init and keep burning CPU
-    after the wall fires (measured). ``start_new_session=True`` puts the child in
-    its own group so one ``killpg`` takes the whole tree down."""
-    try:
-        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
-    except (ProcessLookupError, PermissionError, OSError):
-        proc.kill()  # group already gone / not the group leader: kill the child
-    try:
-        proc.wait(timeout=10)
-    except (subprocess.TimeoutExpired, OSError):
-        pass
-
-
-def _intersect_replay_deadline(
-    scenario: EdocScenario, deadline: float | None
-) -> tuple[float, bool]:
-    """The certifier's hard replay deadline (F3): the scenario-declared hashed
-    ``replay_deadline_s`` measured from now, intersected with any tighter caller
-    wall. So the hashed constant ALWAYS bounds a certifier replay — a post-
-    publication edit to it changes real behavior (as its being hashed implies), and
-    a head-blocking plan cannot hang the certifier unboundedly (adr-036 R6).
-
-    Returns ``(deadline, clipped_by_caller)``. The flag carries the R6
-    crash-vs-censor typing for a mid-replay timeout (the S3 review's F1 — an
-    inherited S2 defect, fixed here with the matsim row; MATSim's ~2.8 s JVM
-    startup merely widened the same window ~100x): only an expiry of the
-    SCENARIO-declared deadline is the model's fault (an unexecutable /
-    head-blocking plan — censor); a caller wall clipping below it is a
-    certifier-side budget exhaustion and must RAISE as infrastructure."""
-    scen_deadline = time.perf_counter() + float(scenario.replay_deadline_s)
-    if deadline is None or deadline >= scen_deadline:
-        return scen_deadline, False
-    return deadline, True
+    """This row's :func:`~tabench.models.adapters._subprocess.remaining` binding
+    (RAISES if a compile/iterate phase already ate the whole wall budget)."""
+    return remaining(deadline, label=_LABEL)
 
 
 def _run(
     cmd: list[str], *, cwd: str, deadline: float | None, what: str,
     censor_on_fail: bool = False, censor_on_timeout: bool | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    """Run a SUMO subprocess under adr-027 discipline: wheel ``SUMO_HOME``,
-    ``stdin=DEVNULL``, the single wall deadline as timeout, output captured, its
-    OWN process group so a wall kill reaps the whole tree (F2).
-
-    Crash-vs-censor (adr-036 R6): by default a timeout / OS error / nonzero rc is
-    a certifier-side INFRASTRUCTURE ``RuntimeError``. For the ONE step that replays
-    the MODEL's emitted plans (the pinned ``sumo`` meso replay), the caller passes
-    ``censor_on_fail=True`` so a genuine subprocess crash raises
-    :class:`~tabench.edoc.replay.PlanReplayFailure` (the censor signal — an
-    unexecutable/head-blocking plan is an invalid emission). The TIMEOUT typing is
-    split out (the S3 review's F1, an inherited S2 defect): ``censor_on_timeout``
-    (default: follows ``censor_on_fail``) is passed as ``False`` by the replay when
-    a CALLER wall clipped below the scenario-declared deadline, so a certifier-side
-    budget kill RAISES instead of censoring — only a scenario-deadline expiry
-    blames the plan. A ``_remaining`` pre-exhaustion and a missing binary
-    (``OSError``) stay infrastructure RAISEs on every step, replay included (they
-    are not the plan crashing the engine)."""
-    if censor_on_timeout is None:
-        censor_on_timeout = censor_on_fail
-    timeout = _remaining(deadline)  # pre-exhaustion -> plain RuntimeError (infra)
-    try:
-        proc = subprocess.Popen(
-            cmd,
-            cwd=cwd,
-            env=sumo_env(),
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            start_new_session=True,
-        )
-    except OSError as exc:
-        raise RuntimeError(f"{what}: could not execute ({exc})\n  cmd: {' '.join(cmd)}") from exc
-    try:
-        out, err = proc.communicate(timeout=timeout)
-    except subprocess.TimeoutExpired as exc:
-        _reap_group(proc)
-        msg = f"{what}: killed by the wall deadline\n  cmd: {' '.join(cmd)}"
-        if censor_on_timeout:
-            raise PlanReplayFailure(msg) from exc
-        raise RuntimeError(msg) from exc
-    if proc.returncode != 0:
-        msg = (
-            f"{what}: exit {proc.returncode}\n  cmd: {' '.join(cmd)}\n"
-            f"  stderr tail: {err[-800:]}"
-        )
-        if censor_on_fail:
-            raise PlanReplayFailure(msg)
-        raise RuntimeError(msg)
-    return subprocess.CompletedProcess(cmd, proc.returncode, out, err)
+    """Run a SUMO subprocess under the shared EDOC discipline
+    (:func:`~tabench.models.adapters._subprocess.run_disciplined`) with the wheel
+    ``SUMO_HOME`` env (``sumo_env()``): the ONE meso-replay step passes
+    ``censor_on_fail=True`` (an unexecutable plan is a
+    :class:`~tabench.edoc.replay.PlanReplayFailure` censor) with the S3 F1
+    ``censor_on_timeout`` caller-clip/scenario-deadline split preserved."""
+    return run_disciplined(
+        cmd, cwd=cwd, deadline=deadline, what=what, env=sumo_env(), label=_LABEL,
+        censor_on_fail=censor_on_fail, censor_on_timeout=censor_on_timeout,
+    )
 
 
 # --------------------------------------------------------------------------

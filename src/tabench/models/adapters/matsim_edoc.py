@@ -60,8 +60,6 @@ import hashlib
 import math
 import os
 import shutil
-import signal
-import subprocess
 import tempfile
 import time
 import xml.etree.ElementTree as ET
@@ -89,6 +87,8 @@ from ._matsim_io import (
     parse_events,
     parse_output_plans,
 )
+from ._subprocess import intersect_replay_deadline as _intersect_replay_deadline
+from ._subprocess import remaining, run_disciplined
 
 __all__ = [
     "ENGINE",
@@ -231,54 +231,17 @@ def _assert_jdk_pin() -> None:
 
 
 # --------------------------------------------------------------------------
-# wall-deadline plumbing (the S2 discipline verbatim)
+# wall-deadline plumbing — the S2 discipline, now shared in ``_subprocess.py``
+# (so a JVM timeout/killpg fix lands once across the sumo/matsim/dtalite rows).
+# This row binds only its label; ``_run`` adds the JVM env in _run_java.
 # --------------------------------------------------------------------------
+_LABEL = "matsim"
+
+
 def _remaining(deadline: float | None) -> float | None:
-    """Seconds left on the single wall deadline, or ``None`` if unbudgeted.
-    RAISES if the deadline already passed (a prior phase ate the budget)."""
-    if deadline is None:
-        return None
-    left = deadline - time.perf_counter()
-    if left <= 0.0:
-        raise RuntimeError("matsim wall deadline exhausted before the next step")
-    return left
-
-
-def _reap_group(proc: subprocess.Popen) -> None:
-    """SIGKILL the subprocess's whole process GROUP, then reap it (F2):
-    ``subprocess`` times out only the direct child; a JVM (and any
-    ``jspawnhelper`` children) otherwise orphans to init and keeps idling at
-    multi-hundred-MB RSS. ``start_new_session=True`` makes one ``killpg`` take
-    the whole tree down."""
-    try:
-        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
-    except (ProcessLookupError, PermissionError, OSError):
-        proc.kill()
-    try:
-        proc.wait(timeout=10)
-    except (subprocess.TimeoutExpired, OSError):
-        pass
-
-
-def _intersect_replay_deadline(
-    scenario: EdocScenario, deadline: float | None
-) -> tuple[float, bool]:
-    """The certifier's hard replay deadline (F3): the scenario-declared hashed
-    ``replay_deadline_s`` measured from now, intersected with any tighter
-    caller wall — so the hashed constant ALWAYS bounds a certifier replay and a
-    head-blocking plan cannot hang the certifier unboundedly (adr-036 R6).
-
-    Returns ``(deadline, clipped_by_caller)``. The flag carries the R6
-    crash-vs-censor typing for a mid-replay timeout (the S3 review's F1,
-    executed: a ``now + 1.5 s`` caller wall killed the replay JVM mid-startup
-    and was laundered into ``feasible=0``): only an expiry of the
-    SCENARIO-declared deadline is the model's fault (an unexecutable / hanging
-    plan — censor); a caller wall clipping below it is a certifier-side budget
-    exhaustion and must RAISE as infrastructure, never censor."""
-    scen_deadline = time.perf_counter() + float(scenario.replay_deadline_s)
-    if deadline is None or deadline >= scen_deadline:
-        return scen_deadline, False
-    return deadline, True
+    """This row's :func:`~tabench.models.adapters._subprocess.remaining` binding
+    (RAISES if a prior phase already ate the wall budget)."""
+    return remaining(deadline, label=_LABEL)
 
 
 def _run_java(
@@ -308,55 +271,19 @@ def _run(
     censor_on_fail: bool = False, censor_on_timeout: bool | None = None,
     env: dict[str, str] | None = None,
 ) -> None:
-    """Run one subprocess under the S2 discipline: ``stdin=DEVNULL``, its OWN
-    process group (one killpg reaps the whole tree, F2), the single wall
-    deadline as timeout.
-
-    Crash-vs-censor (adr-036 R6): by default a timeout / OS error / nonzero rc
-    is a certifier-side INFRASTRUCTURE ``RuntimeError``. For the ONE step that
-    replays the MODEL's emitted plans, the caller passes ``censor_on_fail=True``
-    so a genuine subprocess crash raises
-    :class:`~tabench.edoc.replay.PlanReplayFailure` (the censor signal). The
-    TIMEOUT typing is split out (the S3 review's F1): ``censor_on_timeout``
-    (default: follows ``censor_on_fail``) is passed as ``False`` by the replay
-    when a CALLER wall clipped below the scenario-declared deadline, so a
-    certifier-side budget kill RAISES instead of censoring — only a
-    scenario-deadline expiry blames the plan. A ``_remaining`` pre-exhaustion
-    and a missing binary (``OSError``) stay infrastructure RAISEs on every
-    step, replay included."""
-    if censor_on_timeout is None:
-        censor_on_timeout = censor_on_fail
-    timeout = _remaining(deadline)  # pre-exhaustion -> plain RuntimeError (infra)
-    try:
-        proc = subprocess.Popen(
-            cmd,
-            cwd=cwd,
-            env=env if env is not None else dict(os.environ),
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            start_new_session=True,
-        )
-    except OSError as exc:
-        raise RuntimeError(f"{what}: could not execute ({exc})\n  cmd: {' '.join(cmd)}") from exc
-    try:
-        _out, err = proc.communicate(timeout=timeout)
-    except subprocess.TimeoutExpired as exc:
-        _reap_group(proc)
-        msg = f"{what}: killed by the wall deadline\n  cmd: {' '.join(cmd)}"
-        if censor_on_timeout:
-            raise PlanReplayFailure(msg) from exc
-        raise RuntimeError(msg) from exc
-    if proc.returncode != 0:
-        msg = (
-            f"{what}: exit {proc.returncode}\n  cmd: {' '.join(cmd)}\n"
-            f"  stderr tail: {err[-800:]}"
-        )
-        if censor_on_fail:
-            raise PlanReplayFailure(msg)
-        raise RuntimeError(msg)
-    # rc is NEVER trusted beyond this point: every caller re-reads its artifact.
+    """Run one subprocess under the shared EDOC discipline
+    (:func:`~tabench.models.adapters._subprocess.run_disciplined`). ``env``
+    defaults to the inherited environment (``_run_java`` passes the JVM one with
+    ``JAVA_HOME`` pinned); the ONE replay step passes ``censor_on_fail=True``
+    (an unexecutable plan is a :class:`~tabench.edoc.replay.PlanReplayFailure`
+    censor) with the S3 F1 ``censor_on_timeout`` caller-clip/scenario-deadline
+    split preserved. ``rc`` is never trusted — every caller re-reads its
+    artifact."""
+    run_disciplined(
+        cmd, cwd=cwd, deadline=deadline, what=what,
+        env=env if env is not None else dict(os.environ), label=_LABEL,
+        censor_on_fail=censor_on_fail, censor_on_timeout=censor_on_timeout,
+    )
 
 
 # --------------------------------------------------------------------------

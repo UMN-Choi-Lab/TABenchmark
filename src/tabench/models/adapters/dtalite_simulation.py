@@ -90,8 +90,6 @@ import heapq
 import importlib.metadata
 import os
 import shutil
-import signal
-import subprocess
 import sys
 import tempfile
 import time
@@ -110,6 +108,8 @@ from ...edoc.replay import (
 )
 from ...edoc.scenario import EdocScenario
 from ...edoc.tdsp import evaluate_route
+from ._subprocess import intersect_replay_deadline as _intersect_replay_deadline
+from ._subprocess import remaining, run_disciplined
 
 __all__ = [
     "ENGINE",
@@ -220,106 +220,40 @@ def _semantic_config() -> str:
 
 
 # --------------------------------------------------------------------------
-# wall-deadline plumbing (the S2 discipline verbatim, S3 F1 from birth)
+# wall-deadline plumbing — the S2 discipline (S3 F1 from birth), now shared in
+# ``_subprocess.py`` so a killpg / timeout-typing fix lands once across the
+# sumo/matsim/dtalite rows. This row binds only the OMP=1 child env (the G0
+# CORRECTNESS pin, adr-029) and its label; the rest calls straight through.
 # --------------------------------------------------------------------------
+_LABEL = "dtalite-simulation"
+
+
 def _remaining(deadline: float | None) -> float | None:
-    """Seconds left on the single wall deadline, or ``None`` if unbudgeted.
-    RAISES if the deadline already passed (a prior phase ate the budget)."""
-    if deadline is None:
-        return None
-    left = deadline - time.perf_counter()
-    if left <= 0.0:
-        raise RuntimeError("dtalite-simulation wall deadline exhausted before the next step")
-    return left
-
-
-def _reap_group(proc: subprocess.Popen) -> None:
-    """SIGKILL the subprocess's whole process GROUP, then reap it.
-    ``start_new_session=True`` puts the python child (and the ctypes-loaded
-    engine inside it) in its own group so one ``killpg`` takes it down; a
-    mid-run kill leaves a torn/empty trajectory.csv, which is exactly why a
-    timeout-killed replay's artifacts are never parsed (R6)."""
-    try:
-        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
-    except (ProcessLookupError, PermissionError, OSError):
-        proc.kill()
-    try:
-        proc.wait(timeout=10)
-    except (subprocess.TimeoutExpired, OSError):
-        pass
-
-
-def _intersect_replay_deadline(
-    scenario: EdocScenario, deadline: float | None
-) -> tuple[float, bool]:
-    """The certifier's hard replay deadline: the scenario-declared hashed
-    ``replay_deadline_s`` measured from now, intersected with any tighter
-    caller wall — the hashed constant ALWAYS bounds a certifier replay, so a
-    head-blocking plan cannot hang the certifier unboundedly (adr-036 R6; the
-    pilot measured an infinite-loop head-block variant, and this deadline is
-    its defense even though the shipped family reproduces the fast
-    filler-corruption variant instead — both defenses ship, adr-040).
-
-    Returns ``(deadline, clipped_by_caller)`` — the S3 F1 typing from birth:
-    only an expiry of the SCENARIO-declared deadline is the model's fault
-    (censor); a caller wall clipping below it is certifier-side budget
-    exhaustion and must RAISE as infrastructure."""
-    scen_deadline = time.perf_counter() + float(scenario.replay_deadline_s)
-    if deadline is None or deadline >= scen_deadline:
-        return scen_deadline, False
-    return deadline, True
+    """This row's :func:`~tabench.models.adapters._subprocess.remaining` binding
+    (RAISES if a prior phase already ate the wall budget)."""
+    return remaining(deadline, label=_LABEL)
 
 
 def _run(
     code: str, *, cwd: str, deadline: float | None, what: str,
     censor_on_fail: bool = False, censor_on_timeout: bool | None = None,
 ) -> None:
-    """Run ONE engine entry (``python -c "import DTALite; ..."``) in a
-    throwaway subprocess under the adr-029 discipline: ``stdin=DEVNULL``
-    (``ExitMessage`` = ``getchar()`` + ``exit()``), CWD-confined outputs, its
-    OWN process group, and the child env ALWAYS pinning ``OMP_NUM_THREADS=1``
-    — a G0 CORRECTNESS requirement (measured: OMP=4 diverges and SIGSEGVs on a
-    congested net; the child override beats a hostile parent).
-
-    Crash-vs-censor (adr-036 R6, S3 F1 split): by default a timeout / OS error
-    / nonzero rc is an infrastructure ``RuntimeError``. The ONE step that
-    replays MODEL-emitted plans passes ``censor_on_fail=True`` (a genuine
-    engine crash raises :class:`PlanReplayFailure`) and ``censor_on_timeout``
-    = whether the SCENARIO deadline was binding. rc is never trusted beyond
-    this function — every caller re-reads its artifact."""
-    if censor_on_timeout is None:
-        censor_on_timeout = censor_on_fail
-    timeout = _remaining(deadline)  # pre-exhaustion -> plain RuntimeError (infra)
-    cmd = [sys.executable, "-c", code]
-    try:
-        proc = subprocess.Popen(
-            cmd,
-            cwd=cwd,
-            env={**os.environ, "OMP_NUM_THREADS": "1"},
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            start_new_session=True,
-        )
-    except OSError as exc:
-        raise RuntimeError(f"{what}: could not execute ({exc})\n  cmd: {' '.join(cmd)}") from exc
-    try:
-        _out, err = proc.communicate(timeout=timeout)
-    except subprocess.TimeoutExpired as exc:
-        _reap_group(proc)
-        msg = f"{what}: killed by the wall deadline\n  cmd: {' '.join(cmd)}"
-        if censor_on_timeout:
-            raise PlanReplayFailure(msg) from exc
-        raise RuntimeError(msg) from exc
-    if proc.returncode != 0:
-        msg = (
-            f"{what}: exit {proc.returncode}\n  cmd: {' '.join(cmd)}\n"
-            f"  stderr tail: {err[-800:]}"
-        )
-        if censor_on_fail:
-            raise PlanReplayFailure(msg)
-        raise RuntimeError(msg)
+    """Run ONE engine entry (``python -c "import DTALite; ..."``) in a throwaway
+    subprocess under the shared EDOC discipline
+    (:func:`~tabench.models.adapters._subprocess.run_disciplined`). The child env
+    ALWAYS pins ``OMP_NUM_THREADS=1`` — a G0 CORRECTNESS requirement (measured:
+    OMP=4 diverges and SIGSEGVs on a congested net; the child override beats a
+    hostile parent, adr-029). ``stdin=DEVNULL`` is the ``ExitMessage`` =
+    ``getchar()`` + ``exit()`` guard. The ONE replay step passes
+    ``censor_on_fail=True`` (a genuine engine crash is a
+    :class:`~tabench.edoc.replay.PlanReplayFailure` censor) with the S3 F1
+    ``censor_on_timeout`` caller-clip/scenario-deadline split preserved; ``rc``
+    is never trusted — every caller re-reads its artifact."""
+    run_disciplined(
+        [sys.executable, "-c", code], cwd=cwd, deadline=deadline, what=what,
+        env={**os.environ, "OMP_NUM_THREADS": "1"}, label=_LABEL,
+        censor_on_fail=censor_on_fail, censor_on_timeout=censor_on_timeout,
+    )
 
 
 # --------------------------------------------------------------------------
