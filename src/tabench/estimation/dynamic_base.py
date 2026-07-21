@@ -65,6 +65,22 @@ class DynamicEstimationTask:
     seed: int = 0
     heldout_digest: str = ""
 
+    def __post_init__(self) -> None:
+        # A 0-sensor task carries no observed counts: obs_count_rmse is an
+        # undefined mean-of-empty (NaN) for both dynamic estimators and the
+        # certificate cannot rank it, so the instance is meaningless for every
+        # estimator. No default or random config builds one -- the runner's random
+        # sensor draw floors at one sensor (runner._draw_sensors) -- but the public
+        # run_dynamic_estimation_experiment DOES accept an explicit empty sensor list
+        # ({'sensors': {'kind': 'explicit', 'links': []}}), which used to emit
+        # NaN-censored rows; reject it here so it fails fast with a clear error.
+        sensors = self.dataset.payload.get("sensor_links")
+        if sensors is not None and len(sensors) == 0:
+            raise ValueError(
+                "DynamicEstimationTask requires at least one sensor; a 0-sensor "
+                "task has no observed counts to estimate from."
+            )
+
     def content_hash(self) -> str:
         """SHA-256 instance pin (domain-prefixed ``tabench-t2d-task-v2;``).
 

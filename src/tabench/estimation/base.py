@@ -66,6 +66,23 @@ class EstimationTask:
     seed: int = 0
     heldout_digest: str = ""
 
+    def __post_init__(self) -> None:
+        # A 0-sensor task carries no observational signal: every count-fitting
+        # estimator's obs_count_rmse is an undefined mean-of-empty (NaN) and the
+        # certificate cannot rank it, so the instance is meaningless for every
+        # estimator. No default or random config builds one -- the runner's random
+        # sensor draw floors at one sensor (runner._draw_sensors) -- but the public
+        # runner DOES accept an explicit empty sensor list
+        # (run_estimation_experiment(..., estimation={'sensors': {'kind': 'explicit',
+        # 'links': []}})), which used to emit NaN-censored rows; reject it here so it
+        # fails fast with a clear error instead.
+        sensors = self.dataset.payload.get("sensor_links")
+        if sensors is not None and len(sensors) == 0:
+            raise ValueError(
+                "EstimationTask requires at least one sensor (link count); a "
+                "0-sensor task has no observed counts to estimate from."
+            )
+
     def content_hash(self) -> str:
         """SHA-256 instance pin over scenario hash + prior bytes + sensor links +
         observed counts + dataset dials + certificate pin + held-out digest + seed.

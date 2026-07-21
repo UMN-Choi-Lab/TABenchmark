@@ -186,3 +186,38 @@ def test_bookkeeping_and_conservation(braess):
     assert metrics["node_balance_residual"] <= 1e-6 * braess.demand.total
     for key in ("relative_gap", "beckmann", "smith_disequilibrium"):
         assert key in trace.final.self_report
+
+
+# --------------------------------------------------------------- prune_tol (B4)
+def test_prune_tol_changes_retained_flows(siouxfalls):
+    """B4 (on): prune_tol is load-bearing -- it decides which zero-flow non-shortest
+    routes are dropped from the working set, and dropping different routes changes the
+    retained set and thus the (non-converged) link-flow trajectory. On Sioux Falls a
+    loosened prune_tol=1e-6 yields link flows NOT byte-identical to the tight default
+    1e-14 (measured max|diff| ~7), while staying feasible. MUTANT KILL: hardcoding
+    prune_tol (ignoring the factor) collapses the two runs to byte-identical."""
+    def flows(prune_tol):
+        trace = Trace()
+        RouteSwapDTDModel(prune_tol=prune_tol).solve(
+            siouxfalls, Budget(iterations=150), RngBundle(0), trace
+        )
+        return trace.final.link_flows
+
+    tight, loose = flows(1e-14), flows(1e-6)
+    assert not np.array_equal(tight, loose)
+    assert np.abs(tight - loose).max() > 1e-3
+    assert Evaluator(siouxfalls).evaluate(loose)["feasible"] == 1.0
+
+
+def test_prune_tol_default_is_pinned(siouxfalls):
+    """B4 (off): prune_tol defaults to 1e-14, so a default run is byte-identical to an
+    explicit prune_tol=1e-14 run -- the off-pin (the existing Braess convergence
+    anchors, which never set prune_tol, pin the default flows)."""
+    def flows(model):
+        trace = Trace()
+        model.solve(siouxfalls, Budget(iterations=150), RngBundle(0), trace)
+        return trace.final.link_flows
+
+    np.testing.assert_array_equal(
+        flows(RouteSwapDTDModel()), flows(RouteSwapDTDModel(prune_tol=1e-14))
+    )

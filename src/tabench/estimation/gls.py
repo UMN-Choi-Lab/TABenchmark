@@ -153,7 +153,7 @@ class GLSEstimator(ODEstimator):
             if resid < best_resid:
                 best_resid, best_g = resid, g.copy()
             done = budget.exhausted(coords)
-            # Sparse emission (ADR-002 Decision 2 / base.py:176-181): every
+            # Sparse emission (ADR-002 Decision 2 / base.py:189-194): every
             # checkpoint triggers a full pinned bfw re-assignment, so emit ~15
             # spaced points plus always the final iterate (and the last before a
             # budget break), never one per iteration (mirrors yang/dn-kalman). At

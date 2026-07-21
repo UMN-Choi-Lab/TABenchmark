@@ -660,9 +660,13 @@ def test_rejects_sue_instance():
         )
 
 
-def test_empty_prior_profile_emits_prior():
-    """A dynamic estimator with an all-zero prior profile (no active pairs) emits
-    the prior instead of crashing the least-squares solve (mirrors gls)."""
+def test_all_zero_prior_and_counts_solves_to_zero_profile():
+    """A dynamic estimator on an all-zero instance -- zero prior profile AND zero
+    counts, but WITH active pairs (so the NORMAL GLS solve runs, not the
+    n_pairs==0 guard that test_empty_pairs_guard_reports_obs_count_rmse covers) --
+    returns the zero profile instead of crashing the least-squares solve (mirrors
+    gls's zero-prior handling). The prior sole minimizer of the strictly convex
+    whitened GLS at an all-zero prior and all-zero counts is x=0."""
     sc = two_route_scenario(sue_theta=None)
     pairs = active_pairs(sc.demand.matrix)
     full = lagged_assignment_tensor(sc.network, pairs, 2.0)
@@ -728,6 +732,53 @@ def test_empty_pairs_guard_reports_obs_count_rmse():
         est.estimate(task, Budget(sp_calls=100), RngBundle(0), trace)
         assert np.array_equal(trace.final.od_matrix, zero_profile)
         assert trace.final.self_report["obs_count_rmse"] == pytest.approx(expected_resid)
+
+
+def test_zero_sensor_dynamic_task_rejected_at_construction():
+    """B4 root-cause guard: a 0-sensor DynamicEstimationTask carries no observed
+    counts, so both dynamic estimators' obs_count_rmse is an undefined mean-of-empty
+    (NaN) and the certificate cannot rank it -- the instance is meaningless for every
+    estimator, so it is rejected at construction (no shipped scenario builds one; the
+    runner always places >=1 sensor). Rejecting here, not per-estimator, also stops the
+    certifier NaN downstream. The empty-*pairs* guard (a >=1-sensor task whose dataset
+    carries no active OD pairs) is a DIFFERENT, still-valid case, covered above."""
+    sc = two_route_scenario(sue_theta=None)
+    pairs = active_pairs(sc.demand.matrix)
+    full = lagged_assignment_tensor(sc.network, pairs, 2.0)
+    n_lags = full.shape[0] - 1
+    n_slices, n_intervals = 3, 3 + n_lags
+    no_sensors = np.array([], dtype=np.int64)
+    obs_ds = DynamicLinkCounts(no_sensors, 5, "none").observe(
+        sc, np.zeros((n_intervals, sc.network.n_links)),
+        RngBundle(0).generator(SOURCE_OBSERVATION),
+    )
+    dataset = dataclasses.replace(
+        obs_ds,
+        payload={**obs_ds.payload, "lag_tensor": full[:, no_sensors, :],
+                 "pairs": np.asarray(pairs, dtype=np.int64)},
+        meta={**obs_ds.meta, "n_slices": n_slices, "slice_length": 2.0,
+              "n_lags": n_lags, "map_recipe": "frozen_freeflow_v1"},
+    )
+    truth = np.zeros((n_slices, sc.network.n_zones, sc.network.n_zones))
+    with pytest.raises(ValueError, match="at least one sensor"):
+        DynamicEstimationTask("t", sc.network, truth, dataset, {}, sc.content_hash(), seed=0)
+
+
+def test_zero_sensor_rejected_through_public_dynamic_runner():
+    """B4 (runner-surface pin): the dynamic twin of the static runner-surface pin. An
+    explicit empty sensor list in the dynamic runner config builds a 0-sensor
+    DynamicEstimationTask, which now raises at construction instead of emitting NaN
+    rows -- pinning the ``sensor_links`` payload-key contract end to end (a future
+    runner refactor that renamed/omitted the key would silently restore NaN rows and
+    the direct-construction pin, which sets the key, would still pass; this driver
+    catches it). The card's default non-empty held-out set clears the disjointness /
+    empty-heldout guards that fire before task construction."""
+    with pytest.raises(ValueError, match="at least one sensor"):
+        run_dynamic_estimation_experiment(
+            two_route_scenario(sue_theta=None), [DynamicPriorBaseline()],
+            Budget(sp_calls=100),
+            estimation=_card(sensors={"kind": "explicit", "links": []}),
+        )
 
 
 def test_gls_static_estimator_unrelated_to_dynamic_registry():

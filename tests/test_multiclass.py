@@ -16,7 +16,7 @@ import tabench as tb
 from tabench.core.budget import Budget
 from tabench.core.results import Trace
 from tabench.core.rng import RngBundle
-from tabench.core.scenario import Demand, MulticlassDemand, Scenario
+from tabench.core.scenario import Demand, MulticlassDemand, Network, Scenario
 from tabench.data.builtin import (
     _MC_INTERACTION_ASYMMETRIC,
     _MC_INTERACTION_SYMMETRIC,
@@ -310,3 +310,100 @@ def test_missing_multiclass_raises() -> None:
     model = tb.MulticlassModel()
     with pytest.raises(ValueError, match="requires a scenario with multiclass"):
         model.solve(tb.braess_scenario(), Budget(iterations=1), RngBundle(0), Trace())
+
+
+# ------------------------------------------------------- censor / guard branches
+# The certificate CENSORS a coupling that drives a class cost non-positive (never a
+# false accept; adr-013 / the model docstring). These pin the two censor paths --
+# the vi_gap NaN guard and the inner diagonalized-cost abort + empty-trace guard --
+# with recorded mutant-kill evidence, plus a run_experiment survival row.
+
+
+def _censor_scenario(
+    interaction, cap: float, power: float, a2: float = 0.0,
+    g_cars: float = 4.0, g_trucks: float = 2.0,
+) -> Scenario:
+    """A two-disjoint-route multiclass network (link order 1->3, 3->2, 1->4, 4->2)
+    with a chosen capacity/power/route-B offset and interaction -- the knob for the
+    degenerate/overflow censor cases (parity with multiclass_two_route_scenario)."""
+    net = Network(
+        name="mc-censor", n_nodes=4, n_zones=2, first_thru_node=1,
+        init_node=np.array([1, 3, 1, 4], dtype=np.int64),
+        term_node=np.array([3, 2, 4, 2], dtype=np.int64),
+        capacity=np.full(4, cap), length=np.zeros(4),
+        free_flow_time=np.array([1.0, 1.0, 1.0 + a2, 1.0]), b=np.full(4, 0.15),
+        power=np.full(4, power), toll=np.zeros(4), link_type=np.ones(4, dtype=np.int64),
+    )
+    od_cars = np.zeros((2, 2))
+    od_cars[0, 1] = g_cars
+    od_trucks = np.zeros((2, 2))
+    od_trucks[0, 1] = g_trucks
+    mc = MulticlassDemand(
+        matrices=np.stack([od_cars, od_trucks]), interaction=np.asarray(interaction, float)
+    )
+    return Scenario(
+        name="mc-censor", network=net, demand=Demand(od_cars + od_trucks), multiclass=mc
+    )
+
+
+def test_censor_vi_gap_nan_on_negative_coupling() -> None:
+    """B4: the vi_gap NaN guard censors a coupling that drives the class-summed
+    coupled cost non-positive (the "a coupling that drives a cost non-positive stops
+    the sweep and emits a flow the certificate then CENSORS" case in the model
+    docstring). With M = [[1, -2], [0, 3]] the trucks' Gauss-Seidel update raises the
+    shared-link flow enough that cars' coupled cost (cross term M[0,1] = -2) turns
+    non-positive only at the END of a sweep -- so a FINITE gap is recorded on the
+    first sweep, then vi_gap returns NaN and the certificate censors the emitted flow
+    (feasible=0, gap NaN), with self_report key parity to the normal branch. Reached
+    branch: the `if not np.all(np.isfinite(cost_i)) or cost_i.min() <= 0.0: return
+    float('nan')` guard inside vi_gap. MUTANT KILL: disabling that guard makes the
+    downstream all-or-nothing raise on the non-positive cost, so solve() raises out of
+    vi_gap (which sits outside the sweep's try/except) instead of censoring."""
+    sc = _censor_scenario([[1.0, -2.0], [0.0, 3.0]], cap=2.0, power=1.0, a2=5.0)
+    trace = Trace()
+    with np.errstate(over="ignore", invalid="ignore"):
+        tb.MulticlassModel(relaxation=0.7).solve(sc, Budget(iterations=30), RngBundle(0), trace)
+    gaps = [s.self_report["relative_gap"] for s in trace]
+    assert any(np.isfinite(g) for g in gaps)  # a normal sweep recorded a finite gap first
+    assert np.isnan(trace.final.self_report["relative_gap"])  # then vi_gap censored
+    assert set(trace.final.self_report) == {"relative_gap"}  # key parity, NaN sentinel
+    assert np.all(np.isfinite(trace.final.class_link_flows))  # a finite censored flow
+    met = Evaluator(sc).evaluate(trace.final.link_flows, trace.final.class_link_flows)
+    assert met["feasible"] == 0.0  # the certificate censors it
+    assert np.isnan(met["relative_gap"])
+
+
+def test_censor_overflow_inner_abort_key_parity() -> None:
+    """B4: the inner diagonalized-cost abort (`raise ValueError` on a non-finite /
+    non-positive class cost, caught by the sweep's `except (RuntimeError, ValueError):
+    break`) followed by the empty-trace guard records the SAME self_report key set as
+    the normal branch, with relative_gap as the not-computable NaN sentinel. Driven by
+    a 1e-100-capacity power-4 network whose free-flow AON loading overflows the BPR
+    cost to non-finite on the FIRST inner iteration -- before any normal checkpoint --
+    exactly the guard's target case (mirrors sc_tap's guard-branch parity test). MUTANT
+    KILL: making the sweep's `except (RuntimeError, ValueError)` catch nothing (empty
+    tuple) makes solve() raise the ValueError instead of censoring into a guard row."""
+    guard_sc = _censor_scenario(_MC_INTERACTION_SYMMETRIC, cap=1e-100, power=4.0)
+    guard = Trace()
+    with np.errstate(over="ignore", invalid="ignore"):  # intentional BPR overflow
+        tb.MulticlassModel().solve(guard_sc, Budget(iterations=50), RngBundle(0), guard)
+        met = Evaluator(guard_sc).evaluate(guard.final.link_flows, guard.final.class_link_flows)
+    assert len(guard) == 1  # only the empty-trace guard checkpoint (no normal record)
+    assert np.isnan(guard.final.self_report["relative_gap"])
+    assert np.all(np.isfinite(guard.final.class_link_flows))  # the finite free-flow start
+    normal = _run(multiclass_two_route_scenario(), iterations=50, target=1e-13)
+    assert set(guard.final.self_report) == set(normal.final.self_report)
+    assert met["feasible"] == 0.0
+
+
+def test_run_experiment_survives_multiclass_censor() -> None:
+    """B4 end-to-end: run_experiment over the overflow-censor multiclass scenario
+    completes without raising -- the model emits its guard artifact and the certifier
+    censors it into a feasible=0 row, instead of a ValueError propagating out of the
+    run (parity with sc_tap's run_experiment survival test)."""
+    from tabench.experiments.runner import run_experiment
+
+    guard_sc = _censor_scenario(_MC_INTERACTION_SYMMETRIC, cap=1e-100, power=4.0)
+    with np.errstate(over="ignore", invalid="ignore"):
+        res = run_experiment(guard_sc, [tb.MulticlassModel()], Budget(iterations=50))
+    assert res.rows[-1]["feasible"] == 0.0

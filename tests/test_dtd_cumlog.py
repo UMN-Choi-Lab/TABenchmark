@@ -430,3 +430,34 @@ def test_braess_content_hash_preserved():
     """This model adds no scenario field: the golden Braess content hash must be
     byte-identical."""
     assert braess_scenario().content_hash() == BRAESS_GOLDEN_HASH
+
+
+# ----------------------------------------------------------- _ACTIVE_TOL (B4)
+def test_active_tol_excludes_shed_routes(siouxfalls):
+    """B4: the _ACTIVE_TOL branch (a working-set route counts as active iff its logit
+    choice probability p >= 1e-6) is load-bearing on the active_routes and
+    used_valuation_spread self-reports -- an existing test only checks the KEY exists.
+    On congested Sioux Falls routes get shed as flows settle: their valuations diverge
+    and their logit shares underflow below the tolerance, so active_routes rises
+    (column generation) then FALLS well below its peak (routes go inactive), while
+    used_valuation_spread stays BOUNDED because the diverging shed valuations are
+    excluded from the used set. MUTANT KILL: replacing `p >= _ACTIVE_TOL` with
+    `p >= 0.0` counts every working-set route as active, so active_routes becomes
+    monotone non-decreasing (final == peak, no shedding) and used_valuation_spread
+    blows up to the diverging valuation_max (measured: real used_spread ~53 vs mutant
+    ~8.6e4)."""
+    trace = _solve(
+        siouxfalls,
+        CumLogDTDModel(r=0.25, eta_schedule="constant", eta0=1.0),
+        iterations=400,
+    )
+    active = [s.self_report["active_routes"] for s in trace]
+    used_spread = [s.self_report["used_valuation_spread"] for s in trace]
+    vmax = [s.self_report["valuation_max"] for s in trace]
+    # Routes are genuinely shed: active_routes drops well below its peak. Under the
+    # mutant active_routes = working-set size, which only grows (never drops).
+    assert max(active) - active[-1] > 20
+    # The shed routes' diverging valuations are EXCLUDED from the used spread, which
+    # stays bounded even as the dropped-route valuations diverge (mutant: blows up).
+    assert max(used_spread) < 1e3
+    assert vmax[-1] > 100.0 * used_spread[-1]

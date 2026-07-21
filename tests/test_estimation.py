@@ -275,8 +275,42 @@ def test_gls_zero_prior_emits_prior_without_crashing():
     assert bundle.final.self_report["obs_count_rmse"] == pytest.approx(expected_resid)
 
 
+def test_zero_sensor_task_rejected_at_construction():
+    """B4 root-cause guard: a 0-sensor EstimationTask carries no observed counts, so
+    every count-fitting estimator's obs_count_rmse is an undefined mean-of-empty (NaN)
+    and the certificate cannot rank it -- the instance is meaningless for every
+    estimator, so it is rejected at construction (no shipped scenario builds one).
+    A >=1-sensor task (incl. the single sensor at index 0, NOT zero sensors) still
+    builds, so this is not a spurious tightening."""
+    sc = braess_scenario(6.0)
+    with pytest.raises(ValueError, match="at least one sensor"):
+        _task(sc, BRAESS_TRUTH, np.array([], dtype=np.int64), np.zeros((2, 2)))
+    # One sensor at link index 0 is a valid task (guards the off-by-one the guard must
+    # not trip): len == 1, not 0.
+    task = _task(sc, BRAESS_TRUTH, np.array([0]), _single_pair_prior(4.0))
+    assert len(task.dataset.payload["sensor_links"]) == 1
+
+
+def test_zero_sensor_rejected_through_public_runner():
+    """B4 (runner-surface pin): the fail-fast reaches the PUBLIC runner boundary end
+    to end. An explicit empty sensor list in the runner config
+    (``estimation={'sensors': {'kind':'explicit','links':[]}}``) builds a 0-sensor
+    task, which now raises at construction instead of emitting NaN-censored rows.
+    Pins the ``sensor_links`` payload-key contract: a future runner refactor that
+    renamed/omitted the key would silently restore NaN rows while the direct-
+    construction pin (which sets the key) still passed -- this driver catches it. The
+    non-empty held-out set is needed to clear the disjointness/empty-heldout guards
+    that fire before task construction."""
+    with pytest.raises(ValueError, match="at least one sensor"):
+        run_estimation_experiment(
+            braess_scenario(6.0), [PriorBaseline()], Budget(sp_calls=100),
+            estimation={"sensors": {"kind": "explicit", "links": []},
+                        "heldout": {"kind": "explicit", "links": [0]}},
+        )
+
+
 def test_gls_default_stride_records_every_iteration():
-    """no-op-at-default invariant (base.py:176-181 stride, ADR-002 Dec 2): at the
+    """no-op-at-default invariant (base.py:189-194 stride, ADR-002 Dec 2): at the
     default outer_iters=15 the stride is max(1, 15//15)=1, so gls records EVERY
     outer iteration exactly as before the stride was added -- one checkpoint per
     iteration, indices 1..15. A future stride change that alters the DEFAULT trace
@@ -299,7 +333,7 @@ def test_gls_default_stride_records_every_iteration():
 
 def test_gls_high_iters_strides_the_trace():
     """on=changes: with outer_iters >> 15 the stride thins the trace to ~15 spaced
-    checkpoints plus the final iterate (base.py:176-181), instead of one per
+    checkpoints plus the final iterate (base.py:189-194), instead of one per
     iteration -- each checkpoint is a full pinned certificate."""
     sc = braess_scenario(6.0)
     task = _task(sc, BRAESS_TRUTH, np.array([1, 2, 3]), _single_pair_prior(4.0))

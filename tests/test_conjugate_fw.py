@@ -15,9 +15,12 @@ from tabench import (
     BiconjugateFrankWolfeModel,
     Budget,
     ConjugateFrankWolfeModel,
+    Demand,
     Evaluator,
     FrankWolfeModel,
+    Network,
     RngBundle,
+    Scenario,
     Trace,
     braess_scenario,
     run_experiment,
@@ -248,3 +251,58 @@ def test_target_gap_early_stop_and_manifest(braess, tmp_path):
 def test_budget_requires_a_resource_axis():
     with pytest.raises(ValueError, match="resource axis"):
         Budget(target_relative_gap=1e-4)
+
+
+# ------------------------------------------- degenerate-direction restart (B4)
+
+
+def _degenerate_conjugate_scenario() -> Scenario:
+    """An 8-link 4-node power-4 BPR network on which BFW's conjugate search
+    direction DEGENERATES (the exact line search returns alpha<=0 while the search
+    point s != the AON point y) before convergence, so the plain-FW restart is
+    load-bearing. Hardcoded from a random-network search hit: with the restart BFW
+    reaches the unique UE (gap ~1e-16 by iteration 12); without it, BFW breaks at
+    iteration 5 with relative gap ~0.30 (a false first-order-optimal stop)."""
+    init = np.array([1, 2, 1, 4, 2, 3, 3, 4], dtype=np.int64)
+    term = np.array([2, 1, 4, 1, 3, 2, 4, 3], dtype=np.int64)
+    cap = np.array(
+        [0.460019, 1.036316, 1.114387, 0.571556, 1.548781, 0.493242, 0.965088, 1.178458]
+    )
+    fft = np.array(
+        [4.875652, 6.281187, 7.64054, 9.606405, 3.55781, 6.836925, 7.265944, 3.634487]
+    )
+    m = len(init)
+    net = Network(
+        name="fw-restart", n_nodes=4, n_zones=3, first_thru_node=1,
+        init_node=init, term_node=term, capacity=cap, length=np.zeros(m),
+        free_flow_time=fft, b=np.full(m, 0.15), power=np.full(m, 4.0),
+        toll=np.zeros(m), link_type=np.ones(m, dtype=np.int64),
+    )
+    od = np.zeros((3, 3))
+    for (i, j), val in {
+        (0, 1): 39.07111, (0, 2): 15.98951, (1, 2): 21.495838,
+        (2, 0): 6.06211, (2, 1): 18.098534,
+    }.items():
+        od[i, j] = val
+    return Scenario("fw-restart", net, Demand(od))
+
+
+def test_bfw_degenerate_direction_restart_reaches_ue():
+    """BFW's degenerate-conjugate-direction restart is load-bearing here: the
+    conjugate direction degenerates mid-run (line search alpha<=0 with s != y), and
+    ONLY the restart -- clear the conjugacy state, retake a plain FW step -- lets BFW
+    push past it to the unique UE (link flows are unique on a strictly-increasing-cost
+    BPR network). Existing tests only ``continue`` past this branch on nice networks;
+    this reaches it and asserts its effect. MUTANT KILL: disabling the restart branch
+    makes BFW break at iteration 5 with relative gap ~0.30, so the convergence
+    assertion fails."""
+    sc = _degenerate_conjugate_scenario()
+    trace = Trace()
+    BiconjugateFrankWolfeModel().solve(sc, Budget(iterations=60), RngBundle(0), trace)
+    metrics = Evaluator(sc).evaluate(trace.final.link_flows)
+    assert metrics["feasible"] == 1.0
+    assert metrics["relative_gap"] < 1e-6  # restart-off stalls at ~0.30
+    # Deterministic (per capabilities): two runs are byte-identical.
+    again = Trace()
+    BiconjugateFrankWolfeModel().solve(sc, Budget(iterations=60), RngBundle(0), again)
+    np.testing.assert_array_equal(trace.final.link_flows, again.final.link_flows)
