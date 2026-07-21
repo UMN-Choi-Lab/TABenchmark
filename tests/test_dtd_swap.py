@@ -194,19 +194,19 @@ def test_prune_tol_changes_retained_flows(siouxfalls):
     routes are dropped from the working set, and dropping different routes changes the
     retained set and thus the (non-converged) link-flow trajectory.
 
-    swap_rate is deliberately SMALL (0.05): at the default 1.0 the adaptively-capped
-    step can zero a costlier route EXACTLY in one day, so no flow ever occupies the
-    (1e-14, 1e-6] prune window and both tolerances prune the same set -- which is
-    platform-dependent (byte-identical runs on the CI 3.12 numpy, different locally).
-    A small swap_rate makes the decay of costlier routes multiplicative, so a decaying
-    flow must transit the window's eight decades over many days -- a property a 1-ulp
-    arithmetic difference cannot erase -- and the loosened prune_tol=1e-6 provably
-    drops routes the tight default 1e-14 retains. MUTANT KILL: hardcoding prune_tol
-    (ignoring the factor) collapses the two runs to byte-identical."""
+    400 days, not 150: decaying route flows only DIP BELOW the (1e-14, 1e-6] prune
+    window's ceiling after ~150-200 days on Sioux Falls, and exactly where they sit at
+    day 150 is a numpy-version knife-edge (measured: the smallest prune-time flow at
+    150 days is 1.8e-6 on numpy 2.5.1 -- zero window occupancy, test red on the CI
+    3.12 leg -- vs 2.2e-7 on 2.2.6). By 400 days the decay has transited the whole
+    window on both (measured occupancy 2321 vs 2788 prune-time flow observations),
+    a thousands-strong margin that a version's ulp-level arithmetic cannot erase.
+    MUTANT KILL: hardcoding prune_tol (ignoring the factor) collapses the two runs
+    to byte-identical."""
     def flows(prune_tol):
         trace = Trace()
-        RouteSwapDTDModel(prune_tol=prune_tol, swap_rate=0.05).solve(
-            siouxfalls, Budget(iterations=150), RngBundle(0), trace
+        RouteSwapDTDModel(prune_tol=prune_tol).solve(
+            siouxfalls, Budget(iterations=400), RngBundle(0), trace
         )
         return trace.final.link_flows
 
