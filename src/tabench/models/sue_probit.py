@@ -59,6 +59,8 @@ class SueProbitMsaModel(TrafficAssignmentModel):
         deterministic=False,
         provides_gap=False,
         seedable=True,
+        # solve() raises without scenario.sue_theta (the probit perception beta).
+        inputs_required=frozenset({"od_matrix", "sue_theta"}),
     )
     factors = {
         "draws_per_iteration": FactorSpec(

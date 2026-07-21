@@ -61,6 +61,8 @@ class ElasticDemandFWModel(TrafficAssignmentModel):
         deterministic=True,
         provides_gap=True,
         seedable=True,
+        # solve() raises without scenario.elastic_demand (the decay law).
+        inputs_required=frozenset({"od_matrix", "elastic_demand"}),
     )
 
     factors = {

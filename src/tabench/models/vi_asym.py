@@ -98,6 +98,8 @@ class AsymmetricVIModel(TrafficAssignmentModel):
         deterministic=True,
         provides_gap=True,
         seedable=True,
+        # solve() raises without scenario.link_interaction (the C operator).
+        inputs_required=frozenset({"od_matrix", "link_interaction"}),
     )
     factors = {
         "outer_iters": FactorSpec(

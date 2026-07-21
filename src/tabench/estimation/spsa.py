@@ -151,8 +151,16 @@ class SPSAEstimator(ODEstimator):
             a_k = a / (k + 1 + a_stab) ** 0.602
             c_k = c / (k + 1) ** 0.101
             delta = 2.0 * gen.integers(0, 2, size=u.size).astype(np.float64) - 1.0
-            g_plus = self._project(np.exp(u + c_k * delta))
-            g_minus = self._project(np.exp(u - c_k * delta))
+            # Clamp the log-space exponent at the float64 exp boundary
+            # (|exponent| <= 709) before exp: the base-class _project is identity,
+            # so an unprojected log-space excursion would otherwise exp to +-inf.
+            # For normal-range priors (|log prior| < 709) the clip never binds and
+            # the pinned traces are byte-identical (verified). For subnormal or
+            # overflow-scale priors it deliberately reshapes the candidate -- the
+            # protection working -- and the emitted bytes CAN then differ from
+            # unclamped code (a clamped candidate can win best-iterate tracking).
+            g_plus = self._project(np.exp(np.clip(u + c_k * delta, -709.0, 709.0)))
+            g_minus = self._project(np.exp(np.clip(u - c_k * delta, -709.0, 709.0)))
             l_plus, f_plus = loss(g_plus)
             l_minus, f_minus = loss(g_minus)
             sp_calls += 2 * self._sp_cost_per_eval()

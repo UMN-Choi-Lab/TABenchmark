@@ -81,6 +81,7 @@ from ..core.capabilities import Capabilities
 from ..core.results import ResultBundle, Trace
 from ..core.rng import RngBundle
 from ..core.scenario import Demand, Network, Scenario
+from ._numerics import softmax
 from ._paths import PathEngine
 from .base import TrafficAssignmentModel, register_model
 from .frank_wolfe import BiconjugateFrankWolfeModel
@@ -199,10 +200,10 @@ def _numpy_logit_load(
         h_new = np.empty_like(h)
         for g in range(len(demand)):
             mask = od_index == g
-            z = -_LOGIT_BETA * c_route[mask]
-            z -= z.max()
-            e = np.exp(z)
-            h_new[mask] = demand[g] * e / e.sum()
+            # Fuse demand INSIDE the division -- (demand*e)/s, HEAD's exact
+            # association -- so this loader stays bitwise-identical to before the
+            # softmax was shared (float * / do not associate; dtd_cumlog is bare).
+            h_new[mask] = softmax(-_LOGIT_BETA * c_route[mask], scale=demand[g])
         if np.abs(h_new - h).max() < 1e-12:
             h = h_new
             break

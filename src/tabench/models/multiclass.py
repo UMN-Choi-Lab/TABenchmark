@@ -97,6 +97,9 @@ class MulticlassModel(TrafficAssignmentModel):
         deterministic=True,
         provides_gap=True,
         seedable=True,
+        # solve() raises without scenario.multiclass; it emits per-class flows.
+        inputs_required=frozenset({"od_matrix", "multiclass"}),
+        outputs=frozenset({"link_flows", "class_link_flows"}),
     )
     factors = {
         "outer_iters": FactorSpec(

@@ -114,6 +114,8 @@ class CostSmoothingSUEModel(TrafficAssignmentModel):
         deterministic=True,
         provides_gap=True,
         seedable=True,
+        # solve() raises without scenario.sue_theta (the logit-SUE task dial).
+        inputs_required=frozenset({"od_matrix", "sue_theta"}),
     )
     factors = {
         "smoothing_weight": FactorSpec(

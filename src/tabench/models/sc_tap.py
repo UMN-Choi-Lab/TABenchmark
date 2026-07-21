@@ -83,6 +83,8 @@ class SideConstrainedModel(TrafficAssignmentModel):
         deterministic=True,
         provides_gap=True,
         seedable=True,
+        # solve() raises without scenario.side_capacities (per-link hard caps).
+        inputs_required=frozenset({"od_matrix", "side_capacities"}),
     )
     factors = {
         "rho0": FactorSpec(

@@ -22,6 +22,7 @@ import numpy as np
 from scipy.sparse.csgraph import dijkstra
 
 from ..core.scenario import Demand, Network
+from ._numerics import logsumexp
 from ._paths import PathEngine
 
 __all__ = ["StochEngine"]
@@ -96,10 +97,7 @@ class StochEngine:
                 if j == origin_index:
                     continue
                 terms = x[self._incoming(j)] + b[tails[self._incoming(j)]]
-                terms = terms[np.isfinite(terms)]
-                if terms.size:
-                    m = float(terms.max())
-                    b[j] = m + float(np.log(np.exp(terms - m).sum()))
+                b[j] = logsumexp(terms)  # stays -inf if no finite incoming term
 
             # Backward pass descending r: split node volume over incoming
             # efficient links with logit fractions phi = exp(x + b_tail - b_node).

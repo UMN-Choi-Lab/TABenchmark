@@ -83,6 +83,8 @@ class BoundedlyRationalUEModel(TrafficAssignmentModel):
         deterministic=True,
         provides_gap=True,
         seedable=True,
+        # solve() raises without scenario.br_epsilon (the indifference band).
+        inputs_required=frozenset({"od_matrix", "br_epsilon"}),
     )
     factors = {
         "alpha": FactorSpec(

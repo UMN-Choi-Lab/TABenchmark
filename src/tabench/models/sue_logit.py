@@ -41,6 +41,8 @@ class DialSUEModel(TrafficAssignmentModel):
         deterministic=True,
         provides_gap=True,
         seedable=True,
+        # solve() raises without scenario.sue_theta (the SUE dispersion dial).
+        inputs_required=frozenset({"od_matrix", "sue_theta"}),
     )
 
     def solve(

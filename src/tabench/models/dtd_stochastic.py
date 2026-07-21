@@ -115,6 +115,7 @@ from ..core.factors import FactorSpec
 from ..core.results import ResultBundle, Trace
 from ..core.rng import RngBundle
 from ..core.scenario import Demand, Scenario
+from ._numerics import logsumexp
 from ._stoch import StochEngine
 from .base import TrafficAssignmentModel, register_model
 
@@ -181,10 +182,7 @@ def _sampled_dial_load(
             if j == origin_index:
                 continue
             terms = x[engine._incoming(j)] + b[tails[engine._incoming(j)]]
-            terms = terms[np.isfinite(terms)]
-            if terms.size:
-                m = float(terms.max())
-                b[j] = m + float(np.log(np.exp(terms - m).sum()))
+            b[j] = logsumexp(terms)  # stays -inf if no finite incoming term
 
         # Backward pass per destination on integer traveler counts (each OD
         # pair has its own per-traveler weight, so counts are never mixed
@@ -241,6 +239,8 @@ class CascettaStochasticProcessModel(TrafficAssignmentModel):
         deterministic=False,
         provides_gap=True,
         seedable=True,
+        # solve() raises without scenario.sue_theta (the logit-SUE task dial).
+        inputs_required=frozenset({"od_matrix", "sue_theta"}),
     )
     factors = {
         "smoothing_weight": FactorSpec(

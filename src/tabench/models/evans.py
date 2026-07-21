@@ -74,6 +74,8 @@ class EvansCombinedModel(TrafficAssignmentModel):
         deterministic=True,
         provides_gap=True,
         seedable=True,
+        # solve() raises without scenario.combined_demand (the fixed margins).
+        inputs_required=frozenset({"od_matrix", "combined_demand"}),
     )
 
     factors = {

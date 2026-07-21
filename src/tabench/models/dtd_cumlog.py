@@ -140,6 +140,7 @@ from ..core.factors import FactorSpec
 from ..core.results import ResultBundle, Trace
 from ..core.rng import RngBundle
 from ..core.scenario import Scenario
+from ._numerics import softmax
 from ._paths import PathEngine
 from .base import TrafficAssignmentModel, register_model
 
@@ -292,10 +293,7 @@ class CumLogDTDModel(TrafficAssignmentModel):
 
         def route_probs(key: tuple[int, int]) -> np.ndarray:
             """Logit choice probabilities p_k = softmax(-r s_k) over the OD's set."""
-            z = -r * s[key]
-            z = z - z.max()  # min-normalized s keeps this a no-op, but stay safe
-            e = np.exp(z)
-            return e / e.sum()
+            return softmax(-r * s[key])
 
         def emitted() -> np.ndarray:
             """Softmax-loaded link flows: f_k = d_w p_k aggregated over routes."""
