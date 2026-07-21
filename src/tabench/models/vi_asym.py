@@ -44,7 +44,10 @@ certificate then CENSORS -- never a false accept, but not a solution. The
 always-reported VI residual makes non-convergence visible rather than hiding it.
 When the interaction vanishes (``C = 0``) the outer loop is a no-op and the model
 reduces EXACTLY to ordinary Frank-Wolfe UE, matching the shipped solvers on the
-separable case.
+separable case. The outer loop stops on EITHER convergence channel: the
+caller-facing ``Budget.target_relative_gap`` (via ``budget.target_met``, parity
+with the sibling solvers) OR the model-owned ``target_gap`` factor, whichever the
+VI relative gap satisfies first (in addition to the budget resource axes).
 
 Certificate (P1; adr-011). The scored quantity is the **VI residual** -- the
 normalized gap ``(<t(v), v> - min_{y in K} <t(v), y>) / <t(v), v>`` -- which the
@@ -125,6 +128,12 @@ class AsymmetricVIModel(TrafficAssignmentModel):
             doc="Outer stop tolerance on the VI relative gap at the full asymmetric "
             "cost t(v) = t_BPR(v) + C v.",
         ),
+        "line_search_xtol": FactorSpec(
+            default=1e-13,
+            kind="float",
+            bounds=(1e-16, 1e-3),
+            doc="Absolute tolerance of the Brent line search on the step size.",
+        ),
     }
 
     def solve(
@@ -143,6 +152,7 @@ class AsymmetricVIModel(TrafficAssignmentModel):
         inner_iters = self.factor_values["inner_iters"]
         relaxation = self.factor_values["relaxation"]
         target_gap = self.factor_values["target_gap"]
+        line_search_xtol = self.factor_values["line_search_xtol"]
         m = network.n_links
 
         def full_cost(w: np.ndarray) -> np.ndarray:
@@ -181,7 +191,9 @@ class AsymmetricVIModel(TrafficAssignmentModel):
 
                     if g(0.0) >= 0.0:
                         break  # diagonalized UE reached for this frozen offset
-                    alpha = 1.0 if g(1.0) <= 0.0 else float(brentq(g, 0.0, 1.0, xtol=1e-13))
+                    alpha = (
+                        1.0 if g(1.0) <= 0.0 else float(brentq(g, 0.0, 1.0, xtol=line_search_xtol))
+                    )
                     if alpha <= 0.0:
                         break
                     v_inner = v_inner + alpha * dx
@@ -206,7 +218,11 @@ class AsymmetricVIModel(TrafficAssignmentModel):
                 wall_ms=1000.0 * (time.perf_counter() - start),
             )
             trace.record(v, coords, relative_gap=gap)
-            if budget.exhausted(coords) or gap <= target_gap:
+            # Two convergence stop channels (parity with the sibling solvers,
+            # e.g. frank_wolfe/msa): the caller-facing Budget.target_relative_gap
+            # via budget.target_met, AND the model-owned target_gap factor. Both
+            # are honored so a caller's Budget target is not a silent no-op here.
+            if budget.exhausted(coords) or budget.target_met(gap) or gap <= target_gap:
                 break
 
         # Guard: if the very first inner solve failed before any checkpoint, still

@@ -51,6 +51,30 @@ def test_frank_wolfe_reaches_analytic_ue(scenario):
     assert metrics["relative_gap"] < 1e-5
     # At UE every used route costs 92, so TSTT / demand == route time.
     assert metrics["tstt"] / scenario.demand.total == pytest.approx(REF_ROUTE_TIME, abs=0.1)
+    # off=no-op for the multiclass engine's per-class field: a single-class model
+    # leaves class_link_flows at the core/results.py default (None). Only the
+    # multiclass solver (adr-013) ever populates it.
+    assert bundle.final.class_link_flows is None
+
+
+def test_msa_pinned_flow_anchor(scenario):
+    """Regression anchor: MSA on Braess (D=6) at 200 iterations converges TOWARD
+    the analytic UE [4,2,2,2,4] but not all the way (1/k averaging is slow). The
+    measured max deviation from UE at 200 iters is ~0.0201 (flows
+    [4.01005, 1.98995, 1.98995, 2.02010, 3.97990]); pin to UE at atol=0.045
+    (~2x the measured deviation) so a convergence-speed regression is caught."""
+    bundle = _solve(MSAModel(), scenario, iterations=200)
+    np.testing.assert_allclose(bundle.final.link_flows, REF_FLOWS, atol=0.045)
+
+
+def test_aon_pinned_free_flow_route(scenario):
+    """Regression anchor: AON is closed-form on Braess. Free-flow route costs are
+    1->3->2 = eps+50, 1->4->2 = 50+eps, and the bypass 1->3->4->2 = eps+10+eps ~ 10
+    (the zero-intercept links carry a tiny fft=1e-6). The bypass is strictly
+    cheapest, so all 6 units load onto it: links 1->3 (idx 0), 3->4 (idx 2), 4->2
+    (idx 4) carry 6, the two flat links carry 0 -> exact flow [6,0,6,0,6]."""
+    bundle = _solve(AllOrNothingModel(), scenario, iterations=1)
+    np.testing.assert_allclose(bundle.final.link_flows, [6.0, 0.0, 6.0, 0.0, 6.0], atol=1e-9)
 
 
 def test_frank_wolfe_self_report_matches_harness(scenario):

@@ -38,6 +38,14 @@ self-reports the recovered ``beta_a`` and the augmented-cost gap, and a fully
 harness-recomputed augmented-cost equilibrium gap (recovering ``beta`` as shadow
 prices on the binding set by a small convex program) is a documented enhancement.
 
+Convergence STOP (deliberate ``Budget.target_relative_gap`` bypass). Because that
+raw relative gap is *positive* at a correct SC equilibrium (above), sc-tap does NOT
+honor a caller ``Budget.target_relative_gap`` -- a target on the raw gap would be
+met spuriously or never. The outer loop's convergence test is instead the
+augmented-cost inner gap plus capacity feasibility (``aug_gap <= 1e-10`` and
+``violation <= feas_tol``); absent that, it runs to the ``Budget`` iteration/wall
+envelope. (br-ue documents an analogous bypass; sc-tap's had been left implicit.)
+
 Sourcing. Larsson & Patriksson (1995, Transportation Research Part B 29(6):433-455)
 is paywalled and attributed unread; the augmented-cost equilibrium, the
 multiplier-as-toll interpretation, and the augmented-Lagrangian form are
@@ -102,6 +110,12 @@ class SideConstrainedModel(TrafficAssignmentModel):
             bounds=(1e-14, 1e-2),
             doc="Capacity-violation tolerance max(v_a - u_a)+ for the outer stop.",
         ),
+        "line_search_xtol": FactorSpec(
+            default=1e-13,
+            kind="float",
+            bounds=(1e-16, 1e-3),
+            doc="Absolute tolerance of the Brent line search on the step size.",
+        ),
     }
 
     def solve(
@@ -120,6 +134,7 @@ class SideConstrainedModel(TrafficAssignmentModel):
         rho_growth = self.factor_values["rho_growth"]
         inner_iters = self.factor_values["inner_iters"]
         feas_tol = self.factor_values["feas_tol"]
+        line_search_xtol = self.factor_values["line_search_xtol"]
         m = network.n_links
 
         def aug_cost(w: np.ndarray, beta: np.ndarray, r: float) -> np.ndarray:
@@ -154,7 +169,9 @@ class SideConstrainedModel(TrafficAssignmentModel):
 
                     if g(0.0) >= 0.0:
                         break  # augmented UE reached for this (beta, rho)
-                    alpha = 1.0 if g(1.0) <= 0.0 else float(brentq(g, 0.0, 1.0, xtol=1e-13))
+                    alpha = (
+                        1.0 if g(1.0) <= 0.0 else float(brentq(g, 0.0, 1.0, xtol=line_search_xtol))
+                    )
                     if alpha <= 0.0:
                         break
                     v = v + alpha * dx
@@ -226,6 +243,13 @@ class SideConstrainedModel(TrafficAssignmentModel):
                     iterations=k, sp_calls=sp_calls, wall_ms=1000.0 * (time.perf_counter() - start)
                 ),
                 relative_gap=float("nan"),
+                # Key parity with the normal branch: emit augmented_relative_gap so a
+                # consumer reading the union of self_report keys does not see it vanish
+                # on pathological input. This guard is entered precisely because the
+                # augmented-cost all-or-nothing was not computable (its costs went
+                # non-finite / non-positive -- the same reason beckmann is NaN here),
+                # so the value is the not-computable NaN sentinel, not an invented gap.
+                augmented_relative_gap=float("nan"),
                 max_capacity_violation=float(np.maximum(v - u, 0.0).max()),
                 max_multiplier=float(beta.max()),
                 beckmann=float("nan"),

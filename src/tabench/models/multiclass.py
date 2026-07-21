@@ -38,6 +38,11 @@ VI. Convergence follows the Dafermos (1982) / Florian & Spiess (1982) diagonal-
 dominance condition (own-class sensitivity dominates the cross-class coupling),
 NOT from monotonicity alone; a coupling that drives a cost non-positive stops
 the sweep and emits a flow the certificate then CENSORS (never a false accept).
+The outer loop stops on EITHER convergence channel: the caller-facing
+``Budget.target_relative_gap`` (via ``budget.target_met``, parity with the
+sibling solvers) OR the model-owned ``target_gap`` factor, whichever the
+class-summed VI relative gap satisfies first (in addition to the budget resource
+axes).
 
 Certificate (P1; adr-013). Each checkpoint emits the per-class link flows
 ``V`` as a first-class object (``FlowState.class_link_flows``), and the harness
@@ -123,6 +128,12 @@ class MulticlassModel(TrafficAssignmentModel):
             doc="Outer stop tolerance on the class-summed VI relative gap at the "
             "full coupled cost.",
         ),
+        "line_search_xtol": FactorSpec(
+            default=1e-13,
+            kind="float",
+            bounds=(1e-16, 1e-3),
+            doc="Absolute tolerance of the Brent line search on the step size.",
+        ),
     }
 
     def solve(
@@ -141,6 +152,7 @@ class MulticlassModel(TrafficAssignmentModel):
         inner_iters = int(self.factor_values["inner_iters"])
         relaxation = float(self.factor_values["relaxation"])
         target_gap = float(self.factor_values["target_gap"])
+        line_search_xtol = float(self.factor_values["line_search_xtol"])
         m = network.n_links
         k = mc.n_classes
         interaction = mc.interaction
@@ -203,7 +215,11 @@ class MulticlassModel(TrafficAssignmentModel):
 
                         if g(0.0) >= 0.0:
                             break  # class-i diagonalized UE reached
-                        alpha = 1.0 if g(1.0) <= 0.0 else float(brentq(g, 0.0, 1.0, xtol=1e-13))
+                        alpha = (
+                            1.0
+                            if g(1.0) <= 0.0
+                            else float(brentq(g, 0.0, 1.0, xtol=line_search_xtol))
+                        )
                         if alpha <= 0.0:
                             break
                         w = w + alpha * dx
@@ -221,7 +237,16 @@ class MulticlassModel(TrafficAssignmentModel):
             trace.record(
                 state.sum(axis=0), coords, class_link_flows=state, relative_gap=gap
             )
-            if budget.exhausted(coords) or (np.isfinite(gap) and gap <= target_gap):
+            # Two convergence stop channels (parity with the sibling solvers,
+            # e.g. frank_wolfe/msa): the caller-facing Budget.target_relative_gap
+            # via budget.target_met (already NaN/None-safe), AND the model-owned
+            # target_gap factor (kept under its np.isfinite guard). Both are
+            # honored so a caller's Budget target is not a silent no-op here.
+            if (
+                budget.exhausted(coords)
+                or budget.target_met(gap)
+                or (np.isfinite(gap) and gap <= target_gap)
+            ):
                 break
 
         if len(trace) == 0:

@@ -24,6 +24,7 @@ from tabench import (
     SideConstrainedModel,
     Trace,
     braess_scenario,
+    run_experiment,
     sc_two_route_scenario,
 )
 
@@ -158,6 +159,126 @@ def test_infeasible_capacity_is_reported_not_crashed():
     assert metrics["sc_capacity_feasible"] == 0.0  # infeasible instance reported
     assert metrics["max_capacity_violation"] > 0.0
     assert np.all(np.isfinite(trace.final.link_flows))
+
+
+# --------------------------------------------------------- line-search xtol
+def test_line_search_xtol_loose_changes_flows():
+    """T2 (on): line_search_xtol threads into the brentq inner line search. On the
+    binding-capacity anchor (cap=4, where brentq genuinely runs -- the augmented
+    Beckmann line search has an interior root) a loose xtol=1e-3 yields flows NOT
+    byte-identical to the default (tight 1e-13) run, while still converging to a
+    capacity-feasible SC equilibrium. Proves the factor is load-bearing."""
+    sc = sc_two_route_scenario(demand=10.0, cap=4.0)
+
+    def flows(xtol):
+        trace = Trace()
+        SideConstrainedModel(line_search_xtol=xtol).solve(
+            sc, Budget(iterations=300), RngBundle(0), trace
+        )
+        return trace.final.link_flows
+
+    default = flows(1e-13)
+    loose = flows(1e-3)
+    assert not np.array_equal(default, loose)
+    assert Evaluator(sc).evaluate(loose)["sc_capacity_feasible"] == 1.0
+
+
+def test_line_search_xtol_default_is_no_op():
+    """T2 (off): line_search_xtol defaults to 1e-13 -- the value the brentq inner
+    line search was previously hardcoded to -- so a default run is byte-identical to
+    an explicit xtol=1e-13 run. The existing pinned anchors (which never set the
+    factor, e.g. test_binding_capacity_anchor) are the off-pin for the flows."""
+    assert SideConstrainedModel().factor_values["line_search_xtol"] == 1e-13
+    sc = sc_two_route_scenario(demand=10.0, cap=4.0)
+
+    def flows(model):
+        trace = Trace()
+        model.solve(sc, Budget(iterations=300), RngBundle(0), trace)
+        return trace.final.link_flows
+
+    np.testing.assert_array_equal(
+        flows(SideConstrainedModel()), flows(SideConstrainedModel(line_search_xtol=1e-13))
+    )
+
+
+# --------------------------------------------------------- guard-branch parity
+def test_guard_branch_self_report_key_parity():
+    """T3: sc-tap's empty-trace guard branch (the first inner solve failed before any
+    checkpoint) must emit the SAME self_report key set as the normal branch, so a
+    consumer reading the union of keys does not see augmented_relative_gap vanish on
+    pathological input. Driven here by a tiny-capacity network whose free-flow AON
+    loading overflows the BPR cost to non-finite on the first inner iteration, so the
+    augmented-cost all-or-nothing raises before the first trace.record -- exactly the
+    guard's target case. augmented_relative_gap is emitted as the not-computable NaN
+    sentinel (as beckmann already is here, since the guard is entered precisely
+    because that all-or-nothing was not computable), giving key-set parity."""
+    init = np.array([1, 3], dtype=np.int64)
+    term = np.array([3, 2], dtype=np.int64)
+    net = Network(
+        name="overflow-guard", n_nodes=3, n_zones=2, first_thru_node=1,
+        init_node=init, term_node=term, capacity=np.full(2, 1e-100), length=np.zeros(2),
+        free_flow_time=np.array([1.0, 1.0]), b=np.full(2, 0.15), power=np.full(2, 4.0),
+        toll=np.zeros(2), link_type=np.ones(2, dtype=np.int64),
+    )
+    od = np.zeros((2, 2))
+    od[0, 1] = 10.0
+    guard_sc = Scenario("overflow-guard", net, Demand(od), side_capacities=np.array([1e6, 1e6]))
+    guard = Trace()
+    with np.errstate(over="ignore"):  # the intentional BPR overflow -> non-finite cost
+        SideConstrainedModel().solve(guard_sc, Budget(iterations=50), RngBundle(0), guard)
+    assert len(guard) == 1  # only the guard checkpoint (no normal-branch record)
+    normal = _solve(sc_two_route_scenario(demand=10.0, cap=4.0))  # normal-branch key set
+    assert set(guard.final.self_report) == set(normal.final.self_report)
+    assert "augmented_relative_gap" in guard.final.self_report
+    assert np.isnan(guard.final.self_report["augmented_relative_gap"])
+
+
+# --------------------------------------------------- certifier never-raise contract
+def _overflow_guard_scenario() -> Scenario:
+    """The pathological SC scenario whose loaded flow overflows the RECOMPUTED BPR
+    cost to non-finite (capacity 1e-100 at power 4) -- the certifier's censor case."""
+    net = Network(
+        name="overflow-guard", n_nodes=3, n_zones=2, first_thru_node=1,
+        init_node=np.array([1, 3], dtype=np.int64), term_node=np.array([3, 2], dtype=np.int64),
+        capacity=np.full(2, 1e-100), length=np.zeros(2),
+        free_flow_time=np.array([1.0, 1.0]), b=np.full(2, 0.15), power=np.full(2, 4.0),
+        toll=np.zeros(2), link_type=np.ones(2, dtype=np.int64),
+    )
+    od = np.zeros((2, 2))
+    od[0, 1] = 10.0
+    return Scenario("overflow-guard", net, Demand(od), side_capacities=np.array([1e6, 1e6]))
+
+
+def test_evaluator_censors_overflowing_recomputed_costs_without_raising():
+    """B-1 (contract-restoring): Evaluator.evaluate must NEVER raise out of the
+    scoring loop. A FINITE emitted flow whose RECOMPUTED BPR cost overflows to
+    non-finite previously raised ValueError ("Link costs must be strictly positive
+    and finite") from the downstream all-or-nothing; it must now CENSOR (feasible=0)
+    with the FULL metric key set -- making the sc_tap guard comment ("the certificate
+    scores it and reports the constraint state") literally true, not a crash."""
+    guard_sc = _overflow_guard_scenario()
+    guard = Trace()
+    with np.errstate(over="ignore"):  # the intentional BPR overflow -> non-finite cost
+        SideConstrainedModel().solve(guard_sc, Budget(iterations=50), RngBundle(0), guard)
+        met = Evaluator(guard_sc).evaluate(guard.final.link_flows)  # must not raise
+    assert met["feasible"] == 0.0
+    # FULL metric key set -- parity with a healthy SC evaluation, so a consumer
+    # reading any scored key (incl. the SC constraint keys) never hits a KeyError.
+    healthy_sc = sc_two_route_scenario(demand=10.0, cap=4.0)
+    healthy = Evaluator(healthy_sc).evaluate(_solve(healthy_sc).final.link_flows)
+    assert set(met) == set(healthy)
+    assert {"sc_capacity_feasible", "max_capacity_violation"} <= set(met)
+
+
+def test_run_experiment_survives_overflow_guard_scenario():
+    """B-1 end-to-end: run_experiment over the overflow guard scenario completes
+    without crashing -- the model emits its guard artifact and the certifier censors
+    it into a feasible=0 row, instead of a ValueError propagating out of the run
+    (runner.py has no try/except around evaluate)."""
+    guard_sc = _overflow_guard_scenario()
+    with np.errstate(over="ignore"):
+        res = run_experiment(guard_sc, [SideConstrainedModel()], Budget(iterations=50))
+    assert res.rows[-1]["feasible"] == 0.0
 
 
 # ---------------------------------------------------------------- mechanics

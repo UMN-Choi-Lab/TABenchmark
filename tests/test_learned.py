@@ -63,6 +63,21 @@ def test_deterministic():
     np.testing.assert_array_equal(a, b)
 
 
+def test_pinned_link_flows_anchor():
+    """Regression anchor: on the fixed Braess scenario (seedless, deterministic per
+    the model's capabilities) the surrogate emits fixed link flows. Two runs are
+    byte-identical, and the emitted final flows are pinned to the measured values
+    [4.32019858, 0.01432931, 4.32019858, 0.01432931, 4.32019858] at atol=1e-5
+    (tight but safe against BLAS-level drift in the offline ridge fit). Pins the
+    end-to-end train->predict pipeline against silent surrogate regressions."""
+    a = _flows(braess_scenario(), LearnedSurrogateModel())
+    b = _flows(braess_scenario(), LearnedSurrogateModel())
+    np.testing.assert_array_equal(a, b)  # deterministic (per capabilities)
+    measured = [4.320198576963898, 0.014329312516191, 4.320198576963898,
+                0.014329312516191, 4.320198576963898]
+    np.testing.assert_allclose(a, measured, atol=1e-5)
+
+
 def test_mixes_with_classical_solvers_in_one_grid():
     scenario = braess_scenario()
     result = run_experiment(

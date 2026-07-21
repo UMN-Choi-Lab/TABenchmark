@@ -227,6 +227,68 @@ def test_monotone_sweep_matches_closed_form():
         prev = f_a
 
 
+def test_budget_target_relative_gap_stops_early():
+    """T1 (on): the caller-facing ``Budget.target_relative_gap`` is now a real stop
+    channel (parity with the sibling solvers via ``budget.target_met``). A LOOSE
+    caller target (1e-2, far looser than the 1e-10 target_gap factor) stops the
+    outer loop at strictly fewer sweeps than an otherwise-identical run that leaves
+    the caller target unset, and the last self-reported VI gap satisfies it."""
+    sc = vi_two_route_scenario(10.0, 0.5, 0.2)
+    default = _solve(sc, iterations=300)  # no caller target -> factor (1e-10) gates
+    loose = _solve(sc, iterations=300, target_relative_gap=1e-2)
+    assert len(loose) < len(default)  # measured 4 vs 22 sweeps
+    assert loose.final.self_report["relative_gap"] <= 1e-2
+
+
+def test_budget_target_none_is_byte_identical_off_noop():
+    """T1 (off): with a caller target of None -- or any value at least as tight as
+    the model's own 1e-10 target_gap factor -- the new budget.target_met channel is
+    inert (the factor fires first), so the run is byte-identical to the prior
+    factor-only behavior. The existing pinned anchors (test_analytic_anchor,
+    test_no_interaction_reduces_to_plain_ue) run with target_relative_gap=1e-12 and
+    still pass, which is the off-pin; here we add an explicit trace-length + flow
+    equality between a None-target run and a tight (1e-12) run."""
+    sc = vi_two_route_scenario(10.0, 0.5, 0.2)
+    none = _solve(sc, iterations=300)
+    tight = _solve(sc, iterations=300, target_relative_gap=1e-12)
+    assert len(none) == len(tight)
+    np.testing.assert_array_equal(none.final.link_flows, tight.final.link_flows)
+
+
+def test_line_search_xtol_default_is_no_op():
+    """T2 (off): line_search_xtol defaults to 1e-13 -- the value the brentq inner
+    line search was previously hardcoded to -- so a default run is byte-identical to
+    an explicit xtol=1e-13 run. The existing pinned anchors (which never set the
+    factor) are the off-pin for the emitted flows."""
+    assert AsymmetricVIModel().factor_values["line_search_xtol"] == 1e-13
+    sc = vi_two_route_scenario(10.0, 0.5, 0.2)
+    default = _solve(sc, iterations=300, target_relative_gap=1e-12)
+    explicit = _solve(
+        sc, AsymmetricVIModel(line_search_xtol=1e-13), iterations=300, target_relative_gap=1e-12
+    )
+    np.testing.assert_array_equal(default.final.link_flows, explicit.final.link_flows)
+
+
+def test_line_search_xtol_loose_changes_flows():
+    """T2 (on): line_search_xtol threads into the brentq inner line search. On the
+    asymmetric-VI anchor a loose xtol=1e-3 yields link_flows NOT byte-identical to
+    the default (tight 1e-13) run, while still certifying a feasible, finite VI
+    residual (measured max|diff| ~1.2e-3). This KILLS the "factor declared but not
+    threaded from brentq" mutant: the existing off-pin compares a default run to an
+    explicit-same-value run, which stays byte-identical even if the factor is
+    un-threaded -- only a loose-value on-test can see the threading."""
+    sc = vi_two_route_scenario(10.0, 0.5, 0.2)
+    default = _solve(sc, iterations=300, target_relative_gap=1e-12)
+    loose = _solve(
+        sc, AsymmetricVIModel(line_search_xtol=1e-3), iterations=300, target_relative_gap=1e-12
+    )
+    assert not np.array_equal(default.final.link_flows, loose.final.link_flows)
+    # Sanity: the loose run still certifies a feasible, finite VI-residual equilibrium.
+    met = Evaluator(sc).evaluate(loose.final.link_flows)
+    assert met["feasible"] == 1.0
+    assert np.isfinite(met["relative_gap"])
+
+
 def test_registry_and_paradigm():
     from tabench.models import MODEL_REGISTRY
 
