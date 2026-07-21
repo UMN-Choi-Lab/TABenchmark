@@ -10,6 +10,8 @@ one justified keep (``sumo-marouter`` mirrors the marouter CLI flag
 ``--max-inner-iterations`` -- engine vernacular, documented "not the repo gap").
 """
 
+import pytest
+
 from tabench.models.base import MODEL_REGISTRY
 
 CANONICAL = "inner_iterations"
@@ -62,8 +64,14 @@ def test_the_nine_renamed_natives_expose_canonical_name():
 def test_allowlist_is_load_bearing_not_vacuous():
     """The allowlist entry must correspond to a real keep: sumo-marouter really does
     expose max_inner_iterations (the --max-inner-iterations mirror) and NOT the
-    canonical name, so the exemption cannot silently rot into a blanket pass."""
+    canonical name, so the exemption cannot silently rot into a blanket pass.
+
+    Guarded units register only where their extra is installed (the CI core legs
+    have no sumo), so absent registration is a skip, not a failure -- the sumo CI
+    job runs this row for real."""
     for name, allowed in _ALLOWLIST.items():
+        if name not in MODEL_REGISTRY:
+            pytest.skip(f"{name} not registered here (its extra is not installed)")
         factors = MODEL_REGISTRY[name].factors
         for key in allowed:
             assert key in factors, f"stale allowlist: {name} no longer has {key!r}"
