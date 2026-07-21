@@ -149,6 +149,112 @@ def _git_commit() -> str:
         return "unavailable"
 
 
+# --------------------------------------------------------- shared run scaffolding
+# The three T2 runners (run_estimation_experiment, run_dynamic_estimation_experiment,
+# run_bo4mob_estimation_experiment) were near-verbatim clones of the manifest/writer
+# boilerplate below. Hoisted here so the blocks live once; each helper returns the
+# EXACT dict/string the inline clones built, so the manifest JSON stays byte-identical.
+
+
+def _check_unique_estimator_names(estimators: list) -> list[str]:
+    """Return the estimator names, raising if any is duplicated (results and
+    manifests are keyed by name, so each instance needs a distinct one)."""
+    names = [e.name for e in estimators]
+    duplicates = {n for n in names if names.count(n) > 1}
+    if duplicates:
+        raise ValueError(f"Duplicate estimator names {sorted(duplicates)}")
+    return names
+
+
+def _budget_manifest(budget: Budget) -> dict[str, Any]:
+    """The 4-key budget block recorded in every experiment manifest."""
+    return {
+        "iterations": budget.iterations,
+        "sp_calls": budget.sp_calls,
+        "wall_seconds": budget.wall_seconds,
+        "target_relative_gap": budget.target_relative_gap,
+    }
+
+
+def _rng_manifest(seed: int) -> dict[str, Any]:
+    """The RNG provenance block (root seed + spawn-key schema + reserved sources)
+    shared by the static and dynamic T2 manifests (P8)."""
+    return {
+        "root_seed": seed,
+        "schema": (
+            "numpy SeedSequence spawn_key=(macrorep, source, replication) "
+            "with Philox (see tabench.core.rng, P8)"
+        ),
+        "reserved_sources": {
+            "observation": SOURCE_OBSERVATION,
+            "evaluation": SOURCE_EVALUATION,
+            "bootstrap": SOURCE_BOOTSTRAP,
+            "prior": SOURCE_PRIOR,
+        },
+    }
+
+
+def _estimators_manifest(estimators: list) -> dict[str, Any]:
+    """The per-estimator capabilities+factors block recorded in every T2 manifest."""
+    return {
+        e.name: {
+            "capabilities": {
+                "paradigm": e.capabilities.paradigm,
+                "deterministic": e.capabilities.deterministic,
+                "seedable": e.capabilities.seedable,
+                "inputs_required": sorted(e.capabilities.inputs_required),
+                "outputs": sorted(e.capabilities.outputs),
+                "trained_on": list(e.capabilities.trained_on),
+            },
+            "factors": e.factor_values,
+        }
+        for e in estimators
+    }
+
+
+def _environment_manifest() -> dict[str, Any]:
+    """The interpreter/library/commit provenance block, identical across T1 and T2."""
+    return {
+        "python": sys.version.split()[0],
+        "platform": platform.platform(),
+        "numpy": np.__version__,
+        "scipy": scipy.__version__,
+        "tabench": tabench.__version__,
+        "git_commit": _git_commit(),
+    }
+
+
+def _budget_part(budget: Budget) -> str:
+    """The it/sp/ws budget slug for T2 output filenames (T1 also encodes the gap)."""
+    return "-".join(
+        f"{axis}{value}"
+        for axis, value in (
+            ("it", budget.iterations),
+            ("sp", budget.sp_calls),
+            ("ws", budget.wall_seconds),
+        )
+        if value is not None
+    )
+
+
+def _write_outputs(
+    out_dir: str | Path,
+    stem: str,
+    rows: list[dict[str, Any]],
+    manifest: dict[str, Any],
+    fieldnames: list[str],
+) -> None:
+    """Write the ``<stem>.csv`` + ``<stem>.manifest.json`` pair (the writer tail)."""
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    with open(out / f"{stem}.csv", "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+    with open(out / f"{stem}.manifest.json", "w") as f:
+        json.dump(manifest, f, indent=2)
+
+
 def _score_bundle(
     scenario: Scenario, bundle: ResultBundle, macrorep: int, evaluator: Evaluator
 ) -> list[dict[str, Any]]:
@@ -324,14 +430,7 @@ def run_experiment(
             {"model": key[0], "macrorep": key[1], "seed_info": bundle.seed_info}
             for key, bundle in bundles.items()
         ],
-        "environment": {
-            "python": sys.version.split()[0],
-            "platform": platform.platform(),
-            "numpy": np.__version__,
-            "scipy": scipy.__version__,
-            "tabench": tabench.__version__,
-            "git_commit": _git_commit(),
-        },
+        "environment": _environment_manifest(),
         "notes": (
             "wall_ms is recorded, never a ranking axis (P6); per-machine "
             "wall-clock calibration is planned for the stochastic track."
@@ -414,6 +513,56 @@ def _draw_sensors(
         return np.array([], dtype=np.int64)
     n = min(max(1, round(coverage * n_links)), available.size)
     return np.sort(rng.choice(available, size=n, replace=False))
+
+
+def _draw_sensor_design(
+    estimation: dict[str, Any], n_links: int, seed: int, adr_label: str
+) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
+    """Shared obs/held-out sensor placement for the static + dynamic T2 runners.
+
+    Draws the observed and held-out sensor sets from the estimation config on the
+    reserved sensor-placement substream, enforces obs/held-out disjointness, and
+    rejects an empty held-out set. Returns the two sensor arrays plus the resolved
+    held-out config (the caller reads its own period dials off it). ``adr_label``
+    names the governing ADR in the messages so each track cites its own contract.
+    """
+    place_rng = RngBundle(root_seed=seed, macrorep=0).generator(
+        SOURCE_OBSERVATION, replication=_SENSOR_PLACEMENT_REPLICATION
+    )
+    obs_sensors = _draw_sensors(
+        n_links, estimation.get("sensors") or {"kind": "random", "coverage": 0.3}, place_rng
+    )
+    ho_cfg = estimation.get("heldout") or {"kind": "random", "coverage": 0.1}
+    heldout_sensors = _draw_sensors(n_links, ho_cfg, place_rng, exclude=obs_sensors)
+    overlap = np.intersect1d(obs_sensors, heldout_sensors)
+    if overlap.size:
+        # heldout_count_rmse is the ranking column and must be out of sample;
+        # disjointness is enforced by the harness, never by convention (P7). The
+        # exclude= path only covers random draws, so validate explicit sets here.
+        raise ValueError(
+            "held-out sensors must be disjoint from observed sensors "
+            f"({adr_label} heldout_count_rmse contract, P7); overlapping links: "
+            f"{overlap.tolist()}"
+        )
+    if heldout_sensors.size == 0:
+        # heldout_count_rmse is THE ranking column, so an all-NaN held-out design
+        # must be explicit, not silent (identical guard on both T2 tracks).
+        raise ValueError(
+            "held-out sensor set is empty — heldout_count_rmse is THE ranking "
+            f"column ({adr_label}), so an all-NaN held-out design must be explicit, "
+            "not silent; add heldout links or widen coverage"
+        )
+    return obs_sensors, heldout_sensors, ho_cfg
+
+
+def _heldout_digest(heldout_sensors: np.ndarray, suffix: str) -> str:
+    """SHA-256 over the sorted held-out sensor links plus a per-track ``suffix`` (the
+    held-out period dials), folded into the task hash WITHOUT exposing the held-out
+    sensor identities to the estimator (ADR-002 Decision 1 / ADR-023, P7)."""
+    ho_hash = hashlib.sha256()
+    ho_hash.update(np.ascontiguousarray(np.sort(heldout_sensors), dtype=np.int64).tobytes())
+    ho_hash.update(suffix.encode())
+    return ho_hash.hexdigest()
 
 
 def identifiability_report(
@@ -536,10 +685,7 @@ def run_estimation_experiment(
             "dataclasses.replace(scenario, sue_theta=None, reference=None)."
         )
 
-    names = [e.name for e in estimators]
-    duplicates = {n for n in names if names.count(n) > 1}
-    if duplicates:
-        raise ValueError(f"Duplicate estimator names {sorted(duplicates)}")
+    names = _check_unique_estimator_names(estimators)
 
     certificate = dict(CERTIFICATE_DEFAULTS)
     certificate.update(estimation.get("certificate") or {})
@@ -563,34 +709,12 @@ def run_estimation_experiment(
     pin_solver.solve(scenario, pin_budget, RngBundle(seed), truth_trace)
     oracle_flows = truth_trace.final.link_flows
 
-    place_rng = RngBundle(root_seed=seed, macrorep=0).generator(
-        SOURCE_OBSERVATION, replication=_SENSOR_PLACEMENT_REPLICATION
+    obs_sensors, heldout_sensors, ho_cfg = _draw_sensor_design(
+        estimation, n_links, seed, "ADR-002"
     )
-    obs_sensors = _draw_sensors(
-        n_links, estimation.get("sensors") or {"kind": "random", "coverage": 0.3}, place_rng
-    )
-    ho_cfg = estimation.get("heldout") or {"kind": "random", "coverage": 0.1}
-    heldout_sensors = _draw_sensors(n_links, ho_cfg, place_rng, exclude=obs_sensors)
-
-    overlap = np.intersect1d(obs_sensors, heldout_sensors)
-    if overlap.size:
-        # heldout_count_rmse is the ranking column and must be out of sample;
-        # disjointness is enforced by the harness, never by convention (P7). The
-        # exclude= path only covers random draws, so validate explicit sets here.
-        raise ValueError(
-            "held-out sensors must be disjoint from observed sensors "
-            "(ADR-002 heldout_count_rmse contract, P7); overlapping links: "
-            f"{overlap.tolist()}"
-        )
-
     n_periods = int(estimation.get("n_periods", 1))
     ho_periods = int(ho_cfg.get("n_periods", n_periods))
-    # Digest of the held-out design folded into the task hash without exposing
-    # the held-out sensor identities to the estimator (ADR-002 Decision 1).
-    ho_hash = hashlib.sha256()
-    ho_hash.update(np.ascontiguousarray(np.sort(heldout_sensors), dtype=np.int64).tobytes())
-    ho_hash.update(f"ho_periods={ho_periods};".encode())
-    heldout_digest = ho_hash.hexdigest()
+    heldout_digest = _heldout_digest(heldout_sensors, f"ho_periods={ho_periods};")
     noise = estimation.get("noise", "poisson")
     # Davis-Nihan day-to-day dials (ADR-012); ignored for other noise modes.
     dn_population_scale = float(estimation.get("population_scale", 50.0))
@@ -693,49 +817,12 @@ def run_estimation_experiment(
         },
         "certificate": certificate,
         "identifiability": ident,
-        "estimators": {
-            e.name: {
-                "capabilities": {
-                    "paradigm": e.capabilities.paradigm,
-                    "deterministic": e.capabilities.deterministic,
-                    "seedable": e.capabilities.seedable,
-                    "inputs_required": sorted(e.capabilities.inputs_required),
-                    "outputs": sorted(e.capabilities.outputs),
-                    "trained_on": list(e.capabilities.trained_on),
-                },
-                "factors": e.factor_values,
-            }
-            for e in estimators
-        },
-        "budget": {
-            "iterations": budget.iterations,
-            "sp_calls": budget.sp_calls,
-            "wall_seconds": budget.wall_seconds,
-            "target_relative_gap": budget.target_relative_gap,
-        },
+        "estimators": _estimators_manifest(estimators),
+        "budget": _budget_manifest(budget),
         "seed": seed,
         "macroreps": macroreps,
-        "rng": {
-            "root_seed": seed,
-            "schema": (
-                "numpy SeedSequence spawn_key=(macrorep, source, replication) "
-                "with Philox (see tabench.core.rng, P8)"
-            ),
-            "reserved_sources": {
-                "observation": SOURCE_OBSERVATION,
-                "evaluation": SOURCE_EVALUATION,
-                "bootstrap": SOURCE_BOOTSTRAP,
-                "prior": SOURCE_PRIOR,
-            },
-        },
-        "environment": {
-            "python": sys.version.split()[0],
-            "platform": platform.platform(),
-            "numpy": np.__version__,
-            "scipy": scipy.__version__,
-            "tabench": tabench.__version__,
-            "git_commit": _git_commit(),
-        },
+        "rng": _rng_manifest(seed),
+        "environment": _environment_manifest(),
         "notes": (
             "T2 estimation: each emitted OD matrix is certified through the pinned "
             "reference assignment; count-fit and OD-fit are a pair, ranked by "
@@ -744,17 +831,7 @@ def run_estimation_experiment(
     }
 
     if out_dir is not None:
-        out = Path(out_dir)
-        out.mkdir(parents=True, exist_ok=True)
-        budget_part = "-".join(
-            f"{axis}{value}"
-            for axis, value in (
-                ("it", budget.iterations),
-                ("sp", budget.sp_calls),
-                ("ws", budget.wall_seconds),
-            )
-            if value is not None
-        )
+        budget_part = _budget_part(budget)
         # task_hash[:8] pins the estimation block (sensors, held-out digest,
         # dataset dials, certificate) so card variants sharing a scenario/budget/
         # seed can never silently overwrite each other's CSV (ADR-002 Decision 1).
@@ -763,12 +840,7 @@ def run_estimation_experiment(
             f"{scenario.name}-{scenario.content_hash()[:8]}_t2-{task_hash8}_"
             f"{'-'.join(names)}_{budget_part}_seed-{seed}"
         )
-        with open(out / f"{stem}.csv", "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=_EST_CSV_FIELDS)
-            writer.writeheader()
-            writer.writerows(rows)
-        with open(out / f"{stem}.manifest.json", "w") as f:
-            json.dump(manifest, f, indent=2)
+        _write_outputs(out_dir, stem, rows, manifest, _EST_CSV_FIELDS)
 
     return ExperimentResult(rows=rows, bundles=bundles, manifest=manifest)
 
@@ -978,10 +1050,7 @@ def run_dynamic_estimation_experiment(
             "Pass the UE instance, e.g. "
             "dataclasses.replace(scenario, sue_theta=None, reference=None)."
         )
-    names = [e.name for e in estimators]
-    duplicates = {n for n in names if names.count(n) > 1}
-    if duplicates:
-        raise ValueError(f"Duplicate estimator names {sorted(duplicates)}")
+    names = _check_unique_estimator_names(estimators)
 
     pairs = active_pairs(scenario.demand.matrix)
     n_slices = int(estimation.get("n_slices", 2))
@@ -1011,36 +1080,18 @@ def run_dynamic_estimation_experiment(
     expected = predict_interval_counts(full_map, truth_pairs, n_intervals)  # (T, n_links)
 
     n_links = network.n_links
-    place_rng = RngBundle(root_seed=seed, macrorep=0).generator(
-        SOURCE_OBSERVATION, replication=_SENSOR_PLACEMENT_REPLICATION
+    obs_sensors, heldout_sensors, _ = _draw_sensor_design(
+        estimation, n_links, seed, "ADR-023"
     )
-    obs_sensors = _draw_sensors(
-        n_links, estimation.get("sensors") or {"kind": "random", "coverage": 0.3}, place_rng
-    )
-    ho_cfg = estimation.get("heldout") or {"kind": "random", "coverage": 0.1}
-    heldout_sensors = _draw_sensors(n_links, ho_cfg, place_rng, exclude=obs_sensors)
-    overlap = np.intersect1d(obs_sensors, heldout_sensors)
-    if overlap.size:
-        raise ValueError(
-            "held-out sensors must be disjoint from observed sensors "
-            f"(ADR-023 heldout_count_rmse contract, P7); overlapping links: {overlap.tolist()}"
-        )
-    if heldout_sensors.size == 0:
-        raise ValueError(
-            "held-out sensor set is empty — heldout_count_rmse is THE ranking "
-            "column (ADR-023), so an all-NaN held-out design must be explicit, "
-            "not silent; add heldout links or widen coverage"
-        )
 
     n_days = int(estimation.get("n_days", estimation.get("n_periods", 1)))
     noise = estimation.get("noise", "poisson")
     prior_cfg = estimation.get("prior") or {"kind": "stale", "cv": 0.3}
     prior_cv = float(prior_cfg.get("cv", 0.3))
 
-    ho_hash = hashlib.sha256()
-    ho_hash.update(np.ascontiguousarray(np.sort(heldout_sensors), dtype=np.int64).tobytes())
-    ho_hash.update(f"ho_intervals={n_intervals};ho_days={n_days};".encode())
-    heldout_digest = ho_hash.hexdigest()
+    heldout_digest = _heldout_digest(
+        heldout_sensors, f"ho_intervals={n_intervals};ho_days={n_days};"
+    )
 
     ident = dynamic_identifiability_report(
         full_map, obs_sensors, pairs, n_slices, n_intervals
@@ -1144,50 +1195,14 @@ def run_dynamic_estimation_experiment(
             "prior": {"kind": prior_cfg.get("kind", "stale"), "cv": prior_cv},
             "stochastic": stochastic,
         },
+        "certificate": certificate,
         "identifiability": ident,
-        "estimators": {
-            e.name: {
-                "capabilities": {
-                    "paradigm": e.capabilities.paradigm,
-                    "deterministic": e.capabilities.deterministic,
-                    "seedable": e.capabilities.seedable,
-                    "inputs_required": sorted(e.capabilities.inputs_required),
-                    "outputs": sorted(e.capabilities.outputs),
-                    "trained_on": list(e.capabilities.trained_on),
-                },
-                "factors": e.factor_values,
-            }
-            for e in estimators
-        },
-        "budget": {
-            "iterations": budget.iterations,
-            "sp_calls": budget.sp_calls,
-            "wall_seconds": budget.wall_seconds,
-            "target_relative_gap": budget.target_relative_gap,
-        },
+        "estimators": _estimators_manifest(estimators),
+        "budget": _budget_manifest(budget),
         "seed": seed,
         "macroreps": macroreps,
-        "rng": {
-            "root_seed": seed,
-            "schema": (
-                "numpy SeedSequence spawn_key=(macrorep, source, replication) "
-                "with Philox (see tabench.core.rng, P8)"
-            ),
-            "reserved_sources": {
-                "observation": SOURCE_OBSERVATION,
-                "evaluation": SOURCE_EVALUATION,
-                "bootstrap": SOURCE_BOOTSTRAP,
-                "prior": SOURCE_PRIOR,
-            },
-        },
-        "environment": {
-            "python": sys.version.split()[0],
-            "platform": platform.platform(),
-            "numpy": np.__version__,
-            "scipy": scipy.__version__,
-            "tabench": tabench.__version__,
-            "git_commit": _git_commit(),
-        },
+        "rng": _rng_manifest(seed),
+        "environment": _environment_manifest(),
         "notes": (
             "T2 within-day dynamic estimation (Cascetta et al. 1993): the estimand is "
             "the (H, Z, Z) time-slice profile; counts flow through a frozen exogenous "
@@ -1197,28 +1212,13 @@ def run_dynamic_estimation_experiment(
     }
 
     if out_dir is not None:
-        out = Path(out_dir)
-        out.mkdir(parents=True, exist_ok=True)
-        budget_part = "-".join(
-            f"{axis}{value}"
-            for axis, value in (
-                ("it", budget.iterations),
-                ("sp", budget.sp_calls),
-                ("ws", budget.wall_seconds),
-            )
-            if value is not None
-        )
+        budget_part = _budget_part(budget)
         task_hash8 = data_reps[0][0].content_hash()[:8]
         stem = (
             f"{scenario.name}-{scenario.content_hash()[:8]}_t2d-{task_hash8}_"
             f"{'-'.join(names)}_{budget_part}_seed-{seed}"
         )
-        with open(out / f"{stem}.csv", "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=_DYN_CSV_FIELDS)
-            writer.writeheader()
-            writer.writerows(rows)
-        with open(out / f"{stem}.manifest.json", "w") as f:
-            json.dump(manifest, f, indent=2)
+        _write_outputs(out_dir, stem, rows, manifest, _DYN_CSV_FIELDS)
 
     return ExperimentResult(rows=rows, bundles=bundles, manifest=manifest)
 
@@ -1358,10 +1358,7 @@ def run_bo4mob_estimation_experiment(
     if instance_key not in BO4MOB_REGISTRY:
         raise KeyError(f"unknown bo4mob instance {instance_key!r}; see tabench.data.bo4mob")
 
-    names = [e.name for e in estimators]
-    duplicates = {n for n in names if names.count(n) > 1}
-    if duplicates:
-        raise ValueError(f"Duplicate estimator names {sorted(duplicates)}")
+    names = _check_unique_estimator_names(estimators)
     for est in estimators:
         if est.capabilities.trained_on:
             # No Scenario exists to key the fairness gate off; a learned/SPSA BO4Mob
@@ -1495,59 +1492,20 @@ def run_bo4mob_estimation_experiment(
             "heldout_digest": heldout_digest,
             "ranking_metric": "heldout_nrmse",
         },
-        "estimators": {
-            e.name: {
-                "capabilities": {
-                    "paradigm": e.capabilities.paradigm,
-                    "deterministic": e.capabilities.deterministic,
-                    "seedable": e.capabilities.seedable,
-                    "inputs_required": sorted(e.capabilities.inputs_required),
-                    "outputs": sorted(e.capabilities.outputs),
-                    "trained_on": list(e.capabilities.trained_on),
-                },
-                "factors": e.factor_values,
-            }
-            for e in estimators
-        },
-        "budget": {
-            "iterations": budget.iterations,
-            "sp_calls": budget.sp_calls,
-            "wall_seconds": budget.wall_seconds,
-            "target_relative_gap": budget.target_relative_gap,
-        },
+        "estimators": _estimators_manifest(estimators),
+        "budget": _budget_manifest(budget),
         "seed": seed,
         "macroreps": macroreps,
-        "environment": {
-            "python": sys.version.split()[0],
-            "platform": platform.platform(),
-            "numpy": np.__version__,
-            "scipy": scipy.__version__,
-            "tabench": tabench.__version__,
-            "git_commit": _git_commit(),
-        },
+        "rng": _rng_manifest(seed),
+        "environment": _environment_manifest(),
         "citation": bo4mob_citation(BO4MOB_REGISTRY[instance_key]),
         "notes": _BO4MOB_ESTIMATION_NOTES,
     }
 
     if out_dir is not None:
-        out = Path(out_dir)
-        out.mkdir(parents=True, exist_ok=True)
-        budget_part = "-".join(
-            f"{axis}{value}"
-            for axis, value in (
-                ("it", budget.iterations),
-                ("sp", budget.sp_calls),
-                ("ws", budget.wall_seconds),
-            )
-            if value is not None
-        )
+        budget_part = _budget_part(budget)
         task_hash8 = task.content_hash()[:8]
         stem = f"bo4mob-{instance_key}_t2b-{task_hash8}_{'-'.join(names)}_{budget_part}_seed-{seed}"
-        with open(out / f"{stem}.csv", "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=_BO4MOB_CSV_FIELDS)
-            writer.writeheader()
-            writer.writerows(rows)
-        with open(out / f"{stem}.manifest.json", "w") as f:
-            json.dump(manifest, f, indent=2)
+        _write_outputs(out_dir, stem, rows, manifest, _BO4MOB_CSV_FIELDS)
 
     return ExperimentResult(rows=rows, bundles=bundles, manifest=manifest)

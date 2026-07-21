@@ -569,8 +569,10 @@ def test_run_estimation_experiment_end_to_end():
     sc = braess_scenario(6.0)
     estimators = [PriorBaseline(), GLSEstimator(k_inner=40, outer_iters=8)]
     cfg = {
-        "sensors": {"kind": "explicit", "links": [0, 1, 2, 3, 4]},
-        "heldout": {"kind": "explicit", "links": []},
+        # Near-full coverage: link 2 is reserved as the (non-empty) held-out set —
+        # an empty held-out design is rejected on both T2 tracks (ADR-002/ADR-023).
+        "sensors": {"kind": "explicit", "links": [0, 1, 3, 4]},
+        "heldout": {"kind": "explicit", "links": [2]},
         "n_periods": 1,
         "noise": "none",
         "prior": {"kind": "stale", "cv": 0.0},
@@ -790,11 +792,13 @@ def test_yang_certifies_honestly_end_to_end():
     """od-congested runs through the pinned P1 certificate with no model-specific
     trust: the SCORE (od_feasible, od_rmse) is recomputed by the harness's
     ODCertifier from the emitted OD matrix, never from a self-report. With a cv=0
-    prior (=truth) it certifies od_feasible=1 and recovers under full sensors."""
+    prior (=truth) it certifies od_feasible=1 and recovers under near-full sensors."""
     sc = braess_scenario(6.0)
     cfg = {
-        "sensors": {"kind": "explicit", "links": [0, 1, 2, 3, 4]},
-        "heldout": {"kind": "explicit", "links": []},
+        # Link 2 reserved as the non-empty held-out set (an empty held-out design
+        # is rejected on both T2 tracks, ADR-002/ADR-023).
+        "sensors": {"kind": "explicit", "links": [0, 1, 3, 4]},
+        "heldout": {"kind": "explicit", "links": [2]},
         "n_periods": 1,
         "noise": "none",
         "prior": {"kind": "stale", "cv": 0.0},

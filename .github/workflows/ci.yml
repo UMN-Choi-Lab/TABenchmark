@@ -173,7 +173,10 @@ jobs:
         # covered by the sumo-free matrix legs. test_cli.py rides here too so the
         # sumo-gated bo4mob CLI card tests (happy path + the 5fullRegion HPC refusal)
         # actually execute (they importorskip sumo, so the sumo-free legs skip them).
-        run: pytest tests/test_sumo_marouter.py tests/test_spsa_sumo.py tests/test_bo4mob.py tests/test_bo4mob_estimation.py tests/test_sumo_duaiterate.py tests/test_cli.py -q -ra
+        # test_runner_scaffolding.py (B7) rides here for the same reason: its D3 pin
+        # test_d3_bo4mob_manifest_records_rng importorskips sumo, so it EXECUTES only on
+        # this leg — the other 8 helper/delta pins already run on every core matrix leg.
+        run: pytest tests/test_sumo_marouter.py tests/test_spsa_sumo.py tests/test_bo4mob.py tests/test_bo4mob_estimation.py tests/test_sumo_duaiterate.py tests/test_cli.py tests/test_runner_scaffolding.py -q -ra
         env:
           TABENCH_REQUIRE_DATA: "1"
       - name: Test (sumo tutorial notebooks)

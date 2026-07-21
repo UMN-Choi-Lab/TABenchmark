@@ -340,11 +340,13 @@ def test_end_to_end_day_to_day():
     """od-kalman runs through the pinned P1 certificate on a day_to_day task: the
     SCORE (od_feasible, od_rmse) is harness-recomputed from the emitted OD matrix,
     never a self-report. With a cv=0 prior (=truth) it certifies feasible and
-    recovers under full sensors; the self-report is finite provenance."""
+    recovers under near-full sensors; the self-report is finite provenance."""
     sc = braess_scenario(6.0)
     cfg = {
-        "sensors": {"kind": "explicit", "links": [0, 1, 2, 3, 4]},
-        "heldout": {"kind": "explicit", "links": []},
+        # Link 2 reserved as the non-empty held-out set (an empty held-out design
+        # is rejected on both T2 tracks, ADR-002/ADR-023).
+        "sensors": {"kind": "explicit", "links": [0, 1, 3, 4]},
+        "heldout": {"kind": "explicit", "links": [2]},
         "n_periods": 60,
         "noise": "day_to_day",
         "population_scale": 80.0,
