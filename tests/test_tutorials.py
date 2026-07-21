@@ -8,8 +8,14 @@ The PI rule "a new model must ship a tutorial" made mechanical:
   same-ADR ``covers`` folds;
 * the DNL track cannot grow silently — new ``LinkModel`` / ``NodeModel`` subclasses
   must appear in the manifest;
-* notebooks are committed STRIPPED (no outputs, no execution counts) and their
-  ``metadata.tabench`` block is folder-consistent;
+* notebooks are committed EXECUTED — every non-empty code cell carries the outputs
+  and the strictly sequential ``execution_count`` of one clean top-to-bottom run
+  (PI directive 2026-07-21: the committed notebook IS the rendered tutorial).
+  Drift safety still comes from the CI re-execution below, never from output
+  identity. The one exemption ships stripped: the matsim notebook, whose
+  JAVA-only toolchain (adr-039) is absent on the maintainer box; the matsim CI
+  job still proves its executability. ``metadata.tabench`` stays
+  folder-consistent;
 * CI re-executes each one from a cleared state (gated on ``TABENCH_RUN_TUTORIALS=1``,
   mirroring the ``TABENCH_REQUIRE_DATA`` discipline in ``tests/conftest.py``).
 
@@ -265,16 +271,37 @@ def test_dnl_manifest_complete():
     assert not leaked, f"foreign scratch subclasses leaked into the gate: {sorted(leaked)}"
 
 
+# The notebooks that CANNOT be executed on the maintainer box and therefore ship
+# stripped (no outputs, no execution counts). matsim is JAVA-only behind no pip extra
+# (adr-039: TABENCH_MATSIM_HOME + TABENCH_JAVA_HOME); its executability is still proven
+# by the matsim CI job, which executes it from a cleared state. Shrink, never grow.
+_EXECUTED_EXEMPT = frozenset({"11-external/05-matsim.ipynb"})
+
+
 @pytest.mark.parametrize(
     "nb_path", _existing_notebooks(), ids=lambda p: str(p.relative_to(_TUT))
 )
-def test_notebook_is_stripped(nb_path):
+def test_notebook_is_executed(nb_path):
     nb = json.loads(nb_path.read_text())
-    for cell in nb.get("cells", []):
-        if cell.get("cell_type") != "code":
-            continue
-        assert cell.get("outputs", []) == [], f"{nb_path.name}: committed code outputs (strip)"
-        assert cell.get("execution_count") is None, f"{nb_path.name}: execution_count not cleared"
+    code = [c for c in nb.get("cells", []) if c.get("cell_type") == "code"]
+    if str(nb_path.relative_to(_TUT)) in _EXECUTED_EXEMPT:
+        for cell in code:
+            assert cell.get("outputs", []) == [], (
+                f"{nb_path.name}: exempt notebooks ship stripped (committed outputs)"
+            )
+            assert cell.get("execution_count") is None, (
+                f"{nb_path.name}: exempt notebooks ship stripped (execution_count set)"
+            )
+        return
+    # One clean top-to-bottom run: non-empty code cells count strictly 1..N. Empty
+    # cells are never executed by nbclient and stay None by construction.
+    nonempty = [c for c in code if "".join(c.get("source", "")).strip()]
+    counts = [c.get("execution_count") for c in nonempty]
+    assert counts == list(range(1, len(nonempty) + 1)), (
+        f"{nb_path.name}: not one clean top-to-bottom execution "
+        f"(execution counts {counts}); re-run the whole notebook, do not commit "
+        "a partially or out-of-order executed state"
+    )
 
 
 @pytest.mark.parametrize(

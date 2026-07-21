@@ -91,9 +91,9 @@ TABenchmark/
 │   └── cli.py             # tabench fetch | list | run
 ├── scenarios/             # declarative YAML scenario cards (ladder 0braess → 4winnipeg, + xu2024;
 │                          #   bo4mob is fetch-and-cite, registered separately — not a YAML card)
-├── tutorials/             # 53 numbered notebooks, simple → complex: one stripped, certified
-│                          #   notebook per unit (<NN>-track/<MM>-unit.ipynb; executed on the docs
-│                          #   site, bar the engine-gated torch/sumo/dtalite pages)
+├── tutorials/             # 58 numbered notebooks, simple → complex: one executed, certified
+│                          #   notebook per unit (<NN>-track/<MM>-unit.ipynb; committed with
+│                          #   outputs, bar the Java-gated matsim page)
 ├── demos/                 # demo_quickstart.py, demo_profiles.py
 ├── tests/                 # 1000+ tests: analytic anchors, published-oracle regressions (pytest -q)
 ├── tools/                 # doc generators (model compendium, references, evolution graph)

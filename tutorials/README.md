@@ -30,10 +30,14 @@ jupyter lab tutorials/01-static/05-bfw.ipynb         # interactive
 jupyter nbconvert --to notebook --execute tutorials/01-static/05-bfw.ipynb --stdout  # headless
 ```
 
-Notebooks are committed **stripped** (no cell outputs, no execution counts) so they can
-never drift out of sync with the code — the gate is *execution success plus the
-in-notebook certified asserts*, never output identity. **Every CI leg enforces this.**
-`tests/test_tutorials.py` runs unconditionally on existence + stripping + metadata +
+Notebooks are committed **executed** — every non-empty code cell carries the outputs and
+the strictly sequential execution count of one clean top-to-bottom run, so the committed
+notebook is itself the rendered tutorial. Drift safety does NOT come from output
+identity: CI re-executes every notebook from a cleared state, and the gate is *execution
+success plus the in-notebook certified asserts*. The one exemption ships stripped: the
+matsim notebook (JAVA-only toolchain, adr-039), whose executability the matsim CI job
+proves instead. **Every CI leg enforces this.**
+`tests/test_tutorials.py` runs unconditionally on existence + executed-state + metadata +
 numbering, no env flag needed. The notebook-EXECUTION test (`test_notebook_executes`) is
 wired in too: the core job's Python 3.12 leg installs `.[dev,viz,tutorials]` and sets
 `TABENCH_RUN_TUTORIALS=1`, re-executing every unguarded notebook from a cleared kernel
@@ -49,7 +53,7 @@ guarantee.
 `tests/test_tutorials.py` makes "a new model ships a tutorial" mechanical: every key of
 `MODEL_REGISTRY ∪ ESTIMATOR_REGISTRY ∪ DYNAMIC_ESTIMATOR_REGISTRY` and every unit in the
 import-anchored 11-unit parallel-track manifest must map to a notebook (or a same-ADR
-`covers` sibling), notebooks must be stripped, and `metadata.tabench` must match the
+`covers` sibling), notebooks must be committed executed (matsim excepted), and `metadata.tabench` must match the
 folder. A registered unit with no notebook turns the suite red. Guarded units register
 only where their extra is installed, so enforcement is automatically environment-correct.
 
