@@ -110,6 +110,23 @@ class GLSEstimator(ODEstimator):
         floor = self.factor_values["prior_var_floor"]
 
         g_pr = np.array([prior_matrix[i, j] for (i, j) in pairs], dtype=np.float64)
+        if g_pr.size == 0:
+            # No positive off-diagonal prior support: nothing to estimate. Emit the
+            # prior unchanged (graceful empty-support handling, mirrors yang/dn-kalman)
+            # rather than passing a zero-column system to lsq_linear, which raises a
+            # "zero-size array to reduction operation maximum" ValueError. Empty
+            # support predicts all-zero counts, so the honest self-obs residual is
+            # RMS(counts_mean), matching the dynamic-family guards (never 0.0).
+            coords = BudgetCoords(iterations=1, sp_calls=0, wall_ms=0.0)
+            resid = float(np.sqrt(np.mean(counts_mean ** 2)))
+            trace.record(prior_matrix, coords, obs_count_rmse=resid)
+            return ODResultBundle(
+                estimator_name=self.name,
+                final=trace.final,
+                trace=trace,
+                factors=dict(self.factor_values),
+                seed_info=rng.describe(),
+            )
         w_var = (cv_prior * g_pr) ** 2 + floor
         v_var = np.maximum(counts_mean, 1.0) / max(n_periods, 1)
 
@@ -117,6 +134,9 @@ class GLSEstimator(ODEstimator):
         best_g = g_pr.copy()
         best_resid = np.inf
         sp_calls = 0
+        resid = np.inf
+        coords = BudgetCoords(iterations=0, sp_calls=0, wall_ms=0.0)
+        stride = max(1, int(outer_iters) // 15)
         for it in range(1, int(outer_iters) + 1):
             demand_g = Demand(matrix=od_from_pairs(prior_matrix, pairs, g))
             p, _, _ = proportion_matrix(network, demand_g, k_inner, pairs=pairs, engine=engine)
@@ -129,12 +149,22 @@ class GLSEstimator(ODEstimator):
                 best_resid = float(np.sqrt(np.mean((p_obs @ g_pr - counts_mean) ** 2)))
             g = gls_solve(p_obs, counts_mean, g_pr, w_var, v_var)
             coords = BudgetCoords(iterations=it, sp_calls=sp_calls, wall_ms=0.0)
-            od = od_from_pairs(prior_matrix, pairs, g)
             resid = float(np.sqrt(np.mean((p_obs @ g - counts_mean) ** 2)))
-            trace.record(od, coords, obs_count_rmse=resid)
             if resid < best_resid:
                 best_resid, best_g = resid, g.copy()
-            if budget.exhausted(coords):
+            done = budget.exhausted(coords)
+            # Sparse emission (ADR-002 Decision 2 / base.py:176-181): every
+            # checkpoint triggers a full pinned bfw re-assignment, so emit ~15
+            # spaced points plus always the final iterate (and the last before a
+            # budget break), never one per iteration (mirrors yang/dn-kalman). At
+            # the default outer_iters=15 the stride is max(1, 15//15)=1, so this
+            # records every iteration -- byte-identical to the pre-stride trace
+            # (the no-op-at-default invariant).
+            if it % stride == 0 or it == int(outer_iters) or done:
+                trace.record(
+                    od_from_pairs(prior_matrix, pairs, g), coords, obs_count_rmse=resid
+                )
+            if done:
                 break
         # Re-record the best self-obs-RMSE iterate as the final artifact so the
         # outer fixed point cannot return a strictly dominated last iterate

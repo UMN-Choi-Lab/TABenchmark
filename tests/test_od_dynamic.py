@@ -689,6 +689,47 @@ def test_empty_prior_profile_emits_prior():
     assert np.array_equal(trace.final.od_matrix, zero_profile)
 
 
+def test_empty_pairs_guard_reports_obs_count_rmse():
+    """The n_pairs==0 guard (a task whose dataset carries no active OD pairs) emits
+    the prior profile AND self-reports obs_count_rmse via the SAME residual formula
+    as the normal path -- an empty-pairs profile predicts all-zero counts, so the
+    residual is the RMS of the period-mean counts. Pins self_report parity so a
+    consumer reading self_report['obs_count_rmse'] never hits a KeyError (mirrors
+    gls). Covers BOTH the simultaneous and sequential estimators."""
+    sc = two_route_scenario(sue_theta=None)
+    full = lagged_assignment_tensor(sc.network, active_pairs(sc.demand.matrix), 2.0)
+    n_lags = full.shape[0] - 1
+    n_slices, n_intervals = 3, 3 + n_lags
+    zero_profile = np.zeros((n_slices, sc.network.n_zones, sc.network.n_zones))
+    obs_sensors = np.array([3])
+    # Nonzero flow at the sensor -> nonzero counts, so the parity check bites on a
+    # value the guard path must COMPUTE (not a hardcoded zero).
+    flows = np.zeros((n_intervals, sc.network.n_links))
+    flows[:, obs_sensors[0]] = 3.0
+    obs_ds = DynamicLinkCounts(obs_sensors, 5, "none").observe(
+        sc, flows, RngBundle(0).generator(SOURCE_OBSERVATION)
+    )
+    empty_pairs = np.zeros((0, 2), dtype=np.int64)
+    dataset = dataclasses.replace(
+        obs_ds,
+        payload={**obs_ds.payload, "lag_tensor": full[:, obs_sensors, :][:, :, :0],
+                 "pairs": empty_pairs},
+        meta={**obs_ds.meta, "n_slices": n_slices, "slice_length": 2.0,
+              "n_lags": n_lags, "map_recipe": "frozen_freeflow_v1"},
+    )
+    task = DynamicEstimationTask(
+        "t", sc.network, zero_profile, dataset, {}, sc.content_hash(), seed=0
+    )
+    counts_mean = np.asarray(dataset.payload["counts"], dtype=np.float64).mean(axis=0)
+    expected_resid = float(np.sqrt(np.mean(counts_mean ** 2)))
+    assert expected_resid > 0.0  # the parity check is non-trivial
+    for est in (SimultaneousDynamicGLSEstimator(), SequentialDynamicGLSEstimator()):
+        trace = ODTrace()
+        est.estimate(task, Budget(sp_calls=100), RngBundle(0), trace)
+        assert np.array_equal(trace.final.od_matrix, zero_profile)
+        assert trace.final.self_report["obs_count_rmse"] == pytest.approx(expected_resid)
+
+
 def test_gls_static_estimator_unrelated_to_dynamic_registry():
     """A sanity guard: the static gls estimator is untouched and still registered."""
     assert "gls" in ESTIMATOR_REGISTRY

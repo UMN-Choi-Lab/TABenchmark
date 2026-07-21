@@ -49,7 +49,7 @@ from ..core.factors import FactorSpec
 from ..core.results import Trace
 from ..core.rng import RngBundle
 from ..core.scenario import Demand, Scenario
-from ..models.adapters.sumo_marouter import SumoMarouterModel
+from ..models.adapters.sumo_marouter import SumoMarouterModel, _engine_version
 from ._proportions import active_pairs, od_from_pairs
 from .base import (
     EstimationTask,
@@ -250,4 +250,12 @@ class SumoSPSAEstimator(SPSAEstimator):
         self._log_lo_vec = np.where(pos, np.log(np.where(pos, self._lo_vec, 1.0)), -np.inf)
         self._log_hi_vec = np.log(self._hi_vec)
 
-        return super().estimate(task, budget, rng, trace)
+        bundle = super().estimate(task, budget, rng, trace)
+        # Surface the wrapped marouter engine version into the RECORDED provenance,
+        # mirroring odme_dtalite's seed_info engine tag (adr-027): marouter's
+        # vdf/capacity tables are hardcoded in the SUMO source and could change
+        # between releases, so the running engine identity belongs in the bundle
+        # identity, not just the base rng.describe() (never scored -- P1). The whole
+        # estimate already ran under this engine, so reading it here is post-hoc.
+        bundle.seed_info = {**bundle.seed_info, "engine": _engine_version()}
+        return bundle

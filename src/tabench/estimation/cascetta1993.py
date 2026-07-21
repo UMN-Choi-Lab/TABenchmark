@@ -208,7 +208,15 @@ class SimultaneousDynamicGLSEstimator(DynamicODEstimator):
         n_pairs = len(pairs)
         if n_pairs == 0:
             coords = BudgetCoords(iterations=1, sp_calls=0, wall_ms=0.0)
-            trace.record(task.prior_profile, coords)
+            # Same residual formula as the normal path, evaluated at the emitted
+            # (prior) profile: with no active pairs the map predicts all-zero
+            # counts, so obs_count_rmse is the RMS of the period-mean counts.
+            # Emitting it (not an empty self_report) keeps the key present --
+            # parity with the normal record below.
+            resid = self._self_obs_rmse(
+                m_obs, _profile_pairs(task.prior_profile, pairs), counts_mean, n_intervals
+            )
+            trace.record(task.prior_profile, coords, obs_count_rmse=resid)
             return self._bundle(trace, rng)
         a_stacked = stacked_tensor_map(m_obs, n_slices, n_intervals)
         x = dynamic_gls_simultaneous(
@@ -275,7 +283,18 @@ class SequentialDynamicGLSEstimator(DynamicODEstimator):
         n_pairs = len(pairs)
         if n_pairs == 0:
             coords = BudgetCoords(iterations=1, sp_calls=0, wall_ms=0.0)
-            trace.record(task.prior_profile, coords)
+            # Same residual formula as the normal path, evaluated at the emitted
+            # (prior) profile: no active pairs -> the map predicts all-zero counts,
+            # so obs_count_rmse is the RMS of the period-mean counts. Recording it
+            # keeps the key present (parity with the normal record below), instead
+            # of an empty self_report.
+            from ._dynamic_map import predict_interval_counts
+
+            pred = predict_interval_counts(
+                m_obs, _profile_pairs(task.prior_profile, pairs), n_intervals
+            )
+            resid = float(np.sqrt(np.mean((pred - counts_mean) ** 2)))
+            trace.record(task.prior_profile, coords, obs_count_rmse=resid)
             return self._bundle(trace, rng)
         blocks = tensor_blocks(m_obs, n_slices, n_intervals)
         x = dynamic_gls_sequential(

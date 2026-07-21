@@ -232,9 +232,12 @@ class DavisNihanKalmanEstimator(ODEstimator):
         g_pr = np.array([prior_matrix[i, j] for (i, j) in pairs], dtype=np.float64)
         if g_pr.size == 0:
             # No positive off-diagonal prior support: emit the prior unchanged
-            # (graceful empty-support handling, mirrors gls/od-congested).
+            # (graceful empty-support handling, mirrors gls/od-congested). Empty
+            # support predicts all-zero counts, so the honest self-obs residual is
+            # RMS(counts_mean), matching the dynamic-family guards (never 0.0).
             coords = BudgetCoords(iterations=1, sp_calls=0, wall_ms=0.0)
-            trace.record(prior_matrix, coords, obs_count_rmse=0.0)
+            resid = float(np.sqrt(np.mean(counts_mean ** 2)))
+            trace.record(prior_matrix, coords, obs_count_rmse=resid)
             return ODResultBundle(
                 estimator_name=self.name,
                 final=trace.final,

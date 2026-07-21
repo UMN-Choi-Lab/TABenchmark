@@ -306,3 +306,24 @@ def test_cli_card_path_passes_iterations_budget(tmp_path):
     ])
     assert rc == 0  # 2 would mean the sp_calls-only refusal fired
     assert list(out.glob("*.csv"))
+
+
+# --- provenance: the wrapped sumo engine version is recorded (adr-027) --------
+def test_seed_info_records_the_marouter_engine_version():
+    # The wrapped marouter engine version is surfaced into the returned bundle's
+    # seed_info, mirroring odme_dtalite's engine tag: marouter's vdf/capacity
+    # tables are hardcoded in the SUMO source, so the running engine identity
+    # belongs in the RECORDED provenance (never scored -- P1), not just the base
+    # rng.describe().
+    scen = two_route_scenario(sue_theta=None)
+    res = run_estimation_experiment(
+        scen, [SumoSPSAEstimator(iters=3)], Budget(iterations=1000),
+        seed=_RECOVERY_SEED, macroreps=1, estimation=_RECOVERY_EST,
+    )
+    seed_info = res.bundles[("spsa-sumo", "m0")].seed_info
+    assert "engine" in seed_info
+    engine = seed_info["engine"]
+    assert isinstance(engine, str) and engine  # a non-empty version string
+    assert "marouter" in engine.lower() or engine == "unknown"
+    # The engine tag AUGMENTS the base rng provenance; it does not replace it.
+    assert len(seed_info) > 1

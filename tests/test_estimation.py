@@ -253,6 +253,84 @@ def test_braess_single_sensor_counterexample():
     assert m6["heldout_count_rmse"] < m2["heldout_count_rmse"]
 
 
+# ------------------------------------------------------- GLS empty-support + stride
+
+
+def test_gls_zero_prior_emits_prior_without_crashing():
+    """An all-zero prior (empty off-diagonal support) short-circuits to the prior in
+    ONE checkpoint instead of crashing lsq_linear with a "zero-size array to
+    reduction" ValueError (mirrors yang/dn-kalman empty-support handling). The
+    self-report is the HONEST empty-support residual RMS(counts_mean) -- empty
+    support predicts all-zero counts -- not a fabricated 0.0 "perfect fit" (F-2
+    harmonization with the dynamic-family guards)."""
+    sc = braess_scenario(6.0)
+    task = _task(sc, BRAESS_TRUTH, np.array([1, 2, 3]), np.zeros((2, 2)))
+    trace = ODTrace()
+    bundle = GLSEstimator().estimate(task, Budget(sp_calls=500), RngBundle(0), trace)
+    assert np.array_equal(trace.final.od_matrix, np.zeros((2, 2)))
+    assert len(trace.checkpoints) == 1
+    counts_mean = np.asarray(task.dataset.payload["counts"], dtype=np.float64).mean(axis=0)
+    expected_resid = float(np.sqrt(np.mean(counts_mean ** 2)))
+    assert expected_resid > 0.0  # a non-trivial pin (not the old hardcoded 0.0)
+    assert bundle.final.self_report["obs_count_rmse"] == pytest.approx(expected_resid)
+
+
+def test_gls_default_stride_records_every_iteration():
+    """no-op-at-default invariant (base.py:176-181 stride, ADR-002 Dec 2): at the
+    default outer_iters=15 the stride is max(1, 15//15)=1, so gls records EVERY
+    outer iteration exactly as before the stride was added -- one checkpoint per
+    iteration, indices 1..15. A future stride change that alters the DEFAULT trace
+    is caught here; the final OD is pinned via byte-determinism across two runs."""
+    sc = braess_scenario(6.0)
+    task = _task(sc, BRAESS_TRUTH, np.array([1, 2, 3]), _single_pair_prior(4.0))
+    trace = ODTrace()
+    GLSEstimator(k_inner=5).estimate(
+        task, Budget(sp_calls=10**9, iterations=10**9), RngBundle(0), trace
+    )
+    loop_cps = [cp for cp in trace if cp.coords.iterations <= 15]
+    assert [cp.coords.iterations for cp in loop_cps] == list(range(1, 16))  # stride=1
+    # Byte-determinism pins the emitted final OD without a fragile hardcoded decimal.
+    trace2 = ODTrace()
+    GLSEstimator(k_inner=5).estimate(
+        task, Budget(sp_calls=10**9, iterations=10**9), RngBundle(0), trace2
+    )
+    assert np.array_equal(trace.final.od_matrix, trace2.final.od_matrix)
+
+
+def test_gls_high_iters_strides_the_trace():
+    """on=changes: with outer_iters >> 15 the stride thins the trace to ~15 spaced
+    checkpoints plus the final iterate (base.py:176-181), instead of one per
+    iteration -- each checkpoint is a full pinned certificate."""
+    sc = braess_scenario(6.0)
+    task = _task(sc, BRAESS_TRUTH, np.array([1, 2, 3]), _single_pair_prior(4.0))
+    trace = ODTrace()
+    GLSEstimator(k_inner=5, outer_iters=150).estimate(  # stride = 150 // 15 = 10
+        task, Budget(sp_calls=10**9, iterations=10**9), RngBundle(0), trace
+    )
+    # Lower AND upper bound: iterates 10,20,..,150 = 15 strided points, plus at most
+    # one conditional best-re-record. Over-thinning (too few) fails the lower bound.
+    assert 15 <= len(trace.checkpoints) <= 17
+    # The final outer iterate (it == outer_iters) is always recorded.
+    assert any(cp.coords.iterations == 150 for cp in trace)
+
+
+def test_gls_budget_break_at_off_stride_iteration_is_recorded():
+    """Pins the ``or done`` clause of the strided record condition (base.py "record
+    at least one checkpoint"): when the budget breaks the outer loop on an iteration
+    that is NOT a stride multiple, that break iterate must STILL be recorded, or the
+    trace would be empty. With outer_iters=150 (stride=10) and an iterations=3
+    budget, iteration 3 breaks the loop off-stride (3 % 10 != 0, 3 != 150); without
+    ``or done`` no checkpoint would be emitted and ODTrace.final would raise
+    "ODTrace is empty". (Deleting ``or done`` leaves the rest of the suite green.)"""
+    sc = braess_scenario(6.0)
+    task = _task(sc, BRAESS_TRUTH, np.array([1, 2, 3]), _single_pair_prior(4.0))
+    trace = ODTrace()
+    GLSEstimator(k_inner=5, outer_iters=150).estimate(
+        task, Budget(iterations=3), RngBundle(0), trace
+    )
+    assert [cp.coords.iterations for cp in trace] == [3]
+
+
 # --------------------------------------------------------------- SPSA anchors
 
 
