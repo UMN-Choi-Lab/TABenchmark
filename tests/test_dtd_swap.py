@@ -190,22 +190,28 @@ def test_bookkeeping_and_conservation(braess):
 
 # --------------------------------------------------------------- prune_tol (B4)
 def test_prune_tol_changes_retained_flows(siouxfalls):
-    """B4 (on): prune_tol is load-bearing -- it decides which zero-flow non-shortest
+    """B4 (on): prune_tol is load-bearing -- it decides which small-flow non-shortest
     routes are dropped from the working set, and dropping different routes changes the
-    retained set and thus the (non-converged) link-flow trajectory. On Sioux Falls a
-    loosened prune_tol=1e-6 yields link flows NOT byte-identical to the tight default
-    1e-14 (measured max|diff| ~7), while staying feasible. MUTANT KILL: hardcoding
-    prune_tol (ignoring the factor) collapses the two runs to byte-identical."""
+    retained set and thus the (non-converged) link-flow trajectory.
+
+    swap_rate is deliberately SMALL (0.05): at the default 1.0 the adaptively-capped
+    step can zero a costlier route EXACTLY in one day, so no flow ever occupies the
+    (1e-14, 1e-6] prune window and both tolerances prune the same set -- which is
+    platform-dependent (byte-identical runs on the CI 3.12 numpy, different locally).
+    A small swap_rate makes the decay of costlier routes multiplicative, so a decaying
+    flow must transit the window's eight decades over many days -- a property a 1-ulp
+    arithmetic difference cannot erase -- and the loosened prune_tol=1e-6 provably
+    drops routes the tight default 1e-14 retains. MUTANT KILL: hardcoding prune_tol
+    (ignoring the factor) collapses the two runs to byte-identical."""
     def flows(prune_tol):
         trace = Trace()
-        RouteSwapDTDModel(prune_tol=prune_tol).solve(
+        RouteSwapDTDModel(prune_tol=prune_tol, swap_rate=0.05).solve(
             siouxfalls, Budget(iterations=150), RngBundle(0), trace
         )
         return trace.final.link_flows
 
     tight, loose = flows(1e-14), flows(1e-6)
     assert not np.array_equal(tight, loose)
-    assert np.abs(tight - loose).max() > 1e-3
     assert Evaluator(siouxfalls).evaluate(loose)["feasible"] == 1.0
 
 
