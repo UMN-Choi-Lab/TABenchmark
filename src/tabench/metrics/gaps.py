@@ -294,6 +294,15 @@ class Evaluator:
         v = clipped
 
         costs = net.link_cost(v)
+        if not np.all(np.isfinite(costs)):
+            # A FINITE flow can still drive the RECOMPUTED BPR cost to overflow (a
+            # tiny-capacity link at high power): the downstream all-or-nothing /
+            # od-cost skim would raise ValueError ("Link costs must be strictly
+            # positive and finite") out of the scoring loop and crash the run.
+            # Censor instead -- Evaluator's never-raise contract, mirroring the
+            # non-finite FLOWS censor just above (a black box must not crash the
+            # experiment). The class-flows path guards this per class already.
+            return self._censored("non-finite link costs")
         if self._link_interaction is not None:
             # Non-separable VI cost t(v) = t_BPR(v) + C v (C possibly asymmetric).
             # The relative gap at THIS cost is the normalized Smith/Dafermos VI
