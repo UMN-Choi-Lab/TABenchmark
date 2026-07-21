@@ -99,12 +99,12 @@ class TapasModel(_BushMachinery, TrafficAssignmentModel):
         seedable=True,
     )
     factors = {
-        "inner_rounds": FactorSpec(
+        "inner_iterations": FactorSpec(
             default=10,
             kind="int",
             bounds=(1, 64),
             doc="Cost-equilibrating rounds per iteration; each round re-identifies "
-            "the PAS pool and shifts every PAS once (mirrors algb inner_rounds).",
+            "the PAS pool and shifts every PAS once (mirrors algb inner_iterations).",
         ),
         "prop_rounds": FactorSpec(
             default=5,
@@ -354,7 +354,7 @@ class TapasModel(_BushMachinery, TrafficAssignmentModel):
         self._setup(scenario)
         network = self._network
         engine = self._engine
-        inner_rounds = self.factor_values["inner_rounds"]
+        inner_iterations = self.factor_values["inner_iterations"]
         prop_rounds = self.factor_values["prop_rounds"]
         bush_update_every = self.factor_values["bush_update_every"]
         demand_total = float(scenario.demand.total)
@@ -378,7 +378,7 @@ class TapasModel(_BushMachinery, TrafficAssignmentModel):
             # proportionality pass and the residual.
             pool: list[dict] = []
             cost_rounds = 0
-            for _ in range(inner_rounds):
+            for _ in range(inner_iterations):
                 pool = self._identify_pas(bushes, t)
                 moved_any = False
                 for pas in pool:

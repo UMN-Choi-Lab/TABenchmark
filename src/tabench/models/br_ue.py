@@ -94,7 +94,7 @@ class BoundedlyRationalUEModel(TrafficAssignmentModel):
             doc="Newton step scaling (as in gp); 1 targets the band edge exactly on "
             "a linear network, smaller trades speed for robustness.",
         ),
-        "inner_sweeps": FactorSpec(
+        "inner_iterations": FactorSpec(
             default=4,
             kind="int",
             bounds=(1, 16),
@@ -117,7 +117,7 @@ class BoundedlyRationalUEModel(TrafficAssignmentModel):
         engine = PathEngine(network)
         od = scenario.demand.matrix
         alpha = self.factor_values["alpha"]
-        inner_sweeps = self.factor_values["inner_sweeps"]
+        inner_iterations = self.factor_values["inner_iterations"]
         sp_calls = 0
 
         # Day 0: free-flow all-or-nothing (pinned deterministic start).
@@ -209,7 +209,7 @@ class BoundedlyRationalUEModel(TrafficAssignmentModel):
             # whose excess exceeds the band are shifted, and only enough to bring
             # the excess DOWN TO epsilon (the band edge), never to zero.
             deriv = network.link_cost_derivative(v)
-            for _ in range(inner_sweeps):
+            for _ in range(inner_iterations):
                 for key, plist in paths.items():
                     hlist = flows[key]
                     if len(plist) == 1:

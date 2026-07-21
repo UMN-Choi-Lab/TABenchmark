@@ -87,7 +87,7 @@ class AlgorithmBModel(_BushMachinery, TrafficAssignmentModel):
         seedable=True,
     )
     factors = {
-        "inner_rounds": FactorSpec(
+        "inner_iterations": FactorSpec(
             default=10,
             kind="int",
             bounds=(1, 64),
@@ -100,7 +100,7 @@ class AlgorithmBModel(_BushMachinery, TrafficAssignmentModel):
             kind="int",
             bounds=(1, 8),
             doc="Repeated Newton steps per divergent node per pass (TAP-B "
-            "numNewtonShifts); >1 does not pay at inner_rounds=10 on Sioux Falls.",
+            "numNewtonShifts); >1 does not pay at inner_iterations=10 on Sioux Falls.",
         ),
         "bush_update_every": FactorSpec(
             default=1,
@@ -230,7 +230,7 @@ class AlgorithmBModel(_BushMachinery, TrafficAssignmentModel):
         self._setup(scenario)
         network = self._network
         engine = self._engine
-        inner_rounds = self.factor_values["inner_rounds"]
+        inner_iterations = self.factor_values["inner_iterations"]
         bush_update_every = self.factor_values["bush_update_every"]
 
         v = np.zeros(self._n_links)
@@ -249,7 +249,7 @@ class AlgorithmBModel(_BushMachinery, TrafficAssignmentModel):
             # Fine-interleaved Gauss-Seidel: one shift pass per origin per
             # round (TAP-B updateBatchFlows structure). Coarse interleaving
             # (many consecutive passes on one origin) measurably stalls.
-            for _ in range(inner_rounds):
+            for _ in range(inner_iterations):
                 moved_any = False
                 for bush, o in zip(bushes, self._origins, strict=True):
                     if self._shift_pass(bush, int(o), v, t, dt):

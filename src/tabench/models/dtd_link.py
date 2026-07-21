@@ -146,7 +146,7 @@ class LinkBasedDTDModel(TrafficAssignmentModel):
             "is further capped by Armijo backtracking for guaranteed Beckmann "
             "descent, so lambda only matters when it is the binding (smaller) rate.",
         ),
-        "inner_sweeps": FactorSpec(
+        "inner_iterations": FactorSpec(
             default=8,
             kind="int",
             bounds=(1, 32),
@@ -183,7 +183,7 @@ class LinkBasedDTDModel(TrafficAssignmentModel):
         od = scenario.demand.matrix
         step_size = self.factor_values["step_size"]
         lam = self.factor_values["adjustment_rate"]
-        inner_sweeps = self.factor_values["inner_sweeps"]
+        inner_iterations = self.factor_values["inner_iterations"]
         prune_tol = self.factor_values["prune_tol"]
         max_backtracks = self.factor_values["max_backtracks"]
         sp_calls = 0
@@ -256,7 +256,7 @@ class LinkBasedDTDModel(TrafficAssignmentModel):
             scaled = a * costs
             gflows = {key: list(hlist) for key, hlist in flows.items()}
             x = v.copy()  # target link flows, incrementally updated
-            for _ in range(inner_sweeps):
+            for _ in range(inner_iterations):
                 for key, plist in paths.items():
                     if len(plist) < 2:
                         continue

@@ -56,7 +56,7 @@ instances (regression-tested).
 
 Budget accounting (P6), matching ``algb``'s convention: one sp_call per all-origins
 sweep. Each outer iteration charges one bush-update scan (when it runs),
-``inner_rounds`` M/D shift rounds, and one all-or-nothing for the honest
+``inner_iterations`` M/D shift rounds, and one all-or-nothing for the honest
 self-reported gap. As for ``algb`` the sp_calls axis is not comparable across
 model families; OBA additionally refreshes the shared link costs after every
 origin within a round (Gauss-Seidel), work that shows up in wall-clock but not in
@@ -95,7 +95,7 @@ class OriginBasedModel(_BushMachinery, TrafficAssignmentModel):
         seedable=True,
     )
     factors = {
-        "inner_rounds": FactorSpec(
+        "inner_iterations": FactorSpec(
             default=8,
             kind="int",
             bounds=(1, 64),
@@ -303,7 +303,7 @@ class OriginBasedModel(_BushMachinery, TrafficAssignmentModel):
         self._setup(scenario)
         network = self._network
         engine = self._engine
-        inner_rounds = self.factor_values["inner_rounds"]
+        inner_iterations = self.factor_values["inner_iterations"]
         bush_update_every = self.factor_values["bush_update_every"]
 
         v = np.zeros(self._n_links)
@@ -319,7 +319,7 @@ class OriginBasedModel(_BushMachinery, TrafficAssignmentModel):
                 for bush, o in zip(bushes, self._origins, strict=True):
                     self._update_bush(bush, int(o), t)
                 rounds += 1
-            for _ in range(inner_rounds):
+            for _ in range(inner_iterations):
                 moved_any = False
                 for bush, o in zip(bushes, self._origins, strict=True):
                     if self._shift_pass(bush, int(o), t, dt):

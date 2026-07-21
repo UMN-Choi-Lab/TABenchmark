@@ -109,7 +109,7 @@ class MulticlassModel(TrafficAssignmentModel):
             doc="Outer diagonalization sweeps over the classes (freeze the other "
             "classes, re-solve each class's separable UE, repeat).",
         ),
-        "inner_iters": FactorSpec(
+        "inner_iterations": FactorSpec(
             default=20,
             kind="int",
             bounds=(1, 500),
@@ -152,7 +152,7 @@ class MulticlassModel(TrafficAssignmentModel):
             )
         engine = PathEngine(network)
         outer_iters = int(self.factor_values["outer_iters"])
-        inner_iters = int(self.factor_values["inner_iters"])
+        inner_iterations = int(self.factor_values["inner_iterations"])
         relaxation = float(self.factor_values["relaxation"])
         target_gap = float(self.factor_values["target_gap"])
         line_search_xtol = float(self.factor_values["line_search_xtol"])
@@ -205,7 +205,7 @@ class MulticlassModel(TrafficAssignmentModel):
                     others = state.sum(axis=0) - state[i]
                     offset = interaction[i] @ state - interaction[i, i] * state[i]
                     w = state[i].copy()
-                    for _ in range(inner_iters):
+                    for _ in range(inner_iterations):
                         c = class_cost(w, others, i, offset)
                         if not np.all(np.isfinite(c)) or c.min() <= 0.0:
                             raise ValueError("non-positive diagonalized cost")

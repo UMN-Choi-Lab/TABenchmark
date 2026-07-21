@@ -100,7 +100,7 @@ class SideConstrainedModel(TrafficAssignmentModel):
             bounds=(1.0, 100.0),
             doc="Factor rho is multiplied by when feasibility stalls (Bertsekas).",
         ),
-        "inner_iters": FactorSpec(
+        "inner_iterations": FactorSpec(
             default=20,
             kind="int",
             bounds=(1, 200),
@@ -134,7 +134,7 @@ class SideConstrainedModel(TrafficAssignmentModel):
         engine = PathEngine(network)
         rho = self.factor_values["rho0"]
         rho_growth = self.factor_values["rho_growth"]
-        inner_iters = self.factor_values["inner_iters"]
+        inner_iterations = self.factor_values["inner_iterations"]
         feas_tol = self.factor_values["feas_tol"]
         line_search_xtol = self.factor_values["line_search_xtol"]
         m = network.n_links
@@ -160,7 +160,7 @@ class SideConstrainedModel(TrafficAssignmentModel):
             # gracefully and emit the current flow, which the certificate then
             # reports as capacity-infeasible, rather than crashing.
             try:
-                for _ in range(inner_iters):
+                for _ in range(inner_iterations):
                     t_aug = aug_cost(v, beta, rho)
                     y, _ = engine.all_or_nothing(t_aug, scenario.demand)
                     sp_calls += 1

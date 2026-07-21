@@ -109,7 +109,7 @@ class AsymmetricVIModel(TrafficAssignmentModel):
             doc="Outer diagonalization sweeps (freeze C v, re-solve the separable "
             "UE, re-freeze; the count converges the interaction fixed point).",
         ),
-        "inner_iters": FactorSpec(
+        "inner_iterations": FactorSpec(
             default=20,
             kind="int",
             bounds=(1, 500),
@@ -151,7 +151,7 @@ class AsymmetricVIModel(TrafficAssignmentModel):
             )
         engine = PathEngine(network)
         outer_iters = self.factor_values["outer_iters"]
-        inner_iters = self.factor_values["inner_iters"]
+        inner_iterations = self.factor_values["inner_iterations"]
         relaxation = self.factor_values["relaxation"]
         target_gap = self.factor_values["target_gap"]
         line_search_xtol = self.factor_values["line_search_xtol"]
@@ -180,7 +180,7 @@ class AsymmetricVIModel(TrafficAssignmentModel):
             # non-positive would break AON: stop gracefully and emit the current
             # flow, which the certificate then censors, rather than crashing.
             try:
-                for _ in range(int(inner_iters)):
+                for _ in range(int(inner_iterations)):
                     t_diag = diag_cost(v_inner, offset)
                     if not np.all(np.isfinite(t_diag)) or t_diag.min() <= 0.0:
                         raise ValueError("non-positive diagonalized cost")

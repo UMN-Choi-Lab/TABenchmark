@@ -57,7 +57,7 @@ class GradientProjectionModel(TrafficAssignmentModel):
             doc="Newton step scaling (Jayakrishnan et al. recommend 1; smaller "
             "values trade speed for robustness on hard instances).",
         ),
-        "inner_sweeps": FactorSpec(
+        "inner_iterations": FactorSpec(
             default=4,
             kind="int",
             bounds=(1, 16),
@@ -73,7 +73,7 @@ class GradientProjectionModel(TrafficAssignmentModel):
         engine = PathEngine(network)
         od = scenario.demand.matrix
         alpha = self.factor_values["alpha"]
-        inner_sweeps = self.factor_values["inner_sweeps"]
+        inner_iterations = self.factor_values["inner_iterations"]
         sp_calls = 0
 
         # Initialization: AON at empty-network costs, one path per OD.
@@ -126,7 +126,7 @@ class GradientProjectionModel(TrafficAssignmentModel):
 
             # Newton-projected shifts, Gauss-Seidel over ODs.
             deriv = network.link_cost_derivative(v)
-            for _ in range(inner_sweeps):
+            for _ in range(inner_iterations):
                 for key, plist in paths.items():
                     hlist = flows[key]
                     if len(plist) == 1:
