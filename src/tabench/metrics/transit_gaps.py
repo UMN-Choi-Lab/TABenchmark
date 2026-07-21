@@ -34,14 +34,13 @@ import numpy as np
 
 from ..transit.network import TransitScenario, TransitStrategy
 from ..transit.strategy import optimal_strategy
+from ._feasibility import clip_negatives
 
 __all__ = ["TransitEvaluator"]
 
 
 class TransitEvaluator:
     """Model-blind certifier for one transit scenario."""
-
-    _CLIP_TOL = 1e-9
 
     def __init__(self, scenario: TransitScenario, feasibility_tol: float = 1e-6) -> None:
         self.scenario = scenario
@@ -107,9 +106,10 @@ class TransitEvaluator:
         if not np.all(np.isfinite(v)):
             return self._censored("non-finite arc volumes")
         scale = max(1.0, float(np.abs(v).max()))
-        if v.min() < -self._CLIP_TOL * scale:
+        clipped = clip_negatives(v, scale)
+        if clipped is None:
             return self._censored("negative arc volumes")
-        v = np.maximum(v, 0.0)
+        v = clipped
 
         tol = self.feasibility_tol * max(1.0, self._total_demand)
 
@@ -143,9 +143,12 @@ class TransitEvaluator:
             vd = np.asarray(vd, dtype=np.float64)
             if vd.shape != (net.n_arcs,) or not np.all(np.isfinite(vd)):
                 return self._censored("bad per-destination arc volumes")
-            if vd.min() < -self._CLIP_TOL * scale:
+            # Reuse the AGGREGATE scale from the arc_volumes gate above (a
+            # per-destination split is toleranced against the whole strategy).
+            clipped = clip_negatives(vd, scale)
+            if clipped is None:
                 return self._censored("negative per-destination arc volumes")
-            vd = np.maximum(vd, 0.0)
+            vd = clipped
             # Per-commodity conservation: v^d routes exactly destination d's demand.
             outflow = np.bincount(net.tail, weights=vd, minlength=net.n_nodes)
             inflow = np.bincount(net.head, weights=vd, minlength=net.n_nodes)

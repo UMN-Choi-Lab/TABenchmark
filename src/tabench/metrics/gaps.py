@@ -42,6 +42,7 @@ from ..models._paths import PathEngine
 from ..models._probit import ProbitEngine
 from ..models._stoch import StochEngine
 from ..models.so import marginal_network
+from ._feasibility import clip_negatives
 
 __all__ = ["Evaluator", "node_balance_residual"]
 
@@ -115,9 +116,6 @@ def node_balance_residual(
 
 class Evaluator:
     """Model-blind scorer for one scenario. Reuse across checkpoints."""
-
-    #: negative flows within this (relative) tolerance are clipped as noise
-    _CLIP_TOL = 1e-9
 
     def __init__(
         self,
@@ -290,9 +288,10 @@ class Evaluator:
         if not np.all(np.isfinite(v)):
             return self._censored("non-finite flows")
         scale = max(1.0, float(np.abs(v).max()))
-        if v.min() < -self._CLIP_TOL * scale:
+        clipped = clip_negatives(v, scale)
+        if clipped is None:
             return self._censored("negative flows")
-        v = np.maximum(v, 0.0)
+        v = clipped
 
         costs = net.link_cost(v)
         if self._link_interaction is not None:
@@ -488,9 +487,10 @@ class Evaluator:
         if not np.all(np.isfinite(capital_v)):
             return self._censored("non-finite class flows")
         scale = max(1.0, float(np.abs(capital_v).max()))
-        if capital_v.min() < -self._CLIP_TOL * scale:
+        clipped = clip_negatives(capital_v, scale)
+        if clipped is None:
             return self._censored("negative class flows")
-        capital_v = np.maximum(capital_v, 0.0)
+        capital_v = clipped
 
         total = capital_v.sum(axis=0)
         base = net.link_cost(total)

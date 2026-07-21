@@ -61,6 +61,7 @@ from ..data.bo4mob import (
     local_edgedata_additional,
 )
 from ..edoc.replay import assert_engine_pin
+from ._feasibility import clip_negatives
 
 __all__ = ["Bo4MobODCertifier", "BO4MOB_METRIC_KEYS"]
 
@@ -73,7 +74,6 @@ BO4MOB_METRIC_KEYS = (
     "n_heldout_dates",
 )
 
-_CLIP_TOL = 1e-9
 # Default wall deadline threaded across the certify's od2trips + meso pair. 4smallRegion's
 # meso alone measures ~126 s (adr-041 pilot), so the default clears the slow instance;
 # the fast three (1ramp 0.4 s, 2corridor 9 s, 3junction 14 s) never approach it.
@@ -154,9 +154,10 @@ class Bo4MobODCertifier:
         if not np.all(np.isfinite(q)):
             return self._censored()
         scale = max(1.0, float(np.abs(q).max(initial=0.0)))
-        if q.min() < -_CLIP_TOL * scale:
+        clipped = clip_negatives(q, scale)
+        if clipped is None:
             return self._censored()
-        q = np.maximum(q, 0.0)
+        q = clipped
 
         # Engine pin: read the installed version and RAISE on mismatch (never a
         # censor). Checked before any scoring so a feasible certification always

@@ -39,6 +39,7 @@ import numpy as np
 from ..core.scenario import Scenario
 from ..estimation._dynamic_map import lagged_assignment_tensor, predict_interval_counts
 from ..estimation._proportions import active_pairs
+from ._feasibility import _CLIP_TOL, clip_negatives
 
 __all__ = ["DynamicODCertifier", "DYNAMIC_METRIC_KEYS"]
 
@@ -56,8 +57,6 @@ DYNAMIC_METRIC_KEYS = (
     "profile_rmse",
     "od_identifiable",
 )
-
-_CLIP_TOL = 1e-9
 
 
 def _count_rmse(pred: np.ndarray, counts: np.ndarray) -> float:
@@ -166,9 +165,10 @@ class DynamicODCertifier:
         # under which a genuinely negative active cell escapes censoring
         # (review MINOR, fixed in the static ODCertifier for parity too)
         scale = max(1.0, float(np.abs(q[:, self._off]).max(initial=0.0)))
-        if q.min() < -_CLIP_TOL * scale:
+        clipped = clip_negatives(q, scale)
+        if clipped is None:
             return self._censored()
-        q = np.maximum(q, 0.0)
+        q = clipped
         # off-support censor (review MAJOR): demand on cells with no lag
         # column is count-invisible by construction — see __init__
         off_support_mass = float(q[:, self._offsupport].sum())

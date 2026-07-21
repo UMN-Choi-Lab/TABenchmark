@@ -42,6 +42,7 @@ from ..core.results import Trace
 from ..core.rng import RngBundle
 from ..core.scenario import Demand, Scenario
 from ..models.frank_wolfe import BiconjugateFrankWolfeModel
+from ._feasibility import clip_negatives
 
 __all__ = ["ODCertifier", "CERTIFICATE_DEFAULTS"]
 
@@ -67,8 +68,6 @@ _METRIC_KEYS = (
     "certificate_gap",
     "certificate_converged",
 )
-
-_CLIP_TOL = 1e-9
 
 
 def _rmse_counts(flows: np.ndarray, sensors: np.ndarray, counts: np.ndarray) -> float:
@@ -170,9 +169,10 @@ class ODCertifier:
         # must not inflate the tolerance under which a genuinely negative
         # inter-zonal cell escapes censoring (adr-023 review parity fix)
         scale = max(1.0, float(np.abs(q[self._off]).max(initial=0.0)))
-        if q.min() < -_CLIP_TOL * scale:
+        clipped = clip_negatives(q, scale)
+        if clipped is None:
             return self._censored()
-        q = np.maximum(q, 0.0)
+        q = clipped
 
         try:
             flows, cert_gap, cert_conv = self._pinned_ue(q)
